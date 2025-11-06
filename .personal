@@ -1,0 +1,52 @@
+# Project File Ownership Tracker
+
+This file tracks which files are written by Claude vs the user to maintain clarity on code authorship.
+
+## Files Written by Claude
+
+### Configuration Files
+- docker-compose.yml
+- .env.example (root)
+- .env (root)
+- .gitignore
+- .personal
+- README.md
+- package.json (root)
+
+### Backend API (apps/api/)
+- package.json
+- tsconfig.json
+- tsup.config.ts
+- .env.example
+- .env
+- src/index.ts
+- src/routes/auth.ts
+- src/routes/activities.ts
+
+### Database Package (packages/database/)
+- package.json
+- tsconfig.json
+- src/index.ts
+- prisma/schema.prisma
+
+### Frontend (Next.js/TypeScript)
+- (to be created)
+
+### Tests
+- (to be created)
+
+---
+
+## Files Written by User
+
+- (to be added as you create files)
+
+---
+
+## Collaboratively Modified Files
+
+- (files that both of us work on)
+
+---
+
+**Last Updated:** 2025-11-03
