@@ -1,14 +1,14 @@
 // Vercel serverless function that loads the bundled Fastify app
 // Note: dist/index.js must be built before deployment
 
-let handler;
+let handlerInstance;
 
-module.exports = async (req, res) => {
-  if (!handler) {
+export default async function handler(req, res) {
+  if (!handlerInstance) {
     // Dynamically import the built handler
     const distModule = await import('../dist/index.js');
-    handler = distModule.default;
+    handlerInstance = distModule.default;
   }
 
-  return handler(req, res);
-};
+  return handlerInstance(req, res);
+}
