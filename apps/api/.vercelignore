@@ -6,4 +6,3 @@ coverage
 tests
 *.test.ts
 .turbo
-src
