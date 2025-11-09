@@ -16,6 +16,6 @@ export default defineConfig({
     'bcrypt',
     '@mapbox/node-pre-gyp',
   ],
-  // Don't bundle node_modules dependencies - let Vercel handle them
-  noExternal: [],
+  // Bundle internal workspace packages
+  noExternal: ['@frequency-tracker/database'],
 });
