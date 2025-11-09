@@ -1,10 +1,16 @@
 {
-  "version": 2,
   "buildCommand": "npm run vercel-build",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/[...path]"
+      "destination": "/api"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
 }
