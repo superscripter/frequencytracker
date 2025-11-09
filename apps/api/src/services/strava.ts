@@ -57,7 +57,7 @@ export async function exchangeCodeForToken(code: string): Promise<StravaTokenRes
     throw new Error(`Failed to exchange code for token: ${error}`);
   }
 
-  return response.json();
+  return response.json() as Promise<StravaTokenResponse>;
 }
 
 /**
@@ -82,7 +82,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<StravaRe
     throw new Error(`Failed to refresh access token: ${error}`);
   }
 
-  return response.json();
+  return response.json() as Promise<StravaRefreshResponse>;
 }
 
 /**
@@ -184,7 +184,7 @@ export async function fetchStravaActivities(
     throw new Error(`Failed to fetch Strava activities: ${error}`);
   }
 
-  return response.json();
+  return response.json() as Promise<StravaActivity[]>;
 }
 
 /**
