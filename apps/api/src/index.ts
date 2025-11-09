@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import env from '@fastify/env';
+import prismaPlugin from './plugins/prisma.js';
 import { authRoutes } from './routes/auth';
 import { activityRoutes } from './routes/activities';
 import { activityTypeRoutes } from './routes/activityTypes';
@@ -76,6 +77,9 @@ export async function buildServer() {
   await fastify.register(jwt, {
     secret: fastify.config.JWT_SECRET,
   });
+
+  // Register Prisma
+  await fastify.register(prismaPlugin);
 
   // Health check
   fastify.get('/health', async () => {
