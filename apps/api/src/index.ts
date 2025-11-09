@@ -50,15 +50,17 @@ const schema = {
 
 export async function buildServer() {
   const fastify = Fastify({
-    logger: {
-      transport: {
-        target: 'pino-pretty',
-        options: {
-          translateTime: 'HH:MM:ss Z',
-          ignore: 'pid,hostname',
+    logger: process.env.NODE_ENV === 'production'
+      ? true // Simple JSON logging in production
+      : {
+          transport: {
+            target: 'pino-pretty',
+            options: {
+              translateTime: 'HH:MM:ss Z',
+              ignore: 'pid,hostname',
+            },
+          },
         },
-      },
-    },
   });
 
   // Register env plugin (dotenv already loaded at top of file)
