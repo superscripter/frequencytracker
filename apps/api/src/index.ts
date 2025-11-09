@@ -109,7 +109,20 @@ async function start() {
   }
 }
 
-// Only start server if not in test mode
-if (process.env.NODE_ENV !== 'test') {
+// Vercel serverless function handler
+let serverInstance: any = null;
+
+export default async function handler(req: any, res: any) {
+  if (!serverInstance) {
+    serverInstance = await buildServer();
+    await serverInstance.ready();
+  }
+
+  // Use Fastify's serverless adapter
+  serverInstance.server.emit('request', req, res);
+}
+
+// Only start server if not in test mode and not in Vercel
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   start();
 }
