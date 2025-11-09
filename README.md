@@ -93,41 +93,45 @@ Stateless authentication mechanism:
 6. **Modern Best Practices** - Up-to-date technologies with active communities
 7. **Cost Effective** - All open-source tools, can deploy to free/low-cost platforms
 
-## Project Phases
+## Project Status
 
-### Phase 1: Database & Backend Core (Week 1-2) ✅
-- [x] Set up PostgreSQL (cloud or local)
-- [x] Create Prisma schema (User, Activity, ActivityType, etc.)
-- [x] Set up Prisma with PostgreSQL
-- [x] Implement JWT authentication
-- [x] Create core API endpoints (auth, activities)
-- [ ] Write tests for critical paths
+**Overall Completion: ~85%**
 
-### Phase 2: Business Logic (Week 2-3)
-- [ ] Port calculation logic to new backend layer
-- [ ] Implement frequency calculations
-- [ ] Add recommendations logic
-- [ ] Strava integration (reuse existing logic)
+### ✅ Completed Features
 
-### Phase 3: Frontend Foundation (Week 3-4)
-- [ ] Set up Next.js with TypeScript
-- [ ] Implement authentication flow
-- [ ] Create base layout and navigation
-- [ ] Set up API client with React Query
+#### Backend (Feature Complete)
+- ✅ **Database Schema**: Full Prisma schema with User, Activity, ActivityType models
+- ✅ **Authentication**: JWT-based auth with register, login, profile updates
+- ✅ **Activity Management**: Full CRUD operations with ownership verification and pagination
+- ✅ **Activity Types**: Full management with cascade delete protection
+- ✅ **Recommendations System**: Intelligent algorithm with priority scoring, timezone-aware calculations
+- ✅ **Strava Integration**: Complete OAuth flow, token management, activity import/sync
+- ✅ **Comprehensive E2E Tests**: All major API endpoints tested (auth, activities, activity types, recommendations)
 
-### Phase 4: Features (Week 4-6)
-- [ ] Dashboard with frequency display
-- [ ] Activity management (add/delete)
-- [ ] Recommendations view
-- [ ] Settings page
-- [ ] Strava linking
+#### Frontend (Feature Complete)
+- ✅ **Authentication UI**: Login/register modal with AuthContext
+- ✅ **Activities Tab**: Add/edit/delete activities, filter by type, pagination, timezone-aware date handling
+- ✅ **Recommendations Tab**: Color-coded status display with three sections (Today, Tomorrow, All)
+- ✅ **History Tab**: Complete activity history with Strava sync functionality
+- ✅ **Profile Tab**: User info, timezone selector, Strava connect/disconnect, activity types management
+- ✅ **Component Architecture**: React 19 + TypeScript with Vite build system
+- ✅ **Strava OAuth**: Full integration with connect/disconnect UI
 
-### Phase 5: Polish & Deploy (Week 6-7)
-- [ ] Set up Cloudflare Tunnel
-- [ ] Deploy frontend to Vercel
-- [ ] Error handling & loading states
-- [ ] Mobile responsiveness
-- [ ] Testing & bug fixes
+### 🔴 Outstanding Work
+
+#### Important Features
+- ⚠️ **Data Visualization**: No charts or graphs for frequency trends
+- ⚠️ **Frontend Tests**: Zero tests for React components
+- ⚠️ **Activity Details**: Notes, duration, distance not fully displayed throughout UI
+- ⚠️ **Mobile Responsiveness**: Needs improvement
+- ⚠️ **Error Handling**: No React error boundaries
+
+#### Production Readiness
+- 🚧 **Deployment**: No Cloudflare Tunnel or production configuration
+- 🚧 **Performance**: Missing optimistic updates and loading skeletons
+- 🚧 **Security**: Needs rate limiting, better CORS configuration, stronger JWT secrets
+- 🚧 **Type Safety**: No shared types package between frontend/backend
+- 🚧 **UX Polish**: Missing confirmation dialogs for destructive actions, undo functionality
 
 ## Getting Started
 
@@ -242,19 +246,35 @@ Tests use Vitest and Fastify's `inject()` method for in-memory HTTP testing. See
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and update the values:
+### Backend Configuration
+
+Copy `.env.example` to `.env` in the root directory and update the values:
 
 ```bash
 cp .env.example .env
 ```
 
-Key environment variables:
+Backend environment variables:
 - `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - Secret key for JWT tokens (in apps/api/.env)
+- `JWT_SECRET` - Secret key for JWT tokens (change in production!)
 - `PORT` - API server port (default: 3001)
-- `FRONTEND_URL` - Frontend URL for CORS (default: http://localhost:3000)
-- `STRAVA_CLIENT_ID` - Strava API client ID (to be added)
-- `STRAVA_CLIENT_SECRET` - Strava API client secret (to be added)
+- `FRONTEND_URL` - Frontend URL for CORS and OAuth redirects (default: http://localhost:5173)
+- `STRAVA_CLIENT_ID` - Strava API client ID (optional, for Strava integration)
+- `STRAVA_CLIENT_SECRET` - Strava API client secret (optional, for Strava integration)
+- `STRAVA_REDIRECT_URI` - OAuth callback URL (default: http://localhost:3001/api/strava/callback)
+
+### Frontend Configuration
+
+Create `apps/web/.env` (you can copy from `apps/web/.env.example`):
+
+```bash
+cp apps/web/.env.example apps/web/.env
+```
+
+Frontend environment variables:
+- `VITE_API_URL` - Backend API URL (default: http://localhost:3001)
+
+**Note:** Vite requires environment variables to be prefixed with `VITE_` to be exposed to the frontend code.
 
 ## Project Structure
 
@@ -286,8 +306,8 @@ This project is inspired by: https://github.com/superscripter/frequency_tracker
 
 ## Development Status
 
-**Current Phase:** Phase 1 Complete ✅ - Moving to Phase 2
-**Last Updated:** 2025-11-03
+**Current Progress:** ~85% Complete - All core features built including Strava integration, production polish and testing remaining
+**Last Updated:** 2025-11-08
 
 ### API Endpoints
 
@@ -296,12 +316,32 @@ This project is inspired by: https://github.com/superscripter/frequency_tracker
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/me` - Get current user (requires auth)
 
+#### Activity Types
+- `GET /api/activity-types` - Get all activity types
+- `GET /api/activity-types/:id` - Get single activity type with activity count
+- `POST /api/activity-types` - Create activity type
+  - Body: `{ name: string, description?: string, desiredFrequency: number }`
+- `PUT /api/activity-types/:id` - Update activity type
+  - Body: `{ name?: string, description?: string, desiredFrequency?: number }`
+- `DELETE /api/activity-types/:id` - Delete activity type (only if no activities use it)
+
 #### Activities
-- `GET /api/activities` - Get all activities (requires auth)
+- `GET /api/activities` - Get all activities with pagination (requires auth)
+  - Query params: `typeId` (optional), `page` (optional, default: 1), `limit` (optional, default: 20)
 - `GET /api/activities/:id` - Get single activity (requires auth)
 - `POST /api/activities` - Create activity (requires auth)
 - `PUT /api/activities/:id` - Update activity (requires auth)
 - `DELETE /api/activities/:id` - Delete activity (requires auth)
+
+#### Recommendations
+- `GET /api/recommendations` - Get personalized activity recommendations (requires auth)
+
+#### Strava Integration
+- `GET /api/strava/authorize` - Initiate Strava OAuth flow (requires auth via query param)
+- `GET /api/strava/callback` - OAuth callback handler
+- `POST /api/strava/sync` - Sync activities from Strava (requires auth)
+  - Body: `{ afterDate: string }` (ISO date string)
+- `DELETE /api/strava/disconnect` - Disconnect Strava account (requires auth)
 
 ## Contributing
 

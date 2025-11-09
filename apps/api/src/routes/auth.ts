@@ -43,6 +43,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           id: true,
           email: true,
           name: true,
+          timezone: true,
           createdAt: true,
         },
       });
@@ -89,6 +90,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           id: user.id,
           email: user.email,
           name: user.name,
+          timezone: user.timezone,
           createdAt: user.createdAt,
         },
         token,
@@ -114,6 +116,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           id: true,
           email: true,
           name: true,
+          timezone: true,
           createdAt: true,
           stravaId: true,
         },
@@ -126,6 +129,37 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ user });
     } catch (error) {
       return reply.status(401).send({ error: 'Unauthorized' });
+    }
+  });
+
+  // Update user profile
+  fastify.patch('/profile', async (request, reply) => {
+    try {
+      await request.jwtVerify();
+      const { userId } = request.user as { userId: string };
+
+      const body = request.body as { timezone?: string; name?: string };
+
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(body.timezone && { timezone: body.timezone }),
+          ...(body.name && { name: body.name }),
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          timezone: true,
+          createdAt: true,
+          stravaId: true,
+        },
+      });
+
+      return reply.send({ user });
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ error: 'Failed to update profile' });
     }
   });
 };

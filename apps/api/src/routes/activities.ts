@@ -24,18 +24,45 @@ export const activityRoutes: FastifyPluginAsync = async (fastify) => {
   // Get all activities for user
   fastify.get('/', async (request, reply) => {
     const { userId } = request.user as { userId: string };
+    const { typeId, page, limit } = request.query as {
+      typeId?: string;
+      page?: string;
+      limit?: string;
+    };
+
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {
+      userId,
+      ...(typeId && typeId !== 'all' ? { typeId } : {}),
+    };
+
+    // Get total count for pagination
+    const totalCount = await prisma.activity.count({ where });
 
     const activities = await prisma.activity.findMany({
-      where: { userId },
+      where,
       include: {
         type: true,
       },
       orderBy: {
         date: 'desc',
       },
+      skip,
+      take: limitNum,
     });
 
-    return reply.send({ activities });
+    return reply.send({
+      activities,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limitNum),
+      },
+    });
   });
 
   // Get single activity

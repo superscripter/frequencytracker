@@ -1,0 +1,335 @@
+.activities-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.add-activity-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgba(100, 108, 255, 0.15);
+  border-radius: 4px;
+  border: 1px solid rgba(100, 108, 255, 0.3);
+}
+
+.activity-type-select,
+.activity-date-input,
+.activity-time-input {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.activity-type-select {
+  flex: 2;
+}
+
+.activity-date-input {
+  flex: 1;
+}
+
+.activity-time-input {
+  flex: 0.8;
+}
+
+.activity-type-select:focus,
+.activity-date-input:focus,
+.activity-time-input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.add-activity-btn {
+  padding: 0.5rem 1rem;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.add-activity-btn:hover {
+  background-color: #535bf2;
+}
+
+.cancel-edit-btn {
+  padding: 0.5rem 1rem;
+  background-color: #666;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.cancel-edit-btn:hover {
+  background-color: #555;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  color: #b8b8b8;
+}
+
+.type-filter {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.type-filter:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.error-message {
+  padding: 0.75rem;
+  background-color: rgba(255, 80, 80, 0.2);
+  color: #ff5555;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 80, 80, 0.4);
+}
+
+.activities-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #b8b8b8;
+}
+
+.activities-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #333;
+  background-color: #0a0a0a;
+}
+
+.activities-table th,
+.activities-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #222;
+}
+
+.activities-table th {
+  background-color: #0d0d0d;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.activities-table tbody tr:hover {
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.edit-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem 0.5rem;
+  transition: transform 0.1s;
+}
+
+.edit-btn:hover,
+.delete-btn:hover {
+  transform: scale(1.2);
+}
+
+.edit-btn {
+  margin-right: 0.5rem;
+}
+
+.delete-btn:hover {
+  filter: brightness(1.2);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+  font-style: italic;
+}
+
+.table-footer {
+  text-align: center;
+  padding: 0.5rem;
+  color: #888;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Sync section styling */
+.sync-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: rgba(252, 82, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(252, 82, 0, 0.3);
+}
+
+.sync-section label {
+  font-size: 0.9rem;
+  color: #b8b8b8;
+  white-space: nowrap;
+}
+
+.sync-date-input {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  flex: 1;
+  max-width: 200px;
+}
+
+.sync-date-input:focus {
+  outline: none;
+  border-color: #fc5200;
+}
+
+.sync-btn {
+  padding: 0.5rem 1.5rem;
+  background-color: #fc5200;
+  color: white;
+  border: 1px solid #fc5200;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.sync-btn:hover:not(:disabled) {
+  background-color: #e04700;
+  border-color: #e04700;
+}
+
+.sync-btn:disabled {
+  background-color: #444;
+  border-color: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.sync-message {
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  border: 1px solid #444;
+}
+
+.sync-message.success {
+  background: rgba(74, 222, 128, 0.2);
+  color: #5eff5e;
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.sync-message.error {
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff5555;
+  border-color: rgba(255, 80, 80, 0.5);
+}
+
+/* Pagination styles */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-top: 1px solid #333;
+  margin-top: 1rem;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #b8b8b8;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  padding: 0.5rem 0.75rem;
+  background: #1a1a1a;
+  color: #e8e8e8;
+  border: 1px solid #444;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #2a2a2a;
+  border-color: #646cff;
+}
+
+.pagination-btn:disabled {
+  background: #0a0a0a;
+  color: #555;
+  cursor: not-allowed;
+  border-color: #222;
+}
+
+.pagination-pages {
+  font-size: 0.9rem;
+  color: #e8e8e8;
+  padding: 0 0.5rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .activities-table th,
+  .activities-table td {
+    border-bottom: 1px solid #ddd;
+  }
+
+  .activities-table {
+    border: 1px solid #ddd;
+  }
+
+  .activities-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .type-filter {
+    border: 1px solid #ccc;
+    background: white;
+  }
+
+  .filter-group label {
+    color: #666;
+  }
+}

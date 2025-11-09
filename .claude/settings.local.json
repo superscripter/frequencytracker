@@ -39,7 +39,19 @@
       "Bash(npx create-vite@latest:*)",
       "Bash(npm run web:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(timeout /t 5)",
+      "Bash(Start-Sleep -Seconds 5)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(node check-user.js:*)",
+      "Bash(node list-users.js:*)",
+      "Bash(node migrate-activity-types.js:*)",
+      "Bash(npx tsx:*)",
+      "Bash(timeout /t 3)"
     ],
     "deny": [],
     "ask": []

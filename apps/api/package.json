@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsup",
+    "build": "tsup && npm run db:generate",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "test": "vitest"
+    "test": "vitest",
+    "vercel-build": "npm run db:generate && tsup",
+    "db:generate": "cd ../../packages/database && npx prisma generate"
   },
   "dependencies": {
     "@frequency-tracker/database": "*",

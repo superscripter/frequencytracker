@@ -1,9 +1,92 @@
+import { useState, useEffect } from 'react'
 import './App.css'
+import { useAuth } from './context/AuthContext'
+import { AuthModal } from './components/AuthModal'
+import { ActivityTypesManager } from './components/ActivityTypesManager'
+import { ActivitiesManager } from './components/ActivitiesManager'
+import { Profile } from './components/Profile'
+import { Recommendations } from './components/Recommendations'
+import { History } from './components/History'
+
+type View = 'Activities' | 'Recommendations' | 'History' | 'Profile'
 
 function App() {
+  const [currentView, setCurrentView] = useState<View>('Recommendations')
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const { user, logout, isLoading } = useAuth()
+
+  // Show auth modal if user is not logged in
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setShowAuthModal(true)
+    }
+  }, [user, isLoading])
+
+  if (isLoading) {
+    return (
+      <div className="app">
+        <div className="container">
+          <div className="loading">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div>
-      <h1>Frequency Tracker</h1>
+    <div className="app">
+      <div className="container">
+        <header className="header">
+          <h1>Frequency Tracker</h1>
+        </header>
+
+        <main className="main">
+          <nav className="tabs">
+            <button
+              className={currentView === 'Activities' ? 'active' : ''}
+              onClick={() => setCurrentView('Activities')}
+            >
+              Activities
+            </button>
+            <button
+              className={currentView === 'Recommendations' ? 'active' : ''}
+              onClick={() => setCurrentView('Recommendations')}
+            >
+              Recommendations
+            </button>
+            <button
+              className={currentView === 'History' ? 'active' : ''}
+              onClick={() => setCurrentView('History')}
+            >
+              History
+            </button>
+            <button
+              className={currentView === 'Profile' ? 'active' : ''}
+              onClick={() => setCurrentView('Profile')}
+            >
+              Profile
+            </button>
+          </nav>
+
+          <div className="content">
+            {currentView === 'Activities' && (
+              <div className="activities-view">
+                <ActivitiesManager />
+              </div>
+            )}
+            {currentView === 'Recommendations' && <Recommendations />}
+            {currentView === 'History' && <History />}
+            {currentView === 'Profile' && (
+              <div className="profile-view">
+                <Profile />
+                <div className="divider"></div>
+                <ActivityTypesManager />
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   )
 }

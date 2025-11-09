@@ -4,6 +4,9 @@ import jwt from '@fastify/jwt';
 import env from '@fastify/env';
 import { authRoutes } from './routes/auth';
 import { activityRoutes } from './routes/activities';
+import { activityTypeRoutes } from './routes/activityTypes';
+import { recommendationsRoutes } from './routes/recommendations';
+import stravaRoutes from './routes/strava.js';
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -11,7 +14,7 @@ import { fileURLToPath } from 'url';
 // Load .env from project root (ESM)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-config({ path: resolve(__dirname, '../../../.env') });
+config({ path: resolve(__dirname, '../../../.env'), override: true });
 
 const schema = {
   type: 'object',
@@ -26,6 +29,20 @@ const schema = {
     },
     JWT_SECRET: {
       type: 'string',
+    },
+    STRAVA_CLIENT_ID: {
+      type: 'string',
+    },
+    STRAVA_CLIENT_SECRET: {
+      type: 'string',
+    },
+    STRAVA_REDIRECT_URI: {
+      type: 'string',
+      default: 'http://localhost:3001/api/strava/callback',
+    },
+    FRONTEND_URL: {
+      type: 'string',
+      default: 'http://localhost:5173',
     },
   },
 };
@@ -51,7 +68,8 @@ export async function buildServer() {
 
   // Register CORS
   await fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
   });
 
   // Register JWT
@@ -67,6 +85,9 @@ export async function buildServer() {
   // Register routes
   await fastify.register(authRoutes, { prefix: '/api/auth' });
   await fastify.register(activityRoutes, { prefix: '/api/activities' });
+  await fastify.register(activityTypeRoutes, { prefix: '/api/activity-types' });
+  await fastify.register(recommendationsRoutes, { prefix: '/api/recommendations' });
+  await fastify.register(stravaRoutes, { prefix: '/api/strava' });
 
   return fastify;
 }

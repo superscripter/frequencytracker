@@ -1,0 +1,315 @@
+import { useState, useEffect } from 'react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { useAuth } from '../context/AuthContext';
+import './Recommendations.css';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+interface ActivityType {
+  id: string;
+  name: string;
+  description: string | null;
+  desiredFrequency: number;
+}
+
+interface Recommendation {
+  activityType: ActivityType;
+  lastPerformedDate: string | null;
+  daysSinceLastActivity: number | null;
+  averageFrequency30Days: number | null;
+  difference: number | null;
+  status: 'ahead' | 'due_soon' | 'due_today' | 'overdue' | 'critically_overdue' | 'no_data';
+  priorityScore: number;
+}
+
+export function Recommendations() {
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const { user } = useAuth();
+
+  // Get user timezone or default to Eastern Time
+  const userTimezone = user?.timezone || 'America/New_York';
+
+  // Sync state
+  const [syncDate, setSyncDate] = useState<string>(() => {
+    // Default to 20 days ago in user's timezone
+    const date = new Date();
+    date.setDate(date.getDate() - 20);
+    return formatInTimeZone(date, userTimezone, 'yyyy-MM-dd');
+  });
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
+
+  const fetchRecommendations = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/recommendations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch recommendations');
+      }
+
+      const data = await response.json();
+      setRecommendations(data.recommendations);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load recommendations');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStatusClass = (status: Recommendation['status']): string => {
+    switch (status) {
+      case 'ahead':
+        return 'status-dark-green';
+      case 'due_soon':
+        return 'status-light-green';
+      case 'due_today':
+        return 'status-yellow';
+      case 'overdue':
+        return 'status-red';
+      case 'critically_overdue':
+        return 'status-dark-red';
+      case 'no_data':
+        return 'status-grey';
+      default:
+        return '';
+    }
+  };
+
+  const formatDifference = (difference: number | null, status: Recommendation['status']): string => {
+    if (difference === null) {
+      return 'N/A';
+    }
+
+    if (difference > 0) {
+      return `+${difference.toFixed(1)}`;
+    } else if (difference < 0) {
+      return `${difference.toFixed(1)}`;
+    } else {
+      return '0.0';
+    }
+  };
+
+  const formatAverageFrequency = (avg: number | null): string => {
+    if (avg === null) {
+      return 'N/A';
+    }
+    return avg.toFixed(1);
+  };
+
+  const handleSyncActivities = async () => {
+    try {
+      setIsSyncing(true);
+      setSyncMessage('');
+
+      const token = localStorage.getItem('token');
+
+      // Convert sync date to ISO string at start of day in user's timezone
+      const syncDateTime = `${syncDate}T00:00:00`;
+      const isoDate = formatInTimeZone(
+        new Date(syncDateTime),
+        userTimezone,
+        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+      );
+
+      const response = await fetch(`${API_URL}/api/strava/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          afterDate: new Date(isoDate).toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to sync activities');
+      }
+
+      const result = await response.json();
+      setSyncMessage(
+        `Sync complete: ${result.imported} imported, ${result.skipped} skipped${result.errors.length > 0 ? `, ${result.errors.length} errors` : ''}`
+      );
+
+      // Refresh recommendations
+      await fetchRecommendations();
+
+      // Clear message after 5 seconds
+      setTimeout(() => setSyncMessage(''), 5000);
+    } catch (err) {
+      setSyncMessage(err instanceof Error ? err.message : 'Failed to sync activities');
+      setTimeout(() => setSyncMessage(''), 5000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Filter recommendations for today (due_today, overdue, critically_overdue)
+  const todayRecommendations = recommendations.filter(rec =>
+    rec.status === 'due_today' || rec.status === 'overdue' || rec.status === 'critically_overdue'
+  );
+
+  // Filter recommendations for tomorrow (difference > -2 and < -1)
+  const tomorrowRecommendations = recommendations.filter(rec =>
+    rec.difference !== null && rec.difference > -2 && rec.difference < -1
+  );
+
+  const renderTable = (items: Recommendation[]) => {
+    if (items.length === 0) {
+      return <p className="no-recommendations">No recommendations</p>;
+    }
+
+    return (
+      <div className="recommendations-table-wrapper">
+        <table className="recommendations-table">
+          <thead>
+            <tr>
+              <th>Activity Type</th>
+              <th>Days Since Last Activity</th>
+              <th>Desired Frequency (days)</th>
+              <th>30-Day Average (days)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((rec) => (
+              <tr key={rec.activityType.id} className={getStatusClass(rec.status)}>
+                <td className="activity-name">
+                  <strong>{rec.activityType.name}</strong>
+                  {rec.activityType.description && (
+                    <div className="activity-description">{rec.activityType.description}</div>
+                  )}
+                </td>
+                <td className={`days-since ${getStatusClass(rec.status)}`}>
+                  {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
+                </td>
+                <td className="desired-frequency">
+                  {rec.activityType.desiredFrequency.toFixed(1)}
+                </td>
+                <td className="average-frequency">
+                  {formatAverageFrequency(rec.averageFrequency30Days)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return <div className="recommendations-loading">Loading recommendations...</div>;
+  }
+
+  if (error) {
+    return <div className="recommendations-error">{error}</div>;
+  }
+
+  if (!user) {
+    return <div className="recommendations-error">Please log in to view recommendations</div>;
+  }
+
+  return (
+    <div className="recommendations-container">
+      <div className="sync-section">
+        <label htmlFor="sync-date">Sync from third-party platforms:</label>
+        <input
+          id="sync-date"
+          type="date"
+          value={syncDate}
+          onChange={(e) => setSyncDate(e.target.value)}
+          className="sync-date-input"
+        />
+        <button
+          onClick={handleSyncActivities}
+          disabled={isSyncing || !user?.stravaId}
+          className="sync-btn"
+          title={!user?.stravaId ? 'Connect Strava account in Profile to sync' : 'Sync activities from Strava'}
+        >
+          {isSyncing ? 'Syncing...' : 'Sync'}
+        </button>
+      </div>
+
+      {syncMessage && (
+        <div className={`sync-message ${syncMessage.includes('complete') ? 'success' : 'error'}`}>
+          {syncMessage}
+        </div>
+      )}
+
+      {recommendations.length === 0 ? (
+        <div className="recommendations-empty">
+          <p>No activity types found. Create some activity types to see recommendations.</p>
+        </div>
+      ) : (
+        <>
+          {/* Today Recommendations */}
+          <div className="recommendations-section">
+            <h3>Today Recommendations</h3>
+            {renderTable(todayRecommendations)}
+          </div>
+
+          {/* Tomorrow Recommendations */}
+          <div className="recommendations-section">
+            <h3>Tomorrow Recommendations</h3>
+            {renderTable(tomorrowRecommendations)}
+          </div>
+
+          {/* All Recommendations */}
+          <div className="recommendations-section">
+            <h3>All Activity Recommendations</h3>
+            {renderTable(recommendations)}
+          </div>
+        </>
+      )}
+
+      <div className="recommendations-legend">
+        <h3>Status Legend</h3>
+        <div className="legend-items">
+          <div className="legend-item">
+            <span className="legend-color status-dark-green"></span>
+            <span>Ahead of schedule (done more recently than needed)</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color status-light-green"></span>
+            <span>Due within 2 days</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color status-yellow"></span>
+            <span>Due today (±1 day)</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color status-red"></span>
+            <span>Overdue by 1-2 days</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color status-dark-red"></span>
+            <span>Critically overdue ({'>'}2 days)</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-color status-grey"></span>
+            <span>No data (never performed)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
