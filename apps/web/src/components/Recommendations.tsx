@@ -94,19 +94,6 @@ export function Recommendations() {
     }
   };
 
-  const formatDifference = (difference: number | null, status: Recommendation['status']): string => {
-    if (difference === null) {
-      return 'N/A';
-    }
-
-    if (difference > 0) {
-      return `+${difference.toFixed(1)}`;
-    } else if (difference < 0) {
-      return `${difference.toFixed(1)}`;
-    } else {
-      return '0.0';
-    }
-  };
 
   const formatAverageFrequency = (avg: number | null): string => {
     if (avg === null) {

@@ -13,7 +13,7 @@ type View = 'Activities' | 'Recommendations' | 'History' | 'Profile'
 function App() {
   const [currentView, setCurrentView] = useState<View>('Recommendations')
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const { user, logout, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
 
   // Show auth modal if user is not logged in
   useEffect(() => {
