@@ -16,7 +16,9 @@ interface Recommendation {
   activityType: ActivityType;
   lastPerformedDate: string | null;
   daysSinceLastActivity: number | null;
-  averageFrequency30Days: number | null;
+  averageFrequencyLast3: number | null;
+  averageFrequencyLast10: number | null;
+  trend: 'improving' | 'stable' | 'declining' | 'insufficient_data';
   difference: number | null;
   status: 'ahead' | 'due_soon' | 'due_today' | 'overdue' | 'critically_overdue' | 'no_data';
   priorityScore: number;
@@ -102,6 +104,21 @@ export function Recommendations() {
     return avg.toFixed(1);
   };
 
+  const getTrendDisplay = (trend: Recommendation['trend']): { icon: string; text: string } => {
+    switch (trend) {
+      case 'improving':
+        return { icon: '⬆️', text: 'Improving' };
+      case 'declining':
+        return { icon: '⬇️', text: 'Declining' };
+      case 'stable':
+        return { icon: '➡️', text: 'Stable' };
+      case 'insufficient_data':
+        return { icon: '—', text: 'N/A' };
+      default:
+        return { icon: '—', text: 'N/A' };
+    }
+  };
+
   const handleSyncActivities = async () => {
     try {
       setIsSyncing(true);
@@ -156,9 +173,9 @@ export function Recommendations() {
     rec.status === 'due_today' || rec.status === 'overdue' || rec.status === 'critically_overdue'
   );
 
-  // Filter recommendations for tomorrow (difference > -2 and < -1)
+  // Filter recommendations for tomorrow (due_soon status, which means |difference| >= 1 and < 2)
   const tomorrowRecommendations = recommendations.filter(rec =>
-    rec.difference !== null && rec.difference > -2 && rec.difference < -1
+    rec.status === 'due_soon'
   );
 
   const renderTable = (items: Recommendation[]) => {
@@ -173,30 +190,42 @@ export function Recommendations() {
             <tr>
               <th>Activity Type</th>
               <th>Days Since Last Activity</th>
-              <th>Desired Frequency (days)</th>
-              <th>30-Day Average (days)</th>
+              <th>Desired Frequency</th>
+              <th>Last 3 Avg</th>
+              <th>Last 10 Avg</th>
+              <th>Trend</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((rec) => (
-              <tr key={rec.activityType.id} className={getStatusClass(rec.status)}>
-                <td className="activity-name">
-                  <strong>{rec.activityType.name}</strong>
-                  {rec.activityType.description && (
-                    <div className="activity-description">{rec.activityType.description}</div>
-                  )}
-                </td>
-                <td className={`days-since ${getStatusClass(rec.status)}`}>
-                  {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
-                </td>
-                <td className="desired-frequency">
-                  {rec.activityType.desiredFrequency.toFixed(1)}
-                </td>
-                <td className="average-frequency">
-                  {formatAverageFrequency(rec.averageFrequency30Days)}
-                </td>
-              </tr>
-            ))}
+            {items.map((rec) => {
+              const trendDisplay = getTrendDisplay(rec.trend);
+              return (
+                <tr key={rec.activityType.id} className={getStatusClass(rec.status)}>
+                  <td className="activity-name">
+                    <strong>{rec.activityType.name}</strong>
+                    {rec.activityType.description && (
+                      <div className="activity-description">{rec.activityType.description}</div>
+                    )}
+                  </td>
+                  <td className={`days-since ${getStatusClass(rec.status)}`}>
+                    {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
+                  </td>
+                  <td className="desired-frequency">
+                    {rec.activityType.desiredFrequency.toFixed(1)}
+                  </td>
+                  <td className="average-frequency">
+                    {formatAverageFrequency(rec.averageFrequencyLast3)}
+                  </td>
+                  <td className="average-frequency">
+                    {formatAverageFrequency(rec.averageFrequencyLast10)}
+                  </td>
+                  <td className={`trend-cell trend-${rec.trend}`}>
+                    <span className="trend-icon">{trendDisplay.icon}</span>
+                    <span className="trend-text">{trendDisplay.text}</span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
-import { differenceInDays, subDays } from 'date-fns';
+import { differenceInDays, subDays, startOfDay } from 'date-fns';
 import { prisma } from '@frequency-tracker/database';
 
 interface RecommendationItem {
@@ -13,7 +13,9 @@ interface RecommendationItem {
   };
   lastPerformedDate: string | null;
   daysSinceLastActivity: number | null;
-  averageFrequency30Days: number | null;
+  averageFrequencyLast3: number | null;
+  averageFrequencyLast10: number | null;
+  trend: 'improving' | 'stable' | 'declining' | 'insufficient_data';
   difference: number | null;
   status: 'ahead' | 'due_soon' | 'due_today' | 'overdue' | 'critically_overdue' | 'no_data';
   priorityScore: number;
@@ -45,11 +47,10 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
 
       const userTimezone = user.timezone || 'America/New_York';
 
-      // Calculate date range for 30 days ago in user's timezone
+      // Calculate midnight today in user's timezone for "days ago" calculation
       const nowUtc = new Date();
       const nowInUserTz = toZonedTime(nowUtc, userTimezone);
-      const thirtyDaysAgo = subDays(nowInUserTz, 30);
-      const thirtyDaysAgoUtc = fromZonedTime(thirtyDaysAgo, userTimezone);
+      const midnightToday = startOfDay(nowInUserTz);
 
       // Get all activity types for this user
       const activityTypes = await prisma.activityType.findMany({
@@ -57,23 +58,7 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         orderBy: { name: 'asc' },
       });
 
-      // Get all activities for the user in the last 30 days
-      const recentActivities = await prisma.activity.findMany({
-        where: {
-          userId,
-          date: {
-            gte: thirtyDaysAgoUtc,
-          },
-        },
-        include: {
-          type: true,
-        },
-        orderBy: {
-          date: 'desc',
-        },
-      });
-
-      // Get the most recent activity for each type (might be older than 30 days)
+      // Get all activities for the user
       const allActivitiesByType = await prisma.activity.findMany({
         where: {
           userId,
@@ -95,18 +80,9 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         activitiesByType.get(activity.typeId)!.push(activity);
       }
 
-      const recentActivitiesByType = new Map<string, typeof recentActivities>();
-      for (const activity of recentActivities) {
-        if (!recentActivitiesByType.has(activity.typeId)) {
-          recentActivitiesByType.set(activity.typeId, []);
-        }
-        recentActivitiesByType.get(activity.typeId)!.push(activity);
-      }
-
       // Calculate recommendations for each activity type
       const recommendations: RecommendationItem[] = activityTypes.map((type) => {
         const typeActivities = activitiesByType.get(type.id) || [];
-        const recentTypeActivities = recentActivitiesByType.get(type.id) || [];
 
         let daysSinceLastActivity: number | null = null;
         let lastPerformedDate: string | null = null;
@@ -118,30 +94,40 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         if (typeActivities.length > 0) {
           const lastActivity = typeActivities[0];
           const lastActivityInUserTz = toZonedTime(lastActivity.date, userTimezone);
+          const lastActivityMidnight = startOfDay(lastActivityInUserTz);
           lastPerformedDate = lastActivity.date.toISOString();
 
-          // Calculate days since last activity
-          daysSinceLastActivity = differenceInDays(nowInUserTz, lastActivityInUserTz);
+          // Calculate days since last activity using calendar days (midnight-to-midnight)
+          // This ensures "1 day ago" means "yesterday" regardless of the time of day
+          daysSinceLastActivity = differenceInDays(midnightToday, lastActivityMidnight);
 
           // Calculate difference (positive means overdue, negative means ahead)
           difference = daysSinceLastActivity - type.desiredFrequency;
+          const absDifference = Math.abs(difference);
 
-          // Determine status based on difference
-          if (difference < -2) {
-            status = 'ahead';
-            priorityScore = difference; // Most negative = lowest priority
-          } else if (difference >= -2 && difference < -1) {
-            status = 'due_soon';
-            priorityScore = difference;
-          } else if (difference >= -1 && difference <= 1) {
+          // Determine status based on absolute difference
+          // Use absolute value so activities ahead of or behind schedule are treated the same
+          if (absDifference < 1) {
             status = 'due_today';
             priorityScore = 100 + difference; // Medium priority
-          } else if (difference > 1 && difference <= 2) {
-            status = 'overdue';
-            priorityScore = 200 + difference; // High priority
-          } else {
-            status = 'critically_overdue';
-            priorityScore = 300 + difference; // Highest priority
+          } else if (absDifference >= 1 && absDifference < 2) {
+            status = 'due_soon';
+            priorityScore = difference;
+          } else if (absDifference >= 2) {
+            if (difference > 0) {
+              // Overdue
+              if (absDifference <= 3) {
+                status = 'overdue';
+                priorityScore = 200 + difference;
+              } else {
+                status = 'critically_overdue';
+                priorityScore = 300 + difference;
+              }
+            } else {
+              // Ahead of schedule
+              status = 'ahead';
+              priorityScore = difference; // Most negative = lowest priority
+            }
           }
         } else {
           // No activities ever performed
@@ -149,23 +135,60 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           priorityScore = -1000; // Send to bottom
         }
 
-        // Calculate 30-day average frequency
-        let averageFrequency30Days: number | null = null;
-        if (recentTypeActivities.length >= 2) {
-          // Calculate average days between activities
+        // Helper function to calculate average frequency from N activities
+        const calculateAverageFrequency = (activities: typeof typeActivities, maxCount: number): number | null => {
+          if (activities.length < 2) {
+            return null;
+          }
+
+          // Take up to maxCount most recent activities
+          const activitiesToUse = activities.slice(0, Math.min(maxCount, activities.length));
+
+          if (activitiesToUse.length < 2) {
+            return null;
+          }
+
+          // Calculate intervals between consecutive activities
           const intervals: number[] = [];
-          for (let i = 0; i < recentTypeActivities.length - 1; i++) {
-            const current = toZonedTime(recentTypeActivities[i].date, userTimezone);
-            const next = toZonedTime(recentTypeActivities[i + 1].date, userTimezone);
-            const interval = differenceInDays(current, next);
+          for (let i = 0; i < activitiesToUse.length - 1; i++) {
+            const current = toZonedTime(activitiesToUse[i].date, userTimezone);
+            const currentMidnight = startOfDay(current);
+            const next = toZonedTime(activitiesToUse[i + 1].date, userTimezone);
+            const nextMidnight = startOfDay(next);
+            const interval = differenceInDays(currentMidnight, nextMidnight);
             intervals.push(interval);
           }
 
-          if (intervals.length > 0) {
-            averageFrequency30Days = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
-            // Round to 1 decimal place
-            averageFrequency30Days = Math.round(averageFrequency30Days * 10) / 10;
+          if (intervals.length === 0) {
+            return null;
           }
+
+          const average = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+          // Round to 1 decimal place
+          return Math.round(average * 10) / 10;
+        };
+
+        // Calculate Last 3 and Last 10 averages
+        const averageFrequencyLast3 = calculateAverageFrequency(typeActivities, 3);
+        const averageFrequencyLast10 = calculateAverageFrequency(typeActivities, 10);
+
+        // Determine trend by comparing Last 3 to Last 10
+        let trend: RecommendationItem['trend'] = 'insufficient_data';
+        if (averageFrequencyLast3 !== null && averageFrequencyLast10 !== null) {
+          const difference = Math.abs(averageFrequencyLast3 - averageFrequencyLast10);
+          // Consider values within 0.5 days as stable
+          if (difference < 0.5) {
+            trend = 'stable';
+          } else if (averageFrequencyLast3 < averageFrequencyLast10) {
+            // Smaller average = doing it more frequently = improving
+            trend = 'improving';
+          } else {
+            // Larger average = doing it less frequently = declining
+            trend = 'declining';
+          }
+        } else if (averageFrequencyLast3 !== null || averageFrequencyLast10 !== null) {
+          // If we have at least one average, consider it stable
+          trend = 'stable';
         }
 
         return {
@@ -177,7 +200,9 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           },
           lastPerformedDate,
           daysSinceLastActivity,
-          averageFrequency30Days,
+          averageFrequencyLast3,
+          averageFrequencyLast10,
+          trend,
           difference,
           status,
           priorityScore,

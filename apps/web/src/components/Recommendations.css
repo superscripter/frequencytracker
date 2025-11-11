@@ -1,6 +1,7 @@
 .recommendations-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding-bottom: 4rem;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -71,7 +72,7 @@
 
 .recommendations-table th {
   padding: 0.75rem;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   color: #ffffff;
   border-bottom: 2px solid #333;
@@ -105,6 +106,37 @@
 .average-frequency {
   text-align: center;
   font-weight: 500;
+}
+
+.trend-cell {
+  text-align: center;
+  font-weight: 500;
+}
+
+.trend-icon {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.trend-text {
+  font-size: 0.9rem;
+}
+
+/* Trend color styling */
+.trend-improving {
+  color: #4ade80;
+}
+
+.trend-declining {
+  color: #f87171;
+}
+
+.trend-stable {
+  color: #94a3b8;
+}
+
+.trend-insufficient_data {
+  color: #64748b;
 }
 
 .difference {
@@ -468,6 +500,23 @@
 
   .legend-color {
     border-color: #ccc;
+  }
+
+  /* Trend colors for light mode */
+  .trend-improving {
+    color: #16a34a;
+  }
+
+  .trend-declining {
+    color: #dc2626;
+  }
+
+  .trend-stable {
+    color: #64748b;
+  }
+
+  .trend-insufficient_data {
+    color: #94a3b8;
   }
 }
 
