@@ -1,0 +1,108 @@
+.analytics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+.analytics-loading,
+.analytics-error,
+.analytics-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #b8b8b8;
+}
+
+.analytics-error {
+  color: #ff5555;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.analytics-table thead {
+  background: #1a1a1a;
+}
+
+.analytics-table th {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  color: #b8b8b8;
+  border-bottom: 2px solid #555;
+}
+
+.analytics-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #444;
+  color: #e8e8e8;
+}
+
+.analytics-table td:first-child {
+  text-align: left;
+}
+
+.analytics-table tbody tr:hover {
+  background: #1a1a1a;
+}
+
+h2 {
+  margin: 0;
+  color: #e8e8e8;
+}
+
+/* Status color classes - background color */
+.status-dark-green {
+  background-color: rgba(11, 96, 0, 0.8);
+}
+
+.status-light-green {
+  background-color: rgba(20, 173, 0, 0.8);
+}
+
+.status-yellow {
+  background-color: rgba(255, 221, 0, 0.3);
+}
+
+.status-red {
+  background-color: rgba(204, 0, 0, 0.3);
+}
+
+.status-dark-red {
+  background-color: rgba(179, 0, 0, 0.3);
+}
+
+.status-grey {
+  background-color: rgba(136, 136, 136, 0.2);
+}
+
+/* Light mode support */
+@media (prefers-color-scheme: light) {
+  .status-dark-green {
+    background-color: rgba(11, 96, 0, 0.8);
+  }
+
+  .status-light-green {
+    background-color: rgba(20, 173, 0, 0.8);
+  }
+
+  .status-yellow {
+    background-color: rgba(255, 221, 0, 0.25);
+  }
+
+  .status-red {
+    background-color: rgba(204, 0, 0, 0.2);
+  }
+
+  .status-dark-red {
+    background-color: rgba(179, 0, 0, 0.2);
+  }
+
+  .status-grey {
+    background-color: rgba(136, 136, 136, 0.15);
+  }
+}
