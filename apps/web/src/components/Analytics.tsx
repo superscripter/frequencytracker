@@ -81,26 +81,26 @@ export function Analytics() {
     }
 
     const difference = value - desiredFrequency;
-    const absDifference = Math.abs(difference);
 
-    if (absDifference < 1) {
-      return 'status-light-green'; // due_today
-    } else if (absDifference >= 1 && absDifference < 2) {
-      return 'status-light-green'; // due_soon
-    } else if (absDifference >= 2) {
-      if (difference > 0) {
-        // Overdue (value is higher than desired)
-        if (absDifference <= 3) {
-          return 'status-red'; // overdue
-        } else {
-          return 'status-dark-red'; // critically_overdue
-        }
-      } else {
-        // Ahead of schedule (value is lower than desired)
-        return 'status-dark-green'; // ahead
-      }
+    if (difference < -2) {
+      // Way ahead of schedule
+      return 'status-dark-green';
+    } else if (difference >= -2 && difference < -1) {
+      // Ahead but approaching time
+      return 'status-dark-green';
+    } else if (difference >= -1 && difference < 1) {
+      // Within 1 day of target (due today)
+      return 'status-light-green';
+    } else if (difference >= 1 && difference <= 2) {
+      // 1-2 days overdue (due soon)
+      return 'status-light-green';
+    } else if (difference > 2 && difference <= 4) {
+      // 2-4 days overdue
+      return 'status-red';
+    } else {
+      // More than 4 days overdue
+      return 'status-dark-red';
     }
-    return '';
   };
 
   if (isLoading) {

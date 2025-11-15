@@ -69,11 +69,11 @@ h2 {
 }
 
 .status-red {
-  background-color: rgba(204, 0, 0, 0.3);
+  background-color: rgba(221, 0, 0, 0.8);
 }
 
 .status-dark-red {
-  background-color: rgba(179, 0, 0, 0.3);
+  background-color: rgba(111, 0, 0, 0.8);
 }
 
 .status-grey {
@@ -110,11 +110,11 @@ h2 {
   }
 
   .status-red {
-    background-color: rgba(204, 0, 0, 0.2);
+    background-color: rgba(221, 0, 0, 0.8);
   }
 
   .status-dark-red {
-    background-color: rgba(179, 0, 0, 0.2);
+    background-color: rgba(111, 0, 0, 0.8);
   }
 
   .status-grey {

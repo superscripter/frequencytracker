@@ -40,16 +40,6 @@ export function ActivitiesManager() {
   })
   const [addTime, setAddTime] = useState<string>('12:00')
 
-  // Sync state
-  const [syncDate, setSyncDate] = useState<string>(() => {
-    // Default to 20 days ago in user's timezone
-    const date = new Date()
-    date.setDate(date.getDate() - 20)
-    return formatInTimeZone(date, userTimezone, 'yyyy-MM-dd')
-  })
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [syncMessage, setSyncMessage] = useState('')
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -231,86 +221,12 @@ export function ActivitiesManager() {
     }
   }
 
-  const handleSyncActivities = async () => {
-    try {
-      setIsSyncing(true)
-      setSyncMessage('')
-
-      const token = localStorage.getItem('token')
-
-      // Convert sync date to ISO string at start of day in user's timezone
-      const syncDateTime = `${syncDate}T00:00:00`
-      const isoDate = formatInTimeZone(
-        new Date(syncDateTime),
-        userTimezone,
-        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-      )
-
-      const response = await fetch(`${API_URL}/api/strava/sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          afterDate: new Date(isoDate).toISOString(),
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to sync activities')
-      }
-
-      const result = await response.json()
-      setSyncMessage(
-        `Sync complete: ${result.imported} imported, ${result.skipped} skipped${result.errors.length > 0 ? `, ${result.errors.length} errors` : ''}`
-      )
-
-      // Refresh activities
-      await fetchActivities()
-
-      // Clear message after 5 seconds
-      setTimeout(() => setSyncMessage(''), 5000)
-    } catch (err) {
-      setSyncMessage(err instanceof Error ? err.message : 'Failed to sync activities')
-      setTimeout(() => setSyncMessage(''), 5000)
-    } finally {
-      setIsSyncing(false)
-    }
-  }
-
   if (isLoading) {
     return <div className="activities-loading">Loading activities...</div>
   }
 
   return (
     <div className="activities-manager">
-      <div className="sync-section">
-        <label htmlFor="sync-date">Sync from third-party platforms:</label>
-        <input
-          id="sync-date"
-          type="date"
-          value={syncDate}
-          onChange={(e) => setSyncDate(e.target.value)}
-          className="sync-date-input"
-        />
-        <button
-          onClick={handleSyncActivities}
-          disabled={isSyncing || !user?.stravaId}
-          className="sync-btn"
-          title={!user?.stravaId ? 'Connect Strava account in Profile to sync' : 'Sync activities from Strava'}
-        >
-          {isSyncing ? 'Syncing...' : 'Sync'}
-        </button>
-      </div>
-
-      {syncMessage && (
-        <div className={`sync-message ${syncMessage.includes('complete') ? 'success' : 'error'}`}>
-          {syncMessage}
-        </div>
-      )}
-
       <form className="add-activity-form" onSubmit={handleSubmitActivity}>
         <select
           value={addTypeId}

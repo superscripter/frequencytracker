@@ -194,84 +194,6 @@
   font-style: italic;
 }
 
-/* Sync section styling */
-.sync-section {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background-color: rgba(252, 82, 0, 0.1);
-  border-radius: 4px;
-  border: 1px solid rgba(252, 82, 0, 0.3);
-}
-
-.sync-section label {
-  font-size: 0.9rem;
-  color: #b8b8b8;
-  white-space: nowrap;
-}
-
-.sync-date-input {
-  padding: 0.5rem;
-  border: 1px solid #666;
-  border-radius: 4px;
-  background-color: #0a0a0a;
-  color: #e8e8e8;
-  font-size: 0.9rem;
-  cursor: pointer;
-  flex: 1;
-  max-width: 200px;
-}
-
-.sync-date-input:focus {
-  outline: none;
-  border-color: #fc5200;
-}
-
-.sync-btn {
-  padding: 0.5rem 1.5rem;
-  background-color: #fc5200;
-  color: white;
-  border: 1px solid #fc5200;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.sync-btn:hover:not(:disabled) {
-  background-color: #e04700;
-  border-color: #e04700;
-}
-
-.sync-btn:disabled {
-  background-color: #444;
-  border-color: #444;
-  color: #888;
-  cursor: not-allowed;
-}
-
-.sync-message {
-  padding: 0.75rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  border: 1px solid #666;
-}
-
-.sync-message.success {
-  background: rgba(74, 222, 128, 0.2);
-  color: #5eff5e;
-  border-color: rgba(74, 222, 128, 0.5);
-}
-
-.sync-message.error {
-  background: rgba(255, 80, 80, 0.2);
-  color: #ff5555;
-  border-color: rgba(255, 80, 80, 0.5);
-}
-
 /* Pagination styles */
 .pagination-container {
   display: flex;
@@ -333,19 +255,6 @@
   .activity-time-input {
     flex: none;
     width: 100%;
-  }
-
-  .sync-section {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .sync-section label {
-    white-space: normal;
-  }
-
-  .sync-date-input {
-    max-width: none;
   }
 
   .filter-group {

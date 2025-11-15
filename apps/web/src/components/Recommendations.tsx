@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
 import './Recommendations.css';
 
@@ -29,19 +28,6 @@ export function Recommendations() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useAuth();
-
-  // Get user timezone or default to Eastern Time
-  const userTimezone = user?.timezone || 'America/New_York';
-
-  // Sync state
-  const [syncDate, setSyncDate] = useState<string>(() => {
-    // Default to 10 days ago in user's timezone
-    const date = new Date();
-    date.setDate(date.getDate() - 10);
-    return formatInTimeZone(date, userTimezone, 'yyyy-MM-dd');
-  });
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState('');
 
   useEffect(() => {
     fetchRecommendations();
@@ -83,26 +69,26 @@ export function Recommendations() {
     }
 
     const difference = value - desiredFrequency;
-    const absDifference = Math.abs(difference);
 
-    if (absDifference < 1) {
-      return 'status-light-green'; // due_today
-    } else if (absDifference >= 1 && absDifference < 2) {
-      return 'status-light-green'; // due_soon
-    } else if (absDifference >= 2) {
-      if (difference > 0) {
-        // Overdue (value is higher than desired)
-        if (absDifference <= 3) {
-          return 'status-red'; // overdue
-        } else {
-          return 'status-dark-red'; // critically_overdue
-        }
-      } else {
-        // Ahead of schedule (value is lower than desired)
-        return 'status-dark-green'; // ahead
-      }
+    if (difference < -2) {
+      // Way ahead of schedule
+      return 'status-dark-green';
+    } else if (difference >= -2 && difference < -1) {
+      // Ahead but approaching time
+      return 'status-dark-green';
+    } else if (difference >= -1 && difference < 1) {
+      // Within 1 day of target (due today)
+      return 'status-light-green';
+    } else if (difference >= 1 && difference <= 2) {
+      // 1-2 days overdue (due soon)
+      return 'status-red';
+    } else if (difference > 2 && difference <= 4) {
+      // 2-4 days overdue
+      return 'status-dark-red';
+    } else {
+      // More than 4 days overdue
+      return 'status-dark-red';
     }
-    return '';
   };
 
 
@@ -128,63 +114,14 @@ export function Recommendations() {
     }
   };
 
-  const handleSyncActivities = async () => {
-    try {
-      setIsSyncing(true);
-      setSyncMessage('');
-
-      const token = localStorage.getItem('token');
-
-      // Convert sync date to ISO string at start of day in user's timezone
-      const syncDateTime = `${syncDate}T00:00:00`;
-      const isoDate = formatInTimeZone(
-        new Date(syncDateTime),
-        userTimezone,
-        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-      );
-
-      const response = await fetch(`${API_URL}/api/strava/sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          afterDate: new Date(isoDate).toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to sync activities');
-      }
-
-      const result = await response.json();
-      setSyncMessage(
-        `Sync complete: ${result.imported} imported, ${result.skipped} skipped${result.errors.length > 0 ? `, ${result.errors.length} errors` : ''}`
-      );
-
-      // Refresh recommendations
-      await fetchRecommendations();
-
-      // Clear message after 5 seconds
-      setTimeout(() => setSyncMessage(''), 5000);
-    } catch (err) {
-      setSyncMessage(err instanceof Error ? err.message : 'Failed to sync activities');
-      setTimeout(() => setSyncMessage(''), 5000);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  // Filter recommendations for today (due_today, overdue, critically_overdue)
+  // Filter recommendations for today (all activities with difference > -1)
   const todayRecommendations = recommendations.filter(rec =>
-    rec.status === 'due_today' || rec.status === 'overdue' || rec.status === 'critically_overdue'
+    rec.difference !== null && rec.difference > -1
   );
 
-  // Filter recommendations for tomorrow (due_soon status, which means |difference| >= 1 and < 2)
+  // Filter recommendations for tomorrow (activities with difference > -2 and <= -1)
   const tomorrowRecommendations = recommendations.filter(rec =>
-    rec.status === 'due_soon'
+    rec.difference !== null && rec.difference > -2 && rec.difference <= -1
   );
 
   const renderTable = (items: Recommendation[]) => {
@@ -255,31 +192,6 @@ export function Recommendations() {
 
   return (
     <div className="recommendations-container">
-      <div className="sync-section">
-        <label htmlFor="sync-date">Sync from third-party platforms:</label>
-        <input
-          id="sync-date"
-          type="date"
-          value={syncDate}
-          onChange={(e) => setSyncDate(e.target.value)}
-          className="sync-date-input"
-        />
-        <button
-          onClick={handleSyncActivities}
-          disabled={isSyncing || !user?.stravaId}
-          className="sync-btn"
-          title={!user?.stravaId ? 'Connect Strava account in Profile to sync' : 'Sync activities from Strava'}
-        >
-          {isSyncing ? 'Syncing...' : 'Sync'}
-        </button>
-      </div>
-
-      {syncMessage && (
-        <div className={`sync-message ${syncMessage.includes('complete') ? 'success' : 'error'}`}>
-          {syncMessage}
-        </div>
-      )}
-
       {recommendations.length === 0 ? (
         <div className="recommendations-empty">
           <p>No activity types found. Create some activity types to see recommendations.</p>
