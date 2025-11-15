@@ -7,6 +7,8 @@ interface User {
   timezone?: string
   autoSync?: boolean
   stravaId?: string | null
+  enableDailyNotifications?: boolean
+  notificationTime?: string
 }
 
 interface AuthContextType {

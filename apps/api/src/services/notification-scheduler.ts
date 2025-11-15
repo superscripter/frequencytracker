@@ -95,9 +95,15 @@ async function sendDailyNotifications() {
   console.log('[Notification Scheduler] Starting daily notification send...');
 
   try {
-    // Get all users with push subscriptions
+    // Get the current time in server timezone
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // Get all users with push subscriptions and notifications enabled
     const usersWithSubscriptions = await prisma.user.findMany({
       where: {
+        enableDailyNotifications: true,
         pushSubscriptions: {
           some: {},
         },
@@ -107,10 +113,23 @@ async function sendDailyNotifications() {
       },
     });
 
-    console.log(`[Notification Scheduler] Found ${usersWithSubscriptions.length} users with subscriptions`);
+    console.log(`[Notification Scheduler] Found ${usersWithSubscriptions.length} users with notifications enabled`);
 
     for (const user of usersWithSubscriptions) {
       try {
+        // Check if it's time to send notification to this user
+        const userTime = user.notificationTime || '08:00';
+        const [targetHour, targetMinute] = userTime.split(':').map(Number);
+
+        // Only send if current time matches user's preferred time (within 1-minute window)
+        // This allows for some flexibility in cron job timing
+        const isTimeToSend = currentHour === targetHour && Math.abs(currentMinute - targetMinute) <= 1;
+
+        if (!isTimeToSend) {
+          console.log(`[Notification Scheduler] Skipping user ${user.id} - not their notification time (${userTime})`);
+          continue;
+        }
+
         const userTimezone = user.timezone || 'America/New_York';
         const recommendations = await getUserRecommendations(user.id, userTimezone);
 
@@ -192,15 +211,14 @@ export function initializeNotificationScheduler() {
   // Initialize VAPID configuration
   initVapid();
 
-  // Schedule daily notifications at 8:00 AM
-  // Note: This runs in the server's timezone. For production, you may want to
-  // customize this per user's timezone or run it multiple times for different zones
-  const cronSchedule = process.env.NOTIFICATION_CRON_SCHEDULE || '0 8 * * *'; // 8 AM daily
+  // Schedule notifications to run every minute
+  // This checks each minute if it's time to send notifications to any users based on their preferences
+  const cronSchedule = process.env.NOTIFICATION_CRON_SCHEDULE || '* * * * *'; // Every minute
 
-  console.log(`[Notification Scheduler] Scheduling daily notifications with cron: ${cronSchedule}`);
+  console.log(`[Notification Scheduler] Scheduling notification checks with cron: ${cronSchedule}`);
 
   cron.schedule(cronSchedule, sendDailyNotifications, {
-    timezone: 'America/New_York', // Default timezone, can be made configurable
+    timezone: 'America/New_York', // Server timezone for cron scheduling
   });
 
   console.log('[Notification Scheduler] Scheduler initialized');

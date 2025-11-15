@@ -120,6 +120,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           name: true,
           timezone: true,
           autoSync: true,
+          enableDailyNotifications: true,
+          notificationTime: true,
           createdAt: true,
           stravaId: true,
         },
@@ -141,7 +143,13 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       await request.jwtVerify();
       const { userId } = request.user as { userId: string };
 
-      const body = request.body as { timezone?: string; name?: string; autoSync?: boolean };
+      const body = request.body as {
+        timezone?: string;
+        name?: string;
+        autoSync?: boolean;
+        enableDailyNotifications?: boolean;
+        notificationTime?: string;
+      };
 
       const user = await prisma.user.update({
         where: { id: userId },
@@ -149,6 +157,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           ...(body.timezone && { timezone: body.timezone }),
           ...(body.name && { name: body.name }),
           ...(body.autoSync !== undefined && { autoSync: body.autoSync }),
+          ...(body.enableDailyNotifications !== undefined && { enableDailyNotifications: body.enableDailyNotifications }),
+          ...(body.notificationTime && { notificationTime: body.notificationTime }),
         },
         select: {
           id: true,
@@ -156,6 +166,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           name: true,
           timezone: true,
           autoSync: true,
+          enableDailyNotifications: true,
+          notificationTime: true,
           createdAt: true,
           stravaId: true,
         },

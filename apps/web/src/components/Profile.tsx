@@ -18,8 +18,11 @@ export function Profile() {
   const { user, logout, refreshUser } = useAuth()
   const [timezone, setTimezone] = useState<string>('')
   const [autoSync, setAutoSync] = useState<boolean>(false)
+  const [enableDailyNotifications, setEnableDailyNotifications] = useState<boolean>(false)
+  const [notificationTime, setNotificationTime] = useState<string>('08:00')
   const [isSaving, setIsSaving] = useState(false)
   const [isSavingAutoSync, setIsSavingAutoSync] = useState(false)
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [stravaMessage, setStravaMessage] = useState('')
 
@@ -29,6 +32,12 @@ export function Profile() {
     }
     if (user?.autoSync !== undefined) {
       setAutoSync(user.autoSync)
+    }
+    if (user?.enableDailyNotifications !== undefined) {
+      setEnableDailyNotifications(user.enableDailyNotifications)
+    }
+    if (user?.notificationTime) {
+      setNotificationTime(user.notificationTime)
     }
   }, [user])
 
@@ -145,6 +154,49 @@ export function Profile() {
     }
   }
 
+  const handleNotificationSettingsChange = async (updates: { enableDailyNotifications?: boolean; notificationTime?: string }) => {
+    try {
+      setIsSavingNotifications(true)
+
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update notification settings')
+      }
+
+      // Refresh user data in context
+      await refreshUser()
+      setSaveMessage('Notification settings saved successfully!')
+      setTimeout(() => setSaveMessage(''), 3000)
+    } catch (error) {
+      setSaveMessage('Failed to save notification settings')
+      console.error('Error saving notification settings:', error)
+    } finally {
+      setIsSavingNotifications(false)
+    }
+  }
+
+  const handleEnableNotificationsChange = (checked: boolean) => {
+    setEnableDailyNotifications(checked)
+    handleNotificationSettingsChange({ enableDailyNotifications: checked })
+  }
+
+  const handleNotificationTimeChange = (time: string) => {
+    setNotificationTime(time)
+  }
+
+  const handleSaveNotificationTime = () => {
+    handleNotificationSettingsChange({ notificationTime })
+  }
+
   if (!user) {
     return <p>Please sign in to view your profile.</p>
   }
@@ -195,6 +247,41 @@ export function Profile() {
                 disabled={!user?.stravaId || isSavingAutoSync}
                 title={!user?.stravaId ? 'Connect Strava account to enable auto-sync' : 'Automatically sync activities on page load'}
               />
+            </div>
+          </div>
+          <div className="info-row notification-settings-row">
+            <span className="label">Daily Notifications:</span>
+            <div className="notification-settings">
+              <div className="notification-enable">
+                <input
+                  type="checkbox"
+                  checked={enableDailyNotifications}
+                  onChange={(e) => handleEnableNotificationsChange(e.target.checked)}
+                  className="notification-checkbox"
+                  disabled={isSavingNotifications}
+                />
+                <span className="notification-label">Enable daily reminders</span>
+              </div>
+              {enableDailyNotifications && (
+                <div className="notification-time">
+                  <label htmlFor="notification-time">Time:</label>
+                  <input
+                    id="notification-time"
+                    type="time"
+                    value={notificationTime}
+                    onChange={(e) => handleNotificationTimeChange(e.target.value)}
+                    className="time-input"
+                    disabled={isSavingNotifications}
+                  />
+                  <button
+                    onClick={handleSaveNotificationTime}
+                    disabled={isSavingNotifications || notificationTime === user.notificationTime}
+                    className="save-time-btn"
+                  >
+                    {isSavingNotifications ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="info-row">

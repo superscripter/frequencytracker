@@ -17,6 +17,11 @@ model User {
   name      String?
   timezone  String?  @default("America/New_York") // User's timezone
   autoSync  Boolean  @default(false) // Auto-sync from Strava on page load
+
+  // Notification preferences
+  enableDailyNotifications Boolean @default(false) // Enable daily push notifications
+  notificationTime         String? @default("08:00") // Time to send notifications (HH:MM format in user's timezone)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
