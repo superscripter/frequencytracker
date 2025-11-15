@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildServer } from '../../src/index';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '@frequency-tracker/database';
-import { subDays } from 'date-fns';
+import { subDays, startOfDay } from 'date-fns';
 
 describe('Recommendations API', () => {
   let server: FastifyInstance;
@@ -51,6 +51,7 @@ describe('Recommendations API', () => {
     // Create activity types
     const type1 = await prisma.activityType.create({
       data: {
+        userId,
         name: 'Running',
         description: 'Running activity',
         desiredFrequency: 2.0, // Every 2 days
@@ -60,6 +61,7 @@ describe('Recommendations API', () => {
 
     const type2 = await prisma.activityType.create({
       data: {
+        userId,
         name: 'Swimming',
         description: 'Swimming activity',
         desiredFrequency: 7.0, // Every 7 days
@@ -69,6 +71,7 @@ describe('Recommendations API', () => {
 
     const type3 = await prisma.activityType.create({
       data: {
+        userId,
         name: 'Cycling',
         description: 'Cycling activity',
         desiredFrequency: 3.0, // Every 3 days
@@ -77,7 +80,8 @@ describe('Recommendations API', () => {
     activityTypeId3 = type3.id;
 
     // Create test activities
-    const now = new Date();
+    // Use midnight of today to ensure consistent calendar day calculations
+    const today = startOfDay(new Date());
 
     // Running: Last done 1 day ago (ahead of schedule - due in 1 day)
     await prisma.activity.create({
@@ -85,7 +89,7 @@ describe('Recommendations API', () => {
         userId,
         typeId: activityTypeId1,
         name: 'Morning Run',
-        date: subDays(now, 1),
+        date: subDays(today, 1),
       },
     });
 
@@ -95,7 +99,7 @@ describe('Recommendations API', () => {
         userId,
         typeId: activityTypeId2,
         name: 'Pool Swim',
-        date: subDays(now, 10),
+        date: subDays(today, 10),
       },
     });
 
@@ -105,7 +109,7 @@ describe('Recommendations API', () => {
         userId,
         typeId: activityTypeId2,
         name: 'Lake Swim',
-        date: subDays(now, 17),
+        date: subDays(today, 17),
       },
     });
 
@@ -226,11 +230,11 @@ describe('Recommendations API', () => {
       (r: any) => r.activityType.name === 'Cycling'
     );
 
-    // Running: difference -1, should be due_today
-    expect(runningRec.status).toBe('due_today');
+    // Running: difference -1, |difference| = 1, should be due_soon
+    expect(runningRec.status).toBe('due_soon');
 
-    // Swimming: difference 3, should be critically_overdue
-    expect(swimmingRec.status).toBe('critically_overdue');
+    // Swimming: difference 3, |difference| = 3, should be overdue
+    expect(swimmingRec.status).toBe('overdue');
 
     // Cycling: no data
     expect(cyclingRec.status).toBe('no_data');

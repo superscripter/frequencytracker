@@ -203,6 +203,7 @@ function getPossibleActivityTypeNames(stravaType: string, sportType: string): st
     'WeightTraining': ['Strength Training', 'Weight Training', 'Weights', 'Lifting'],
     'Workout': ['Workout', 'Training'],
     'Yoga': ['Yoga'],
+    'Pilates': ['Pilates'],
     'Crossfit': ['CrossFit', 'Crossfit'],
     'RockClimbing': ['Climbing', 'Rock Climbing'],
     'IceSkate': ['Ice Skating', 'Skating'],

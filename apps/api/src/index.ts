@@ -7,6 +7,7 @@ import { authRoutes } from './routes/auth.js';
 import { activityRoutes } from './routes/activities.js';
 import { activityTypeRoutes } from './routes/activityTypes.js';
 import { recommendationsRoutes } from './routes/recommendations.js';
+import { analyticsRoutes } from './routes/analytics.js';
 import stravaRoutes from './routes/strava.js';
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
@@ -93,6 +94,7 @@ export async function buildServer() {
   await fastify.register(activityRoutes, { prefix: '/api/activities' });
   await fastify.register(activityTypeRoutes, { prefix: '/api/activity-types' });
   await fastify.register(recommendationsRoutes, { prefix: '/api/recommendations' });
+  await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
   await fastify.register(stravaRoutes, { prefix: '/api/strava' });
 
   return fastify;

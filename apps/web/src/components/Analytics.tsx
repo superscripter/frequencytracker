@@ -84,7 +84,7 @@ export function Analytics() {
     const absDifference = Math.abs(difference);
 
     if (absDifference < 1) {
-      return 'status-yellow'; // due_today
+      return 'status-light-green'; // due_today
     } else if (absDifference >= 1 && absDifference < 2) {
       return 'status-light-green'; // due_soon
     } else if (absDifference >= 2) {

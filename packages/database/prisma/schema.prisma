@@ -16,6 +16,7 @@ model User {
   password  String
   name      String?
   timezone  String?  @default("America/New_York") // User's timezone
+  autoSync  Boolean  @default(false) // Auto-sync from Strava on page load
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

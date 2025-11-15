@@ -17,13 +17,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 export function Profile() {
   const { user, logout, refreshUser } = useAuth()
   const [timezone, setTimezone] = useState<string>('')
+  const [autoSync, setAutoSync] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSavingAutoSync, setIsSavingAutoSync] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [stravaMessage, setStravaMessage] = useState('')
 
   useEffect(() => {
     if (user?.timezone) {
       setTimezone(user.timezone)
+    }
+    if (user?.autoSync !== undefined) {
+      setAutoSync(user.autoSync)
     }
   }, [user])
 
@@ -76,6 +81,37 @@ export function Profile() {
       console.error('Error saving timezone:', error)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleAutoSyncChange = async (checked: boolean) => {
+    setAutoSync(checked)
+
+    try {
+      setIsSavingAutoSync(true)
+
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ autoSync: checked }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update auto-sync')
+      }
+
+      // Refresh user data in context
+      await refreshUser()
+    } catch (error) {
+      // Revert on error
+      setAutoSync(!checked)
+      console.error('Error saving auto-sync:', error)
+    } finally {
+      setIsSavingAutoSync(false)
     }
   }
 
@@ -146,6 +182,19 @@ export function Profile() {
               >
                 {isSaving ? 'Saving...' : 'Save'}
               </button>
+            </div>
+          </div>
+          <div className="info-row">
+            <span className="label">Auto Sync:</span>
+            <div className="auto-sync-section">
+              <input
+                type="checkbox"
+                checked={autoSync}
+                onChange={(e) => handleAutoSyncChange(e.target.checked)}
+                className="auto-sync-checkbox"
+                disabled={!user?.stravaId || isSavingAutoSync}
+                title={!user?.stravaId ? 'Connect Strava account to enable auto-sync' : 'Automatically sync activities on page load'}
+              />
             </div>
           </div>
           <div className="info-row">

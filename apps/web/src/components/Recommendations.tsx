@@ -35,9 +35,9 @@ export function Recommendations() {
 
   // Sync state
   const [syncDate, setSyncDate] = useState<string>(() => {
-    // Default to 20 days ago in user's timezone
+    // Default to 10 days ago in user's timezone
     const date = new Date();
-    date.setDate(date.getDate() - 20);
+    date.setDate(date.getDate() - 10);
     return formatInTimeZone(date, userTimezone, 'yyyy-MM-dd');
   });
   const [isSyncing, setIsSyncing] = useState(false);
@@ -84,7 +84,7 @@ export function Recommendations() {
       case 'due_soon':
         return 'status-light-green';
       case 'due_today':
-        return 'status-yellow';
+        return 'status-light-green';
       case 'overdue':
         return 'status-red';
       case 'critically_overdue':
@@ -94,6 +94,34 @@ export function Recommendations() {
       default:
         return '';
     }
+  };
+
+  const calculateStatusForValue = (value: number | null, desiredFrequency: number): string => {
+    if (value === null) {
+      return 'status-grey';
+    }
+
+    const difference = value - desiredFrequency;
+    const absDifference = Math.abs(difference);
+
+    if (absDifference < 1) {
+      return 'status-light-green'; // due_today
+    } else if (absDifference >= 1 && absDifference < 2) {
+      return 'status-light-green'; // due_soon
+    } else if (absDifference >= 2) {
+      if (difference > 0) {
+        // Overdue (value is higher than desired)
+        if (absDifference <= 3) {
+          return 'status-red'; // overdue
+        } else {
+          return 'status-dark-red'; // critically_overdue
+        }
+      } else {
+        // Ahead of schedule (value is lower than desired)
+        return 'status-dark-green'; // ahead
+      }
+    }
+    return '';
   };
 
 
@@ -200,23 +228,23 @@ export function Recommendations() {
             {items.map((rec) => {
               const trendDisplay = getTrendDisplay(rec.trend);
               return (
-                <tr key={rec.activityType.id} className={getStatusClass(rec.status)}>
+                <tr key={rec.activityType.id}>
                   <td className="activity-name">
                     <strong>{rec.activityType.name}</strong>
                     {rec.activityType.description && (
                       <div className="activity-description">{rec.activityType.description}</div>
                     )}
                   </td>
-                  <td className={`days-since ${getStatusClass(rec.status)}`}>
+                  <td className={`days-since ${calculateStatusForValue(rec.daysSinceLastActivity, rec.activityType.desiredFrequency)}`}>
                     {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
                   </td>
                   <td className="desired-frequency">
                     {rec.activityType.desiredFrequency.toFixed(1)}
                   </td>
-                  <td className="average-frequency">
+                  <td className={`average-frequency ${calculateStatusForValue(rec.averageFrequencyLast3, rec.activityType.desiredFrequency)}`}>
                     {formatAverageFrequency(rec.averageFrequencyLast3)}
                   </td>
-                  <td className="average-frequency">
+                  <td className={`average-frequency ${calculateStatusForValue(rec.averageFrequencyLast10, rec.activityType.desiredFrequency)}`}>
                     {formatAverageFrequency(rec.averageFrequencyLast10)}
                   </td>
                   <td className={`trend-cell trend-${rec.trend}`}>
@@ -306,11 +334,7 @@ export function Recommendations() {
           </div>
           <div className="legend-item">
             <span className="legend-color status-light-green"></span>
-            <span>Due within 2 days</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color status-yellow"></span>
-            <span>Due today (±1 day)</span>
+            <span>Due within 2 days or due today</span>
           </div>
           <div className="legend-item">
             <span className="legend-color status-red"></span>

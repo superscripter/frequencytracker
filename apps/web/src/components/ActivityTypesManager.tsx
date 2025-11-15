@@ -204,7 +204,7 @@ export function ActivityTypesManager() {
             <th onClick={() => handleSort('desiredFrequency')} className="sortable">
               Desired Frequency {sortField === 'desiredFrequency' && (sortOrder === 'asc' ? '↑' : '↓')}
             </th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>

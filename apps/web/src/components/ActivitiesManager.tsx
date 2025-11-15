@@ -373,7 +373,7 @@ export function ActivitiesManager() {
           <tr>
             <th>Activity Type</th>
             <th>Date & Time</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>

@@ -5,6 +5,7 @@ interface User {
   email: string
   name: string | null
   timezone?: string
+  autoSync?: boolean
   stravaId?: string | null
 }
 
@@ -25,6 +26,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const triggerAutoSync = async (user: User) => {
+    // Only auto-sync if enabled and user has Strava connected
+    if (!user.autoSync || !user.stravaId) return
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      // Calculate 10 days ago
+      const date = new Date()
+      date.setDate(date.getDate() - 10)
+      const afterDate = date.toISOString()
+
+      // Trigger sync in background (don't await or show errors to user)
+      fetch(`${API_URL}/api/strava/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ afterDate }),
+      }).catch(() => {
+        // Silently fail - user can manually sync if needed
+      })
+    } catch (error) {
+      // Silently fail
+    }
+  }
+
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem('token')
@@ -44,6 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         .then((data) => {
           setUser(data.user)
+          // Trigger auto-sync after user is loaded
+          triggerAutoSync(data.user)
         })
         .catch(() => {
           localStorage.removeItem('token')
@@ -73,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await response.json()
     localStorage.setItem('token', data.token)
     setUser(data.user)
+    // Trigger auto-sync after login
+    triggerAutoSync(data.user)
   }
 
   const register = async (email: string, password: string, name: string) => {
@@ -92,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await response.json()
     localStorage.setItem('token', data.token)
     setUser(data.user)
+    // Trigger auto-sync after registration
+    triggerAutoSync(data.user)
   }
 
   const logout = () => {

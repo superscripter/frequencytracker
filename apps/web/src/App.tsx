@@ -6,9 +6,9 @@ import { ActivityTypesManager } from './components/ActivityTypesManager'
 import { ActivitiesManager } from './components/ActivitiesManager'
 import { Profile } from './components/Profile'
 import { Recommendations } from './components/Recommendations'
-import { History } from './components/History'
+import { Analytics } from './components/Analytics'
 
-type View = 'Activities' | 'Recommendations' | 'History' | 'Profile'
+type View = 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('Recommendations')
@@ -54,10 +54,10 @@ function App() {
               Recommendations
             </button>
             <button
-              className={currentView === 'History' ? 'active' : ''}
-              onClick={() => setCurrentView('History')}
+              className={currentView === 'Analytics' ? 'active' : ''}
+              onClick={() => setCurrentView('Analytics')}
             >
-              History
+              Analytics
             </button>
             <button
               className={currentView === 'Profile' ? 'active' : ''}
@@ -74,7 +74,7 @@ function App() {
               </div>
             )}
             {currentView === 'Recommendations' && <Recommendations />}
-            {currentView === 'History' && <History />}
+            {currentView === 'Analytics' && <Analytics />}
             {currentView === 'Profile' && (
               <div className="profile-view">
                 <Profile />

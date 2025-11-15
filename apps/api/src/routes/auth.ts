@@ -44,6 +44,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           email: true,
           name: true,
           timezone: true,
+          autoSync: true,
           createdAt: true,
         },
       });
@@ -91,6 +92,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           email: user.email,
           name: user.name,
           timezone: user.timezone,
+          autoSync: user.autoSync,
           createdAt: user.createdAt,
         },
         token,
@@ -117,6 +119,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           email: true,
           name: true,
           timezone: true,
+          autoSync: true,
           createdAt: true,
           stravaId: true,
         },
@@ -138,19 +141,21 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       await request.jwtVerify();
       const { userId } = request.user as { userId: string };
 
-      const body = request.body as { timezone?: string; name?: string };
+      const body = request.body as { timezone?: string; name?: string; autoSync?: boolean };
 
       const user = await prisma.user.update({
         where: { id: userId },
         data: {
           ...(body.timezone && { timezone: body.timezone }),
           ...(body.name && { name: body.name }),
+          ...(body.autoSync !== undefined && { autoSync: body.autoSync }),
         },
         select: {
           id: true,
           email: true,
           name: true,
           timezone: true,
+          autoSync: true,
           createdAt: true,
           stravaId: true,
         },
