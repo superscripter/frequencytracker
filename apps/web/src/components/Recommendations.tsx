@@ -77,25 +77,6 @@ export function Recommendations() {
     }
   };
 
-  const getStatusClass = (status: Recommendation['status']): string => {
-    switch (status) {
-      case 'ahead':
-        return 'status-dark-green';
-      case 'due_soon':
-        return 'status-light-green';
-      case 'due_today':
-        return 'status-light-green';
-      case 'overdue':
-        return 'status-red';
-      case 'critically_overdue':
-        return 'status-dark-red';
-      case 'no_data':
-        return 'status-grey';
-      default:
-        return '';
-    }
-  };
-
   const calculateStatusForValue = (value: number | null, desiredFrequency: number): string => {
     if (value === null) {
       return 'status-grey';
