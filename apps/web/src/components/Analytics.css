@@ -80,6 +80,21 @@ h2 {
   background-color: rgba(136, 136, 136, 0.2);
 }
 
+@media (max-width: 768px) {
+  .analytics-table {
+    font-size: 0.8rem;
+  }
+
+  .analytics-table th,
+  .analytics-table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .analytics-container h2 {
+    font-size: 1.3rem;
+  }
+}
+
 /* Light mode support */
 @media (prefers-color-scheme: light) {
   .status-dark-green {

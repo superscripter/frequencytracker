@@ -5,7 +5,7 @@
 
   color-scheme: dark;
   color: #e8e8e8;
-  background-color: #0a0a0a;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -46,12 +46,26 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+input, select, textarea {
+  font-size: 16px; /* Prevents iOS zoom on focus */
+}
 button:hover {
   border-color: #646cff;
 }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2em;
+  }
+
+  button {
+    min-height: 44px; /* Minimum touch target size */
+  }
 }
 
 @media (prefers-color-scheme: light) {

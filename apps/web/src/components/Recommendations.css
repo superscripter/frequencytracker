@@ -56,7 +56,7 @@
   overflow-x: auto;
   margin-bottom: 2rem;
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid #555;
   background: #0a0a0a;
 }
 
@@ -75,12 +75,12 @@
   text-align: center;
   font-weight: 600;
   color: #ffffff;
-  border-bottom: 2px solid #333;
+  border-bottom: 2px solid #555;
 }
 
 .recommendations-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid #444;
 }
 
 .recommendations-table tbody tr:last-child td {
@@ -145,84 +145,41 @@
   font-size: 1.1rem;
 }
 
-/* Status color classes for rows */
-.status-dark-green {
-  background-color: rgba(0, 150, 0, 0.25);
+/* Status color classes - background color */
+.days-since.status-dark-green,
+.average-frequency.status-dark-green {
+  background-color: rgba(11, 96, 0, 0.8);
 }
 
-.status-dark-green td {
-  color: #a8ffa8;
+.days-since.status-light-green,
+.average-frequency.status-light-green {
+  background-color: rgba(20, 173, 0, 0.8);
 }
 
-.status-dark-green .difference {
-  color: #00ff00;
+.days-since.status-yellow,
+.average-frequency.status-yellow {
+  background-color: rgba(255, 221, 0, 0.3);
 }
 
-.status-light-green {
-  background-color: rgba(0, 200, 0, 0.18);
+.days-since.status-red,
+.average-frequency.status-red {
+  background-color: rgba(204, 0, 0, 0.3);
 }
 
-.status-light-green td {
-  color: #d8ffd8;
+.days-since.status-dark-red,
+.average-frequency.status-dark-red {
+  background-color: rgba(179, 0, 0, 0.3);
 }
 
-.status-light-green .difference {
-  color: #88ff88;
-}
-
-.status-yellow {
-  background-color: rgba(255, 220, 0, 0.2);
-}
-
-.status-yellow td {
-  color: #ffee88;
-}
-
-.status-yellow .difference {
-  color: #ffdd00;
-}
-
-.status-red {
-  background-color: rgba(255, 80, 80, 0.2);
-}
-
-.status-red td {
-  color: #ffbbbb;
-}
-
-.status-red .difference {
-  color: #ff5555;
-}
-
-.status-dark-red {
-  background-color: rgba(220, 0, 0, 0.3);
-}
-
-.status-dark-red td {
-  color: #ffaaaa;
-}
-
-.status-dark-red .difference {
-  color: #ff2222;
-  font-weight: 900;
-}
-
-.status-grey {
-  background-color: rgba(80, 80, 80, 0.2);
-}
-
-.status-grey td {
-  color: #999;
-}
-
-.status-grey .difference {
-  color: #999;
+.days-since.status-grey,
+.average-frequency.status-grey {
+  background-color: rgba(136, 136, 136, 0.2);
 }
 
 /* Legend section */
 .recommendations-legend {
   background: #0a0a0a;
-  border: 1px solid #333;
+  border: 1px solid #555;
   border-radius: 8px;
   padding: 1.5rem;
   margin-top: 2rem;
@@ -253,16 +210,16 @@
   width: 40px;
   height: 24px;
   border-radius: 4px;
-  border: 1px solid #444;
+  border: 1px solid #666;
   flex-shrink: 0;
 }
 
 .legend-color.status-dark-green {
-  background-color: #00c800;
+  background-color: #00b300;
 }
 
 .legend-color.status-light-green {
-  background-color: #7bed7b;
+  background-color: #4db84d;
 }
 
 .legend-color.status-yellow {
@@ -270,11 +227,11 @@
 }
 
 .legend-color.status-red {
-  background-color: #ff6b6b;
+  background-color: #cc0000;
 }
 
 .legend-color.status-dark-red {
-  background-color: #ff3333;
+  background-color: #b30000;
 }
 
 .legend-color.status-grey {
@@ -301,7 +258,7 @@
 
 .sync-date-input {
   padding: 0.5rem;
-  border: 1px solid #444;
+  border: 1px solid #666;
   border-radius: 4px;
   background-color: #0a0a0a;
   color: #e8e8e8;
@@ -345,7 +302,7 @@
   padding: 0.75rem;
   border-radius: 4px;
   font-size: 0.9rem;
-  border: 1px solid #444;
+  border: 1px solid #666;
   margin-bottom: 1rem;
 }
 
@@ -413,76 +370,34 @@
     color: rgba(0, 0, 0, 0.5);
   }
 
-  .status-dark-green {
-    background-color: rgba(0, 150, 0, 0.08);
+  .days-since.status-dark-green,
+  .average-frequency.status-dark-green {
+    background-color: rgba(11, 96, 0, 0.8);
   }
 
-  .status-dark-green td {
-    color: #006400;
+  .days-since.status-light-green,
+  .average-frequency.status-light-green {
+    background-color: rgba(20, 173, 0, 0.8);
   }
 
-  .status-dark-green .difference {
-    color: #008000;
+  .days-since.status-yellow,
+  .average-frequency.status-yellow {
+    background-color: rgba(255, 221, 0, 0.25);
   }
 
-  .status-light-green {
-    background-color: rgba(144, 238, 144, 0.15);
+  .days-since.status-red,
+  .average-frequency.status-red {
+    background-color: rgba(204, 0, 0, 0.2);
   }
 
-  .status-light-green td {
-    color: #2d5f2d;
+  .days-since.status-dark-red,
+  .average-frequency.status-dark-red {
+    background-color: rgba(179, 0, 0, 0.2);
   }
 
-  .status-light-green .difference {
-    color: #228b22;
-  }
-
-  .status-yellow {
-    background-color: rgba(255, 215, 0, 0.15);
-  }
-
-  .status-yellow td {
-    color: #8b7500;
-  }
-
-  .status-yellow .difference {
-    color: #b8860b;
-  }
-
-  .status-red {
-    background-color: rgba(255, 100, 100, 0.12);
-  }
-
-  .status-red td {
-    color: #8b0000;
-  }
-
-  .status-red .difference {
-    color: #dc143c;
-  }
-
-  .status-dark-red {
-    background-color: rgba(200, 0, 0, 0.15);
-  }
-
-  .status-dark-red td {
-    color: #8b0000;
-  }
-
-  .status-dark-red .difference {
-    color: #b22222;
-  }
-
-  .status-grey {
-    background-color: rgba(128, 128, 128, 0.08);
-  }
-
-  .status-grey td {
-    color: rgba(0, 0, 0, 0.4);
-  }
-
-  .status-grey .difference {
-    color: rgba(0, 0, 0, 0.4);
+  .days-since.status-grey,
+  .average-frequency.status-grey {
+    background-color: rgba(136, 136, 136, 0.15);
   }
 
   .recommendations-legend {
@@ -522,16 +437,50 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .sync-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sync-section label {
+    white-space: normal;
+  }
+
+  .sync-date-input {
+    max-width: none;
+  }
+
   .recommendations-table {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .recommendations-table th,
   .recommendations-table td {
-    padding: 0.5rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .trend-icon {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+  }
+
+  .trend-text {
+    font-size: 0.8rem;
+  }
+
+  .activity-name strong {
+    font-size: 0.9rem;
+  }
+
+  .activity-description {
+    font-size: 0.75rem;
   }
 
   .legend-items {
     grid-template-columns: 1fr;
+  }
+
+  .recommendations-section h3 {
+    font-size: 1.1rem;
   }
 }

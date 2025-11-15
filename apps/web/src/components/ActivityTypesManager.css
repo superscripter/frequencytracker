@@ -36,7 +36,7 @@
 
 .add-form input {
   padding: 0.5rem;
-  border: 1px solid #444;
+  border: 1px solid #666;
   border-radius: 4px;
   background-color: #0a0a0a;
   color: #e8e8e8;
@@ -68,7 +68,7 @@
 .activity-types-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #333;
+  border: 1px solid #555;
   background-color: #0a0a0a;
 }
 
@@ -76,7 +76,7 @@
 .activity-types-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid #444;
 }
 
 .activity-types-table th {
@@ -100,8 +100,15 @@
 }
 
 .actions-cell {
-  text-align: right;
   white-space: nowrap;
+}
+
+.activity-types-table tbody .actions-cell {
+  text-align: right;
+}
+
+.activity-types-table tbody td:nth-child(2) {
+  text-align: center;
 }
 
 .edit-btn,
@@ -186,6 +193,35 @@
   padding: 2rem;
   color: #888;
   font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .add-form {
+    flex-direction: column;
+  }
+
+  .add-form input[type="text"],
+  .add-form input[type="number"] {
+    flex: none;
+    width: 100%;
+  }
+
+  .activity-types-table {
+    font-size: 0.85rem;
+  }
+
+  .activity-types-table th,
+  .activity-types-table td {
+    padding: 0.5rem 0.3rem;
+  }
+
+  .edit-btn,
+  .delete-btn,
+  .save-btn-inline,
+  .cancel-btn-inline {
+    font-size: 1rem;
+    padding: 0.2rem 0.3rem;
+  }
 }
 
 @media (prefers-color-scheme: light) {
