@@ -9,6 +9,8 @@ import { activityTypeRoutes } from './routes/activityTypes.js';
 import { recommendationsRoutes } from './routes/recommendations.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import stravaRoutes from './routes/strava.js';
+import notificationRoutes from './routes/notifications.js';
+import { initializeNotificationScheduler } from './services/notification-scheduler.js';
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -96,6 +98,7 @@ export async function buildServer() {
   await fastify.register(recommendationsRoutes, { prefix: '/api/recommendations' });
   await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
   await fastify.register(stravaRoutes, { prefix: '/api/strava' });
+  await fastify.register(notificationRoutes, { prefix: '/api/notifications' });
 
   return fastify;
 }
@@ -107,6 +110,9 @@ async function start() {
 
     await fastify.listen({ port, host: '0.0.0.0' });
     fastify.log.info(`Server listening on port ${port}`);
+
+    // Initialize notification scheduler
+    initializeNotificationScheduler();
   } catch (err) {
     console.error(err);
     process.exit(1);

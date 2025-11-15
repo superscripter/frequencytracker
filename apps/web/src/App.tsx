@@ -7,6 +7,7 @@ import { ActivitiesManager } from './components/ActivitiesManager'
 import { Profile } from './components/Profile'
 import { Recommendations } from './components/Recommendations'
 import { Analytics } from './components/Analytics'
+import { NotificationPrompt } from './components/NotificationPrompt'
 
 type View = 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
 
@@ -87,6 +88,7 @@ function App() {
       </div>
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {user && <NotificationPrompt />}
     </div>
   )
 }
