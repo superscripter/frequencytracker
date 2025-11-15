@@ -3,13 +3,6 @@ import { prisma } from '@frequency-tracker/database';
 import webpush from 'web-push';
 import { z } from 'zod';
 
-// Configure web-push with VAPID details
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 const subscriptionSchema = z.object({
   endpoint: z.string(),
   keys: z.object({
@@ -22,7 +15,20 @@ const unsubscribeSchema = z.object({
   endpoint: z.string(),
 });
 
+// Initialize VAPID configuration
+function initVapid() {
+  if (process.env.VAPID_SUBJECT && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT,
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  }
+}
+
 export default async function notificationRoutes(fastify: FastifyInstance) {
+  // Configure web-push with VAPID details when routes are registered
+  initVapid();
   // Get VAPID public key
   fastify.get('/vapid-public-key', async (request, reply) => {
     return { publicKey: process.env.VAPID_PUBLIC_KEY };

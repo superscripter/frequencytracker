@@ -4,12 +4,16 @@ import webpush from 'web-push';
 import { startOfDay, endOfDay } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
-// Configure web-push with VAPID details
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Initialize VAPID configuration
+function initVapid() {
+  if (process.env.VAPID_SUBJECT && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT,
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  }
+}
 
 interface Recommendation {
   id: string;
@@ -185,6 +189,9 @@ async function sendDailyNotifications() {
 
 // Initialize the scheduler
 export function initializeNotificationScheduler() {
+  // Initialize VAPID configuration
+  initVapid();
+
   // Schedule daily notifications at 8:00 AM
   // Note: This runs in the server's timezone. For production, you may want to
   // customize this per user's timezone or run it multiple times for different zones
