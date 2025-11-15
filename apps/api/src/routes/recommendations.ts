@@ -103,31 +103,33 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
 
           // Calculate difference (positive means overdue, negative means ahead)
           difference = daysSinceLastActivity - type.desiredFrequency;
-          const absDifference = Math.abs(difference);
 
-          // Determine status based on absolute difference
-          // Use absolute value so activities ahead of or behind schedule are treated the same
-          if (absDifference < 1) {
-            status = 'due_today';
-            priorityScore = 100 + difference; // Medium priority
-          } else if (absDifference >= 1 && absDifference < 2) {
-            status = 'due_soon';
+          // Determine status based on difference
+          // Positive difference = overdue, negative = ahead of schedule
+          if (difference < -2) {
+            // Way ahead of schedule
+            status = 'ahead';
+            priorityScore = difference; // Most negative = lowest priority
+          } else if (difference >= -2 && difference < -1) {
+            // Ahead but approaching time
+            status = 'ahead';
             priorityScore = difference;
-          } else if (absDifference >= 2) {
-            if (difference > 0) {
-              // Overdue
-              if (absDifference <= 3) {
-                status = 'overdue';
-                priorityScore = 200 + difference;
-              } else {
-                status = 'critically_overdue';
-                priorityScore = 300 + difference;
-              }
-            } else {
-              // Ahead of schedule
-              status = 'ahead';
-              priorityScore = difference; // Most negative = lowest priority
-            }
+          } else if (difference >= -1 && difference < 1) {
+            // Within 1 day of target (due today)
+            status = 'due_today';
+            priorityScore = 100 + difference;
+          } else if (difference >= 1 && difference <= 2) {
+            // 1-2 days overdue (due soon / tomorrow)
+            status = 'due_soon';
+            priorityScore = 150 + difference;
+          } else if (difference > 2 && difference <= 4) {
+            // 2-4 days overdue
+            status = 'overdue';
+            priorityScore = 200 + difference;
+          } else {
+            // More than 4 days overdue
+            status = 'critically_overdue';
+            priorityScore = 300 + difference;
           }
         } else {
           // No activities ever performed
