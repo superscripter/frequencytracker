@@ -1,3 +1,4 @@
+// Push notification routes for web push notifications
 import { FastifyInstance } from 'fastify';
 import { prisma } from '@frequency-tracker/database';
 import webpush from 'web-push';
