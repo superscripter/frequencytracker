@@ -75,32 +75,64 @@ export function Analytics() {
     );
   };
 
-  const calculateStatusForValue = (value: number | null, desiredFrequency: number): string => {
-    if (value === null || value === 0) {
-      return 'status-grey';
+  const calculateGradientColor = (value: number | null, desiredFrequency: number): string => {
+    if (value === null) {
+      return 'rgba(136, 136, 136, 0.2)';
     }
 
     const difference = value - desiredFrequency;
 
-    if (difference < -2) {
-      // Way ahead of schedule
-      return 'status-dark-green';
-    } else if (difference >= -2 && difference < -1) {
-      // Ahead but approaching time
-      return 'status-dark-green';
-    } else if (difference >= -1 && difference < 1) {
-      // Within 1 day of target (due today)
-      return 'status-light-green';
-    } else if (difference >= 1 && difference <= 2) {
-      // 1-2 days overdue (due soon)
-      return 'status-light-green';
-    } else if (difference > 2 && difference <= 4) {
-      // 2-4 days overdue
-      return 'status-red';
+    let r, g, b;
+
+    if (difference <= 0) {
+      // GREEN GRADIENT: Ahead of schedule or on time
+      // Range: -5 (very ahead) to 0 (due today)
+      // Color range: Dark green → Light green
+      const clampedDiff = Math.max(-5, difference);
+      const normalizedPosition = (clampedDiff + 5) / 5; // 0 (very ahead) to 1 (due today)
+
+      // Color gradient:
+      // 0.0 (diff -5): Dark green rgb(0, 80, 0)
+      // 0.5 (diff -2.5): Medium green rgb(34, 139, 34)
+      // 1.0 (diff 0): Light green rgb(76, 175, 80)
+
+      if (normalizedPosition < 0.5) {
+        const t = normalizedPosition / 0.5;
+        r = Math.round(0 + (34 - 0) * t);
+        g = Math.round(80 + (139 - 80) * t);
+        b = Math.round(0 + (34 - 0) * t);
+      } else {
+        const t = (normalizedPosition - 0.5) / 0.5;
+        r = Math.round(34 + (76 - 34) * t);
+        g = Math.round(139 + (175 - 139) * t);
+        b = Math.round(34 + (80 - 34) * t);
+      }
     } else {
-      // More than 4 days overdue
-      return 'status-dark-red';
+      // RED GRADIENT: Overdue
+      // Range: 0 (just overdue) to +5 (very overdue)
+      // Color range: Light red → Dark red
+      const clampedDiff = Math.min(5, difference);
+      const normalizedPosition = clampedDiff / 5; // 0 (just overdue) to 1 (very overdue)
+
+      // Color gradient:
+      // 0.0 (diff 0): Light red/orange rgb(255, 87, 34)
+      // 0.5 (diff 2.5): Medium red rgb(211, 47, 47)
+      // 1.0 (diff 5): Dark red rgb(139, 0, 0)
+
+      if (normalizedPosition < 0.5) {
+        const t = normalizedPosition / 0.5;
+        r = Math.round(255 + (211 - 255) * t);
+        g = Math.round(87 + (47 - 87) * t);
+        b = Math.round(34 + (47 - 34) * t);
+      } else {
+        const t = (normalizedPosition - 0.5) / 0.5;
+        r = Math.round(211 + (139 - 211) * t);
+        g = Math.round(47 + (0 - 47) * t);
+        b = Math.round(47 + (0 - 47) * t);
+      }
     }
+
+    return `rgba(${r}, ${g}, ${b}, 0.8)`;
   };
 
   if (isLoading) {
@@ -124,30 +156,34 @@ export function Analytics() {
           <p>No activity types yet. Create some activity types in your Profile!</p>
         </div>
       ) : (
-        <table className="analytics-table">
-          <thead>
-            <tr>
-              <th>Activity Type</th>
-              <th>Desired Frequency</th>
-              <th>Total Avg Frequency</th>
-              <th>Date of First Activity</th>
-              <th>Number of Activities</th>
-            </tr>
-          </thead>
-          <tbody>
-            {analytics.map((item, index) => (
-              <tr key={index}>
-                <td>{item.activityType}</td>
-                <td>{item.desiredFrequency.toFixed(1)}</td>
-                <td className={calculateStatusForValue(item.totalAvgFrequency, item.desiredFrequency)}>
-                  {item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}
-                </td>
-                <td>{formatDate(item.dateOfFirstActivity)}</td>
-                <td>{item.numberOfActivities}</td>
+        <div className="analytics-table-wrapper">
+          <table className="analytics-table">
+            <thead>
+              <tr>
+                <th>Activity Type</th>
+                <th>Desired Frequency</th>
+                <th>Total Avg Frequency</th>
+                <th>Date of First Activity</th>
+                <th>Number of Activities</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {analytics.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.activityType}</td>
+                  <td>{item.desiredFrequency.toFixed(1)}</td>
+                  <td
+                    style={{ backgroundColor: calculateGradientColor(item.totalAvgFrequency, item.desiredFrequency) }}
+                  >
+                    {item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}
+                  </td>
+                  <td>{formatDate(item.dateOfFirstActivity)}</td>
+                  <td>{item.numberOfActivities}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <h2>Streaks</h2>
@@ -157,28 +193,30 @@ export function Analytics() {
           <p>No streaks yet. Add more activities to track streaks!</p>
         </div>
       ) : (
-        <table className="analytics-table">
-          <thead>
-            <tr>
-              <th>Activity Type</th>
-              <th>Longest Streak</th>
-              <th>Average Frequency</th>
-              <th>Streak Start</th>
-              <th>Streak End</th>
-            </tr>
-          </thead>
-          <tbody>
-            {streaks.map((item, index) => (
-              <tr key={index}>
-                <td>{item.activityType}</td>
-                <td>{item.longestStreak > 0 ? item.longestStreak : 'N/A'}</td>
-                <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
-                <td>{formatDate(item.streakStart)}</td>
-                <td>{formatDate(item.streakEnd)}</td>
+        <div className="analytics-table-wrapper">
+          <table className="analytics-table">
+            <thead>
+              <tr>
+                <th>Activity Type</th>
+                <th>Longest Streak</th>
+                <th>Average Frequency</th>
+                <th>Streak Start</th>
+                <th>Streak End</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {streaks.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.activityType}</td>
+                  <td>{item.longestStreak > 0 ? item.longestStreak : 'N/A'}</td>
+                  <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
+                  <td>{formatDate(item.streakStart)}</td>
+                  <td>{formatDate(item.streakEnd)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
