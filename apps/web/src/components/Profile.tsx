@@ -319,28 +319,8 @@ export function Profile() {
                   className="notification-checkbox"
                   disabled={isSavingNotifications}
                 />
-                <span className="notification-label">Enable daily reminders</span>
+                <span className="notification-label">Enable daily reminders at 6:00 AM MT</span>
               </div>
-              {enableDailyNotifications && (
-                <div className="notification-time">
-                  <label htmlFor="notification-time">Time:</label>
-                  <input
-                    id="notification-time"
-                    type="time"
-                    value={notificationTime}
-                    onChange={(e) => handleNotificationTimeChange(e.target.value)}
-                    className="time-input"
-                    disabled={isSavingNotifications}
-                  />
-                  <button
-                    onClick={handleSaveNotificationTime}
-                    disabled={isSavingNotifications || notificationTime === user.notificationTime}
-                    className="save-time-btn"
-                  >
-                    {isSavingNotifications ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
           <div className="info-row strava-row">

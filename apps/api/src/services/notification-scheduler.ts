@@ -117,20 +117,8 @@ async function sendDailyNotifications() {
 
     for (const user of usersWithSubscriptions) {
       try {
-        // Check if it's time to send notification to this user
-        const userTime = user.notificationTime || '08:00';
-        const [targetHour, targetMinute] = userTime.split(':').map(Number);
-
-        // Only send if current time matches user's preferred time (within 1-minute window)
-        // This allows for some flexibility in cron job timing
-        const isTimeToSend = currentHour === targetHour && Math.abs(currentMinute - targetMinute) <= 1;
-
-        if (!isTimeToSend) {
-          console.log(`[Notification Scheduler] Skipping user ${user.id} - not their notification time (${userTime})`);
-          continue;
-        }
-
-        const userTimezone = user.timezone || 'America/New_York';
+        // Send to all users when cron runs (6:00 AM Denver time)
+        const userTimezone = user.timezone || 'America/Denver';
         const recommendations = await getUserRecommendations(user.id, userTimezone);
 
         // Filter for urgent recommendations (due today, overdue, critically overdue)
