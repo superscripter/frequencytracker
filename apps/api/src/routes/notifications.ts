@@ -153,6 +153,29 @@ export default async function notificationRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Cron endpoint for Vercel Cron Jobs
+  // This endpoint is called by Vercel every minute to send notifications
+  fastify.get('/cron', async (request, reply) => {
+    try {
+      // Verify this is coming from Vercel Cron (check authorization header)
+      const authHeader = request.headers.authorization;
+      const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'development'}`;
+
+      if (authHeader !== expectedAuth) {
+        return reply.code(401).send({ error: 'Unauthorized' });
+      }
+
+      // Import and call the notification sender
+      const { sendDailyNotifications } = await import('../services/notification-scheduler.js');
+      await sendDailyNotifications();
+
+      return { success: true, message: 'Notification check completed' };
+    } catch (error) {
+      console.error('Error in cron endpoint:', error);
+      reply.code(500).send({ error: 'Failed to process cron job' });
+    }
+  });
+
   // Diagnostic endpoint for troubleshooting notifications
   fastify.get('/diagnostic', async (request, reply) => {
     try {
