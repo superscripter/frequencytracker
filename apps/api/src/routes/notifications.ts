@@ -152,4 +152,86 @@ export default async function notificationRoutes(fastify: FastifyInstance) {
       reply.code(500).send({ error: 'Failed to send test notification' });
     }
   });
+
+  // Diagnostic endpoint for troubleshooting notifications
+  fastify.get('/diagnostic', async (request, reply) => {
+    try {
+      await request.jwtVerify();
+      const userId = (request.user as any).userId;
+
+      // Get user data
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          pushSubscriptions: true,
+        },
+      });
+
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
+      // Get server time info
+      const now = new Date();
+      const serverTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Calculate when next notification would be sent
+      const userTime = user.notificationTime || '08:00';
+      const [targetHour, targetMinute] = userTime.split(':').map(Number);
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      const isTimeToSend = currentHour === targetHour && Math.abs(currentMinute - targetMinute) <= 1;
+
+      // Calculate next scheduled time
+      let nextSend = new Date();
+      nextSend.setHours(targetHour, targetMinute, 0, 0);
+      if (nextSend <= now) {
+        nextSend.setDate(nextSend.getDate() + 1);
+      }
+
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          timezone: user.timezone,
+          notificationTime: user.notificationTime,
+          enableDailyNotifications: user.enableDailyNotifications,
+        },
+        subscriptions: {
+          count: user.pushSubscriptions.length,
+          subscriptions: user.pushSubscriptions.map(sub => ({
+            id: sub.id,
+            endpoint: sub.endpoint.substring(0, 50) + '...',
+            createdAt: sub.createdAt,
+          })),
+        },
+        server: {
+          currentTime: now.toISOString(),
+          currentTimeLocal: now.toString(),
+          serverTimezone,
+          currentHour,
+          currentMinute,
+        },
+        scheduling: {
+          userNotificationTime: userTime,
+          targetHour,
+          targetMinute,
+          isTimeToSendNow: isTimeToSend,
+          nextScheduledSend: nextSend.toISOString(),
+          nextScheduledSendLocal: nextSend.toString(),
+          minutesUntilNext: Math.round((nextSend.getTime() - now.getTime()) / 60000),
+        },
+        issues: {
+          noSubscriptions: user.pushSubscriptions.length === 0,
+          notificationsDisabled: !user.enableDailyNotifications,
+          vapidConfigured: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT),
+        },
+      };
+    } catch (error) {
+      console.error('Error in diagnostic endpoint:', error);
+      reply.code(500).send({ error: 'Failed to get diagnostic info' });
+    }
+  });
 }
