@@ -217,32 +217,6 @@ export function Recommendations() {
           </div>
         </>
       )}
-
-      <div className="recommendations-legend">
-        <h3>Status Legend</h3>
-        <div className="legend-items">
-          <div className="legend-item">
-            <span className="legend-color status-dark-green"></span>
-            <span>Ahead of schedule (done more recently than needed)</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color status-light-green"></span>
-            <span>Due within 2 days or due today</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color status-red"></span>
-            <span>Overdue by 1-2 days</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color status-dark-red"></span>
-            <span>Critically overdue ({'>'}2 days)</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color status-grey"></span>
-            <span>No data (never performed)</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
