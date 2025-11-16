@@ -72,7 +72,7 @@ export function Recommendations() {
 
     let r, g, b;
 
-    if (difference < 0) {
+    if (difference <= 0) {
       // GREEN GRADIENT: Ahead of schedule or on time
       // Range: -5 (very ahead) to 0 (due today)
       // Color range: Dark green → Light green
