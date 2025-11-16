@@ -63,32 +63,57 @@ export function Recommendations() {
     }
   };
 
-  const calculateStatusForValue = (value: number | null, desiredFrequency: number): string => {
+  const calculateGradientColor = (value: number | null, desiredFrequency: number): string => {
     if (value === null) {
-      return 'status-grey';
+      return 'rgba(136, 136, 136, 0.2)';
     }
 
     const difference = value - desiredFrequency;
 
-    if (difference < -2) {
-      // Way ahead of schedule
-      return 'status-dark-green';
-    } else if (difference >= -2 && difference < -1) {
-      // Ahead but approaching time
-      return 'status-dark-green';
-    } else if (difference >= -1 && difference < 1) {
-      // Within 1 day of target (due today)
-      return 'status-light-green';
-    } else if (difference >= 1 && difference <= 2) {
-      // 1-2 days overdue (due soon)
-      return 'status-red';
-    } else if (difference > 2 && difference <= 4) {
-      // 2-4 days overdue
-      return 'status-dark-red';
+    // Define color stops for the gradient
+    // Green for ahead (negative difference), red for behind (positive difference)
+    // Range: -5 (very ahead) to +5 (very behind)
+    const clampedDiff = Math.max(-5, Math.min(5, difference));
+
+    // Normalize to 0-1 range (0 = very ahead, 1 = very behind)
+    const normalizedPosition = (clampedDiff + 5) / 10;
+
+    // Color gradient points:
+    // 0.0 (diff -5): Dark green rgb(0, 100, 0)
+    // 0.3 (diff -2): Medium green rgb(34, 139, 34)
+    // 0.5 (diff 0): Light green/yellow rgb(154, 205, 50)
+    // 0.7 (diff +2): Orange rgb(255, 140, 0)
+    // 1.0 (diff +5): Dark red rgb(139, 0, 0)
+
+    let r, g, b;
+
+    if (normalizedPosition < 0.3) {
+      // Dark green to medium green
+      const t = normalizedPosition / 0.3;
+      r = Math.round(0 + (34 - 0) * t);
+      g = Math.round(100 + (139 - 100) * t);
+      b = Math.round(0 + (34 - 0) * t);
+    } else if (normalizedPosition < 0.5) {
+      // Medium green to light green/yellow
+      const t = (normalizedPosition - 0.3) / 0.2;
+      r = Math.round(34 + (154 - 34) * t);
+      g = Math.round(139 + (205 - 139) * t);
+      b = Math.round(34 + (50 - 34) * t);
+    } else if (normalizedPosition < 0.7) {
+      // Light green/yellow to orange
+      const t = (normalizedPosition - 0.5) / 0.2;
+      r = Math.round(154 + (255 - 154) * t);
+      g = Math.round(205 + (140 - 205) * t);
+      b = Math.round(50 + (0 - 50) * t);
     } else {
-      // More than 4 days overdue
-      return 'status-dark-red';
+      // Orange to dark red
+      const t = (normalizedPosition - 0.7) / 0.3;
+      r = Math.round(255 + (139 - 255) * t);
+      g = Math.round(140 + (0 - 140) * t);
+      b = Math.round(0 + (0 - 0) * t);
     }
+
+    return `rgba(${r}, ${g}, ${b}, 0.8)`;
   };
 
 
@@ -153,16 +178,25 @@ export function Recommendations() {
                       <div className="activity-description">{rec.activityType.description}</div>
                     )}
                   </td>
-                  <td className={`days-since ${calculateStatusForValue(rec.daysSinceLastActivity, rec.activityType.desiredFrequency)}`}>
+                  <td
+                    className="days-since"
+                    style={{ backgroundColor: calculateGradientColor(rec.daysSinceLastActivity, rec.activityType.desiredFrequency) }}
+                  >
                     {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
                   </td>
                   <td className="desired-frequency">
                     {rec.activityType.desiredFrequency.toFixed(1)}
                   </td>
-                  <td className={`average-frequency ${calculateStatusForValue(rec.averageFrequencyLast3, rec.activityType.desiredFrequency)}`}>
+                  <td
+                    className="average-frequency"
+                    style={{ backgroundColor: calculateGradientColor(rec.averageFrequencyLast3, rec.activityType.desiredFrequency) }}
+                  >
                     {formatAverageFrequency(rec.averageFrequencyLast3)}
                   </td>
-                  <td className={`average-frequency ${calculateStatusForValue(rec.averageFrequencyLast10, rec.activityType.desiredFrequency)}`}>
+                  <td
+                    className="average-frequency"
+                    style={{ backgroundColor: calculateGradientColor(rec.averageFrequencyLast10, rec.activityType.desiredFrequency) }}
+                  >
                     {formatAverageFrequency(rec.averageFrequencyLast10)}
                   </td>
                   <td className={`trend-cell trend-${rec.trend}`}>

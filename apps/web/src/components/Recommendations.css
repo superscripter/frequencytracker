@@ -151,36 +151,7 @@
   font-size: 1.1rem;
 }
 
-/* Status color classes - background color */
-.days-since.status-dark-green,
-.average-frequency.status-dark-green {
-  background-color: rgba(11, 96, 0, 0.8);
-}
-
-.days-since.status-light-green,
-.average-frequency.status-light-green {
-  background-color: rgba(20, 173, 0, 0.8);
-}
-
-.days-since.status-yellow,
-.average-frequency.status-yellow {
-  background-color: rgba(255, 221, 0, 0.3);
-}
-
-.days-since.status-red,
-.average-frequency.status-red {
-  background-color: rgba(221, 0, 0, 0.8);
-}
-
-.days-since.status-dark-red,
-.average-frequency.status-dark-red {
-  background-color: rgba(111, 0, 0, 0.8);
-}
-
-.days-since.status-grey,
-.average-frequency.status-grey {
-  background-color: rgba(136, 136, 136, 0.2);
-}
+/* Gradient colors are now applied via inline styles in the component */
 
 /* Legend section */
 .recommendations-legend {
@@ -294,36 +265,6 @@
 
   .activity-description {
     color: rgba(0, 0, 0, 0.5);
-  }
-
-  .days-since.status-dark-green,
-  .average-frequency.status-dark-green {
-    background-color: rgba(11, 96, 0, 0.8);
-  }
-
-  .days-since.status-light-green,
-  .average-frequency.status-light-green {
-    background-color: rgba(20, 173, 0, 0.8);
-  }
-
-  .days-since.status-yellow,
-  .average-frequency.status-yellow {
-    background-color: rgba(255, 221, 0, 0.25);
-  }
-
-  .days-since.status-red,
-  .average-frequency.status-red {
-    background-color: rgba(221, 0, 0, 0.8);
-  }
-
-  .days-since.status-dark-red,
-  .average-frequency.status-dark-red {
-    background-color: rgba(111, 0, 0, 0.8);
-  }
-
-  .days-since.status-grey,
-  .average-frequency.status-grey {
-    background-color: rgba(136, 136, 136, 0.15);
   }
 
   .recommendations-legend {
