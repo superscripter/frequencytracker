@@ -38,6 +38,7 @@ function App() {
       <div className="container">
         <header className="header">
           <h1>Frequency Tracker</h1>
+          <img src="/freqTrackerIcon.png" alt="Frequency Tracker" className="header-icon" />
         </header>
 
         <main className="main">
