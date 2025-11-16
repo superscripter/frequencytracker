@@ -1,37 +1,47 @@
 .analytics-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 4rem;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding-bottom: 4rem;
 }
 
 .analytics-loading,
 .analytics-error,
 .analytics-empty {
-  padding: 2rem;
   text-align: center;
+  padding: 2rem;
   color: #b8b8b8;
 }
 
 .analytics-error {
-  color: #ff5555;
+  color: #ff6b6b;
+}
+
+.analytics-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #0a0a0a;
 }
 
 .analytics-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  background: #0a0a0a;
 }
 
 .analytics-table thead {
-  background: #1a1a1a;
+  background: #0d0d0d;
 }
 
 .analytics-table th {
   padding: 0.75rem;
   text-align: center;
   font-weight: 600;
-  color: #b8b8b8;
+  color: #ffffff;
   border-bottom: 2px solid #555;
 }
 
@@ -44,15 +54,18 @@
 
 .analytics-table td:first-child {
   text-align: left;
+  color: #ffffff;
+  font-weight: 500;
 }
 
-.analytics-table tbody tr:hover {
-  background: #1a1a1a;
+.analytics-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 h2 {
-  margin: 0;
-  color: #e8e8e8;
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 /* Status color classes - background color */
@@ -97,6 +110,40 @@ h2 {
 
 /* Light mode support */
 @media (prefers-color-scheme: light) {
+  h2 {
+    color: #213547;
+  }
+
+  .analytics-loading,
+  .analytics-empty {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .analytics-table-wrapper {
+    border-color: #ddd;
+  }
+
+  .analytics-table {
+    background: #fff;
+  }
+
+  .analytics-table thead {
+    background: #f5f5f5;
+  }
+
+  .analytics-table th {
+    color: #213547;
+    border-bottom-color: #ddd;
+  }
+
+  .analytics-table td {
+    border-bottom-color: #eee;
+  }
+
+  .analytics-table td:first-child {
+    color: #213547;
+  }
+
   .status-dark-green {
     background-color: rgba(11, 96, 0, 0.8);
   }
