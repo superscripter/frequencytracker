@@ -20,7 +20,6 @@ export function Profile() {
   const [timezone, setTimezone] = useState<string>('')
   const [autoSync, setAutoSync] = useState<boolean>(false)
   const [enableDailyNotifications, setEnableDailyNotifications] = useState<boolean>(false)
-  const [notificationTime, setNotificationTime] = useState<string>('08:00')
   const [isSaving, setIsSaving] = useState(false)
   const [isSavingAutoSync, setIsSavingAutoSync] = useState(false)
   const [isSavingNotifications, setIsSavingNotifications] = useState(false)
@@ -47,9 +46,6 @@ export function Profile() {
     }
     if (user?.enableDailyNotifications !== undefined) {
       setEnableDailyNotifications(user.enableDailyNotifications)
-    }
-    if (user?.notificationTime) {
-      setNotificationTime(user.notificationTime)
     }
   }, [user])
 
@@ -199,14 +195,6 @@ export function Profile() {
   const handleEnableNotificationsChange = (checked: boolean) => {
     setEnableDailyNotifications(checked)
     handleNotificationSettingsChange({ enableDailyNotifications: checked })
-  }
-
-  const handleNotificationTimeChange = (time: string) => {
-    setNotificationTime(time)
-  }
-
-  const handleSaveNotificationTime = () => {
-    handleNotificationSettingsChange({ notificationTime })
   }
 
   const handleSyncActivities = async () => {
