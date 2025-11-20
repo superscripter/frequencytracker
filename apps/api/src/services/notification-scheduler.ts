@@ -1,8 +1,9 @@
 import cron from 'node-cron';
 import { prisma } from '@frequency-tracker/database';
 import webpush from 'web-push';
-import { startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { syncStravaActivities } from './strava.js';
 
 // Initialize VAPID configuration
 function initVapid() {
@@ -108,7 +109,12 @@ async function sendDailyNotifications() {
           some: {},
         },
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        timezone: true,
+        autoSync: true,
+        stravaId: true,
         pushSubscriptions: true,
       },
     });
@@ -117,34 +123,65 @@ async function sendDailyNotifications() {
 
     for (const user of usersWithSubscriptions) {
       try {
+        // Sync Strava activities if auto-sync is enabled
+        if (user.autoSync && user.stravaId) {
+          try {
+            // Sync activities from the last 7 days to catch any recent activities
+            const syncAfterDate = subDays(new Date(), 7);
+            await syncStravaActivities(user.id, syncAfterDate);
+            console.log(`[Notification Scheduler] Synced Strava activities for user ${user.id}`);
+          } catch (error) {
+            console.error(`[Notification Scheduler] Failed to sync Strava for user ${user.id}:`, error);
+            // Continue with notifications even if sync fails
+          }
+        }
+
         // Send to all users when cron runs (6:00 AM Denver time)
         const userTimezone = user.timezone || 'America/Denver';
         const recommendations = await getUserRecommendations(user.id, userTimezone);
 
-        // Filter for urgent recommendations (due today, overdue, critically overdue)
-        const urgentRecommendations = recommendations.filter(
+        // Separate recommendations by urgency
+        const todayActivities = recommendations.filter(
           (rec) => rec.status === 'due_today' || rec.status === 'overdue' || rec.status === 'critically_overdue'
         );
+        const tomorrowActivities = recommendations.filter(
+          (rec) => rec.status === 'due_soon'
+        );
 
-        if (urgentRecommendations.length === 0) {
-          console.log(`[Notification Scheduler] No urgent recommendations for user ${user.id}`);
+        // Skip if no activities to show
+        if (todayActivities.length === 0 && tomorrowActivities.length === 0) {
+          console.log(`[Notification Scheduler] No recommendations for user ${user.id}`);
           continue;
         }
 
-        // Create notification message
-        const topRecommendations = urgentRecommendations.slice(0, 3);
-        let body = '';
-
-        if (topRecommendations.length === 1) {
-          body = `Time for: ${topRecommendations[0].name}`;
-        } else if (topRecommendations.length === 2) {
-          body = `Time for: ${topRecommendations[0].name} and ${topRecommendations[1].name}`;
+        // Create title with today's activities
+        let title = '';
+        if (todayActivities.length > 0) {
+          const names = todayActivities.slice(0, 3).map(rec => rec.name);
+          if (todayActivities.length > 3) {
+            title = `For Today: ${names.join(', ')}...`;
+          } else {
+            title = `For Today: ${names.join(', ')}`;
+          }
         } else {
-          body = `Time for: ${topRecommendations[0].name}, ${topRecommendations[1].name}, and ${topRecommendations.length - 2} more`;
+          title = 'Frequency Tracker';
+        }
+
+        // Create body with tomorrow's activities
+        let body = '';
+        if (tomorrowActivities.length > 0) {
+          const names = tomorrowActivities.slice(0, 3).map(rec => rec.name);
+          if (tomorrowActivities.length > 3) {
+            body = `For Tomorrow: ${names.join(', ')}...`;
+          } else {
+            body = `For Tomorrow: ${names.join(', ')}`;
+          }
+        } else if (todayActivities.length === 0) {
+          body = 'Check your activity recommendations';
         }
 
         const payload = JSON.stringify({
-          title: `Good morning${user.name ? ', ' + user.name : ''}! 🌅`,
+          title,
           body,
           icon: '/icon-192.png',
           badge: '/icon-192.png',
