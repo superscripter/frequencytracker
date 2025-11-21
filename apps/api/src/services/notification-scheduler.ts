@@ -54,24 +54,25 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
       daysSinceLastActivity = daysDiff;
     }
 
-    // Calculate expected frequency in days
-    const expectedFrequencyDays = 7 / activityType.desiredFrequency;
+    // desiredFrequency is already in days between activities
+    const expectedFrequencyDays = activityType.desiredFrequency;
 
     // Calculate how overdue the activity is
     const daysOverdue = daysSinceLastActivity !== null
       ? daysSinceLastActivity - expectedFrequencyDays
       : 999; // If never done, treat as very overdue
 
-    // Determine status
+    // Determine status based on daysOverdue
+    // Match the logic from recommendations.ts for consistency
     let status = 'ahead';
-    if (daysOverdue >= 2) {
+    if (daysOverdue > 4) {
       status = 'critically_overdue';
-    } else if (daysOverdue >= 1) {
+    } else if (daysOverdue > 2) {
       status = 'overdue';
-    } else if (daysOverdue >= 0) {
-      status = 'due_today';
-    } else if (daysOverdue >= -1) {
+    } else if (daysOverdue >= 1) {
       status = 'due_soon';
+    } else if (daysOverdue >= -1) {
+      status = 'due_today';
     }
 
     // Calculate priority score (higher = more urgent)
