@@ -67,12 +67,14 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
     let status = 'ahead';
     if (daysOverdue > 4) {
       status = 'critically_overdue';
-    } else if (daysOverdue > 2) {
+    } else if (daysOverdue > 2 && daysOverdue <= 4) {
       status = 'overdue';
-    } else if (daysOverdue >= 1) {
+    } else if (daysOverdue >= 1 && daysOverdue <= 2) {
       status = 'due_soon';
-    } else if (daysOverdue >= -1) {
+    } else if (daysOverdue >= -1 && daysOverdue < 1) {
       status = 'due_today';
+    } else if (daysOverdue >= -2 && daysOverdue < -1) {
+      status = 'ahead';
     }
 
     // Calculate priority score (higher = more urgent)
