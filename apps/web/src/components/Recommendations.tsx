@@ -72,29 +72,21 @@ export function Recommendations() {
 
     let r, g, b;
 
-    if (difference <= 0) {
-      // GREEN GRADIENT: Ahead of schedule or on time
-      // Range: -5 (very ahead) to 0 (due today)
-      // Color range: Dark green → Light green
-      const clampedDiff = Math.max(-5, difference);
-      const normalizedPosition = (clampedDiff + 5) / 5; // 0 (very ahead) to 1 (due today)
-
-      // Color gradient:
-      // 0.0 (diff -5): Dark green rgb(0, 40, 0)
-      // 0.5 (diff -2.5): Medium green rgb(0, 148, 13)
-      // 1.0 (diff 0): Light green rgb(0, 255, 25)
-
-      if (normalizedPosition < 0.5) {
-        const t = normalizedPosition / 0.5;
-        r = Math.round(0 + (0 - 0) * t);
-        g = Math.round(40 + (148 - 40) * t);
-        b = Math.round(0 + (13 - 0) * t);
-      } else {
-        const t = (normalizedPosition - 0.5) / 0.5;
-        r = Math.round(0 + (0 - 0) * t);
-        g = Math.round(148 + (255 - 148) * t);
-        b = Math.round(13 + (25 - 13) * t);
-      }
+    if (difference > -1 && difference <= 0) {
+      // Due today: yellow rgb(235, 203, 0)
+      r = 235;
+      g = 203;
+      b = 0;
+    } else if (difference > -2 && difference <= -1) {
+      // Due tomorrow: light yellow rgb(242, 220, 72)
+      r = 242;
+      g = 220;
+      b = 85;
+    } else if (difference <= -2) {
+      // Ahead of schedule (not due for over 2 days): green rgb(68, 204, 82)
+      r = 68;
+      g = 204;
+      b = 82;
     } else {
       // RED GRADIENT: Overdue
       // Range: 0 (just overdue) to +5 (very overdue)
@@ -129,6 +121,20 @@ export function Recommendations() {
       return 'N/A';
     }
     return avg.toFixed(1);
+  };
+
+  const calculateAverageColor = (value: number | null, desiredFrequency: number): string => {
+    if (value === null) {
+      return 'rgba(136, 136, 136, 0.2)';
+    }
+
+    if (value <= desiredFrequency) {
+      // At or under desired average: green rgb(68, 204, 82)
+      return 'rgba(68, 204, 82, 0.8)';
+    } else {
+      // Over desired average: red rgb(230, 44, 44)
+      return 'rgba(230, 44, 44, 0.8)';
+    }
   };
 
   const getTrendDisplay = (trend: Recommendation['trend']): { icon: string; text: string } => {
@@ -196,13 +202,13 @@ export function Recommendations() {
                   </td>
                   <td
                     className="average-frequency"
-                    style={{ backgroundColor: calculateGradientColor(rec.averageFrequencyLast3, rec.activityType.desiredFrequency) }}
+                    style={{ backgroundColor: calculateAverageColor(rec.averageFrequencyLast3, rec.activityType.desiredFrequency) }}
                   >
                     {formatAverageFrequency(rec.averageFrequencyLast3)}
                   </td>
                   <td
                     className="average-frequency"
-                    style={{ backgroundColor: calculateGradientColor(rec.averageFrequencyLast10, rec.activityType.desiredFrequency) }}
+                    style={{ backgroundColor: calculateAverageColor(rec.averageFrequencyLast10, rec.activityType.desiredFrequency) }}
                   >
                     {formatAverageFrequency(rec.averageFrequencyLast10)}
                   </td>

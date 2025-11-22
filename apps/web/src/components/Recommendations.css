@@ -64,6 +64,7 @@
   width: 100%;
   border-collapse: collapse;
   background: #0a0a0a;
+  table-layout: fixed;
 }
 
 .recommendations-table thead {
@@ -87,10 +88,25 @@
   border-bottom: none;
 }
 
-/* Activity name and description */
+/* Column widths - fixed for consistency across tables */
 .activity-name {
   width: 25%;
-  min-width: 150px;
+}
+
+.days-since {
+  width: 12%;
+}
+
+.desired-frequency {
+  width: 12%;
+}
+
+.average-frequency {
+  width: 12%;
+}
+
+.trend-cell {
+  width: 15%;
 }
 
 .activity-name strong {
@@ -109,11 +125,7 @@
 /* Column styling */
 .days-since,
 .desired-frequency,
-.average-frequency {
-  text-align: center;
-  font-weight: 500;
-}
-
+.average-frequency,
 .trend-cell {
   text-align: center;
   font-weight: 500;

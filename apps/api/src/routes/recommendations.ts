@@ -138,34 +138,27 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         }
 
         // Helper function to calculate average frequency from N activities
+        // Takes the Nth most recent activity (or the oldest if fewer than N exist),
+        // calculates days since that activity, and divides by the count
         const calculateAverageFrequency = (activities: typeof typeActivities, maxCount: number): number | null => {
           if (activities.length < 2) {
             return null;
           }
 
-          // Take up to maxCount most recent activities
-          const activitiesToUse = activities.slice(0, Math.min(maxCount, activities.length));
+          // Determine how many activities to use (up to maxCount, but at least what we have)
+          const countToUse = Math.min(maxCount, activities.length);
 
-          if (activitiesToUse.length < 2) {
-            return null;
-          }
+          // Get the Nth most recent activity (0-indexed, so countToUse - 1)
+          const nthActivity = activities[countToUse - 1];
 
-          // Calculate intervals between consecutive activities
-          const intervals: number[] = [];
-          for (let i = 0; i < activitiesToUse.length - 1; i++) {
-            const current = toZonedTime(activitiesToUse[i].date, userTimezone);
-            const currentMidnight = startOfDay(current);
-            const next = toZonedTime(activitiesToUse[i + 1].date, userTimezone);
-            const nextMidnight = startOfDay(next);
-            const interval = differenceInDays(currentMidnight, nextMidnight);
-            intervals.push(interval);
-          }
+          // Calculate days since that activity
+          const nthActivityInUserTz = toZonedTime(nthActivity.date, userTimezone);
+          const nthActivityMidnight = startOfDay(nthActivityInUserTz);
+          const daysSinceNthActivity = differenceInDays(midnightToday, nthActivityMidnight);
 
-          if (intervals.length === 0) {
-            return null;
-          }
+          // Average = days since Nth activity / count
+          const average = daysSinceNthActivity / countToUse;
 
-          const average = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
           // Round to 1 decimal place
           return Math.round(average * 10) / 10;
         };
