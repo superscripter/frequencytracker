@@ -80,20 +80,20 @@ export function Recommendations() {
       const normalizedPosition = (clampedDiff + 5) / 5; // 0 (very ahead) to 1 (due today)
 
       // Color gradient:
-      // 0.0 (diff -5): Dark green rgb(0, 80, 0)
-      // 0.5 (diff -2.5): Medium green rgb(34, 139, 34)
-      // 1.0 (diff 0): Light green rgb(76, 175, 80)
+      // 0.0 (diff -5): Dark green rgb(0, 40, 0)
+      // 0.5 (diff -2.5): Medium green rgb(0, 148, 13)
+      // 1.0 (diff 0): Light green rgb(0, 255, 25)
 
       if (normalizedPosition < 0.5) {
         const t = normalizedPosition / 0.5;
-        r = Math.round(0 + (34 - 0) * t);
-        g = Math.round(80 + (139 - 80) * t);
-        b = Math.round(0 + (34 - 0) * t);
+        r = Math.round(0 + (0 - 0) * t);
+        g = Math.round(40 + (148 - 40) * t);
+        b = Math.round(0 + (13 - 0) * t);
       } else {
         const t = (normalizedPosition - 0.5) / 0.5;
-        r = Math.round(34 + (76 - 34) * t);
-        g = Math.round(139 + (175 - 139) * t);
-        b = Math.round(34 + (80 - 34) * t);
+        r = Math.round(0 + (0 - 0) * t);
+        g = Math.round(148 + (255 - 148) * t);
+        b = Math.round(13 + (25 - 13) * t);
       }
     } else {
       // RED GRADIENT: Overdue
