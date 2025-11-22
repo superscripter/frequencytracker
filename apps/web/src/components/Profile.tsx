@@ -283,19 +283,6 @@ export function Profile() {
               </button>
             </div>
           </div>
-          <div className="info-row">
-            <span className="label">Auto Sync:</span>
-            <div className="auto-sync-section">
-              <input
-                type="checkbox"
-                checked={autoSync}
-                onChange={(e) => handleAutoSyncChange(e.target.checked)}
-                className="auto-sync-checkbox"
-                disabled={!user?.stravaId || isSavingAutoSync}
-                title={!user?.stravaId ? 'Connect Strava account to enable auto-sync' : 'Automatically sync activities on page load'}
-              />
-            </div>
-          </div>
           <div className="info-row notification-settings-row">
             <span className="label">Daily Notifications:</span>
             <div className="notification-settings">
@@ -338,6 +325,17 @@ export function Profile() {
                     >
                       {isSyncing ? 'Syncing...' : 'Sync'}
                     </button>
+                  </div>
+                  <div className="strava-auto-sync">
+                    <input
+                      type="checkbox"
+                      id="auto-sync"
+                      checked={autoSync}
+                      onChange={(e) => handleAutoSyncChange(e.target.checked)}
+                      className="auto-sync-checkbox"
+                      disabled={isSavingAutoSync}
+                    />
+                    <label htmlFor="auto-sync">Auto-sync on page load</label>
                   </div>
                 </>
               ) : (

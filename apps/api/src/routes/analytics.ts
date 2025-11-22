@@ -86,6 +86,8 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       // Calculate streaks for each activity type
+      // A streak is the longest window of time where the average frequency <= desired frequency
+      // We need to find the optimal window, not just greedily extend from start
       const streaks: StreakData[] = activityTypes.map((type) => {
         const activities = type.activities;
         const desiredFrequency = type.desiredFrequency;
@@ -95,100 +97,58 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         let longestStreakStart: Date | null = null;
         let longestStreakEnd: Date | null = null;
 
-        // Need at least 2 activities to calculate a streak
-        if (activities.length >= 2) {
-          let currentStreakStart = activities[0].date;
-          let currentStreakEnd = activities[0].date;
-          let currentStreakActivities = [activities[0].date];
+        // Need at least 1 activity to calculate a streak
+        if (activities.length >= 1) {
+          // Pre-calculate all activity dates in user timezone as midnight
+          const activityMidnights = activities.map((a) => {
+            const inUserTz = toZonedTime(a.date, userTimezone);
+            return startOfDay(inUserTz);
+          });
 
-          for (let i = 1; i < activities.length; i++) {
-            const currentActivity = activities[i];
-            const prevActivity = activities[i - 1];
+          // For each possible starting activity, find the longest valid window
+          for (let startIdx = 0; startIdx < activities.length; startIdx++) {
+            const windowStart = activityMidnights[startIdx];
 
-            // Calculate average frequency between consecutive activities
-            const prevActivityInUserTz = toZonedTime(prevActivity.date, userTimezone);
-            const currentActivityInUserTz = toZonedTime(currentActivity.date, userTimezone);
-            const daysBetween = differenceInDays(
-              startOfDay(currentActivityInUserTz),
-              startOfDay(prevActivityInUserTz)
-            );
+            // Try extending to today first (if this is a current/ongoing streak)
+            // Check if we can include all activities from startIdx to end AND extend to today
+            const activitiesInFullWindow = activities.length - startIdx;
+            const daysToToday = differenceInDays(midnightToday, windowStart);
+            const avgFreqToToday = daysToToday > 0 ? daysToToday / activitiesInFullWindow : 0;
 
-            // Calculate running average frequency for the streak so far
-            const streakStartInUserTz = toZonedTime(currentStreakStart, userTimezone);
-            const currentActivityMidnight = startOfDay(currentActivityInUserTz);
-            const streakStartMidnight = startOfDay(streakStartInUserTz);
-            const totalDaysInStreak = differenceInDays(currentActivityMidnight, streakStartMidnight);
-            const runningAvgFreq = totalDaysInStreak > 0 && currentStreakActivities.length > 0
-              ? totalDaysInStreak / currentStreakActivities.length
-              : 0;
-
-            // Check if adding this activity keeps us at or below desired frequency
-            if (runningAvgFreq <= desiredFrequency) {
-              // Continue the streak
-              currentStreakEnd = currentActivity.date;
-              currentStreakActivities.push(currentActivity.date);
-            } else {
-              // Streak broken - check if it was the longest
-              const streakEndInUserTz = toZonedTime(currentStreakEnd, userTimezone);
-              const streakDuration = differenceInDays(
-                startOfDay(streakEndInUserTz),
-                streakStartMidnight
-              );
-
-              if (streakDuration > longestStreak) {
-                longestStreak = streakDuration;
-                longestStreakStart = currentStreakStart;
-                longestStreakEnd = currentStreakEnd;
-                // Calculate average frequency for the longest streak
-                longestStreakAvgFreq = streakDuration > 0 && currentStreakActivities.length > 0
-                  ? Math.round((streakDuration / currentStreakActivities.length) * 10) / 10
-                  : 0;
+            if (avgFreqToToday <= desiredFrequency && daysToToday > 0) {
+              // The entire window from this start to today is valid
+              if (daysToToday > longestStreak) {
+                longestStreak = daysToToday;
+                longestStreakStart = activities[startIdx].date;
+                longestStreakEnd = nowUtc; // Current time means streak extends to today
+                longestStreakAvgFreq = Math.round(avgFreqToToday * 10) / 10;
               }
+            } else {
+              // Can't extend to today, find the furthest end point that works
+              // Use binary search or linear scan to find the longest valid window
+              for (let endIdx = activities.length - 1; endIdx >= startIdx; endIdx--) {
+                const windowEnd = activityMidnights[endIdx];
+                const daysInWindow = differenceInDays(windowEnd, windowStart);
+                const activitiesInWindow = endIdx - startIdx + 1;
 
-              // Start a new streak
-              currentStreakStart = currentActivity.date;
-              currentStreakEnd = currentActivity.date;
-              currentStreakActivities = [currentActivity.date];
+                // Need at least 1 day span to have a meaningful frequency
+                if (daysInWindow <= 0) continue;
+
+                const avgFreq = daysInWindow / activitiesInWindow;
+
+                if (avgFreq <= desiredFrequency) {
+                  // This window is valid - check if it's the longest
+                  if (daysInWindow > longestStreak) {
+                    longestStreak = daysInWindow;
+                    longestStreakStart = activities[startIdx].date;
+                    longestStreakEnd = activities[endIdx].date;
+                    longestStreakAvgFreq = Math.round(avgFreq * 10) / 10;
+                  }
+                  // Found the longest valid window for this start, no need to check shorter ones
+                  break;
+                }
+              }
             }
-          }
-
-          // Check the final streak and potentially extend to current day
-          const finalStreakStartInUserTz = toZonedTime(currentStreakStart, userTimezone);
-          const streakStartMidnight = startOfDay(finalStreakStartInUserTz);
-
-          // Try extending the streak to current day (midnight today)
-          const daysFromStreakStartToToday = differenceInDays(midnightToday, streakStartMidnight);
-          const extendedAvgFreq = daysFromStreakStartToToday > 0 && currentStreakActivities.length > 0
-            ? daysFromStreakStartToToday / currentStreakActivities.length
-            : 0;
-
-          let finalStreakEnd = currentStreakEnd;
-          let finalStreakDuration = 0;
-          let finalStreakAvgFreq = 0;
-
-          // If extending to today doesn't exceed desired frequency, use today as end
-          if (extendedAvgFreq <= desiredFrequency && daysFromStreakStartToToday >= 0) {
-            finalStreakEnd = nowUtc; // Use current date/time
-            finalStreakDuration = daysFromStreakStartToToday;
-            finalStreakAvgFreq = extendedAvgFreq;
-          } else {
-            // Otherwise use the last activity date as the end
-            const finalStreakEndInUserTz = toZonedTime(currentStreakEnd, userTimezone);
-            finalStreakDuration = differenceInDays(
-              startOfDay(finalStreakEndInUserTz),
-              streakStartMidnight
-            );
-            finalStreakAvgFreq = finalStreakDuration > 0 && currentStreakActivities.length > 0
-              ? finalStreakDuration / currentStreakActivities.length
-              : 0;
-          }
-
-          // Only consider this streak if it meets the desired frequency
-          if (finalStreakAvgFreq <= desiredFrequency && finalStreakDuration > longestStreak) {
-            longestStreak = finalStreakDuration;
-            longestStreakStart = currentStreakStart;
-            longestStreakEnd = finalStreakEnd;
-            longestStreakAvgFreq = Math.round(finalStreakAvgFreq * 10) / 10;
           }
         }
 

@@ -162,9 +162,9 @@ async function sendDailyNotifications() {
         if (todayActivities.length > 0) {
           const names = todayActivities.slice(0, 3).map(rec => rec.name);
           if (todayActivities.length > 3) {
-            title = `For Today: ${names.join(', ')}...`;
+            title = `Today: ${names.join(', ')}...`;
           } else {
-            title = `For Today: ${names.join(', ')}`;
+            title = `Today: ${names.join(', ')}`;
           }
         } else {
           title = 'Frequency Tracker';
@@ -175,9 +175,9 @@ async function sendDailyNotifications() {
         if (tomorrowActivities.length > 0) {
           const names = tomorrowActivities.slice(0, 3).map(rec => rec.name);
           if (tomorrowActivities.length > 3) {
-            body = `For Tomorrow: ${names.join(', ')}...`;
+            body = `Tomorrow: ${names.join(', ')}...`;
           } else {
-            body = `For Tomorrow: ${names.join(', ')}`;
+            body = `Tomorrow: ${names.join(', ')}`;
           }
         } else if (todayActivities.length === 0) {
           body = 'Check your activity recommendations';

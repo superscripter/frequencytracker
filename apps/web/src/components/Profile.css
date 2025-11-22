@@ -239,6 +239,22 @@
   cursor: not-allowed;
 }
 
+.strava-auto-sync {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(252, 82, 0, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(252, 82, 0, 0.3);
+}
+
+.strava-auto-sync label {
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .notification-settings-row {
   flex-direction: column;
   gap: 0.5rem;

@@ -50,16 +50,14 @@ export function ActivitiesManager() {
     fetchActivityTypes()
   }, [])
 
+  // Reset to page 1 when filter changes
   useEffect(() => {
-    setCurrentPage(1) // Reset to page 1 when filter changes
-    fetchActivities()
+    setCurrentPage(1)
   }, [selectedTypeId])
 
   useEffect(() => {
-    if (currentPage > 1) {
-      fetchActivities()
-    }
-  }, [currentPage])
+    fetchActivities()
+  }, [currentPage, selectedTypeId])
 
   // Update the date picker default when timezone changes
   useEffect(() => {
