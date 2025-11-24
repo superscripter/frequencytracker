@@ -2,14 +2,14 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const sourceIcon = path.join(__dirname, '../apps/web/public/freqTrackerIcon.png');
+const sourceIcon = path.join(__dirname, '../apps/web/public/frequencytrackericon.png');
 const outputDir = path.join(__dirname, '../apps/web/public');
 
 async function generateIcons() {
-  console.log('Generating PWA icons from freqTrackerIcon.png...');
+  console.log('Generating PWA icons from frequencytrackericon.png...');
 
   if (!fs.existsSync(sourceIcon)) {
-    console.error('Error: freqTrackerIcon.png not found at', sourceIcon);
+    console.error('Error: frequencytrackericon.png not found at', sourceIcon);
     process.exit(1);
   }
 
