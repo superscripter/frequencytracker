@@ -65,14 +65,34 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         if (numberOfActivities > 0) {
           dateOfFirstActivity = activities[0].date.toISOString();
 
-          // Calculate total avg frequency as: days since first activity / number of activities
-          const firstActivityInUserTz = toZonedTime(activities[0].date, userTimezone);
-          const firstActivityMidnight = startOfDay(firstActivityInUserTz);
-          const daysSinceFirst = differenceInDays(midnightToday, firstActivityMidnight);
+          // Calculate total avg frequency using interval mean
+          // This measures the average number of days between consecutive activities
+          if (numberOfActivities >= 1) {
+            const intervals: number[] = [];
 
-          // Only calculate if we have at least 1 day and at least 1 activity
-          if (daysSinceFirst > 0 && numberOfActivities > 0) {
-            totalAvgFrequency = Math.round((daysSinceFirst / numberOfActivities) * 10) / 10;
+            // Calculate intervals between consecutive activities
+            for (let i = 0; i < activities.length - 1; i++) {
+              const currentActivityInUserTz = toZonedTime(activities[i].date, userTimezone);
+              const currentActivityMidnight = startOfDay(currentActivityInUserTz);
+
+              const nextActivityInUserTz = toZonedTime(activities[i + 1].date, userTimezone);
+              const nextActivityMidnight = startOfDay(nextActivityInUserTz);
+
+              const interval = differenceInDays(nextActivityMidnight, currentActivityMidnight);
+              intervals.push(interval);
+            }
+
+            // Add the partial interval from the most recent activity to today
+            const lastActivityInUserTz = toZonedTime(activities[activities.length - 1].date, userTimezone);
+            const lastActivityMidnight = startOfDay(lastActivityInUserTz);
+            const partialInterval = differenceInDays(midnightToday, lastActivityMidnight);
+            intervals.push(partialInterval);
+
+            // Calculate the mean of all intervals
+            if (intervals.length > 0) {
+              const sum = intervals.reduce((acc, val) => acc + val, 0);
+              totalAvgFrequency = Math.round((sum / intervals.length) * 10) / 10;
+            }
           }
         }
 
@@ -109,11 +129,32 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
           for (let startIdx = 0; startIdx < activities.length; startIdx++) {
             const windowStart = activityMidnights[startIdx];
 
+            // Helper function to calculate interval mean for a window of activities
+            const calculateIntervalMean = (startIdx: number, endIdx: number, includeToday: boolean): number => {
+              const intervals: number[] = [];
+
+              // Calculate intervals between consecutive activities in the window
+              for (let i = startIdx; i < endIdx; i++) {
+                const interval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+                intervals.push(interval);
+              }
+
+              // If including today, add the partial interval from the last activity to today
+              if (includeToday) {
+                const partialInterval = differenceInDays(midnightToday, activityMidnights[endIdx]);
+                intervals.push(partialInterval);
+              }
+
+              // Calculate the mean of all intervals
+              if (intervals.length === 0) return 0;
+              const sum = intervals.reduce((acc, val) => acc + val, 0);
+              return sum / intervals.length;
+            };
+
             // Try extending to today first (if this is a current/ongoing streak)
             // Check if we can include all activities from startIdx to end AND extend to today
-            const activitiesInFullWindow = activities.length - startIdx;
             const daysToToday = differenceInDays(midnightToday, windowStart);
-            const avgFreqToToday = daysToToday > 0 ? daysToToday / activitiesInFullWindow : 0;
+            const avgFreqToToday = calculateIntervalMean(startIdx, activities.length - 1, true);
 
             if (avgFreqToToday <= desiredFrequency && daysToToday > 0) {
               // The entire window from this start to today is valid
@@ -129,12 +170,11 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
               for (let endIdx = activities.length - 1; endIdx >= startIdx; endIdx--) {
                 const windowEnd = activityMidnights[endIdx];
                 const daysInWindow = differenceInDays(windowEnd, windowStart);
-                const activitiesInWindow = endIdx - startIdx + 1;
 
                 // Need at least 1 day span to have a meaningful frequency
                 if (daysInWindow <= 0) continue;
 
-                const avgFreq = daysInWindow / activitiesInWindow;
+                const avgFreq = calculateIntervalMean(startIdx, endIdx, false);
 
                 if (avgFreq <= desiredFrequency) {
                   // This window is valid - check if it's the longest

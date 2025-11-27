@@ -137,27 +137,43 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           priorityScore = -1000; // Send to bottom
         }
 
-        // Helper function to calculate average frequency from N activities
-        // Takes the Nth most recent activity (or the oldest if fewer than N exist),
-        // calculates days since that activity, and divides by the count
+        // Helper function to calculate interval mean from N activities
+        // Calculates the average number of days between consecutive activities
+        // Includes the partial interval from the last activity to today
         const calculateAverageFrequency = (activities: typeof typeActivities, maxCount: number): number | null => {
-          if (activities.length < 2) {
+          if (activities.length < 1) {
             return null;
           }
 
           // Determine how many activities to use (up to maxCount, but at least what we have)
           const countToUse = Math.min(maxCount, activities.length);
 
-          // Get the Nth most recent activity (0-indexed, so countToUse - 1)
-          const nthActivity = activities[countToUse - 1];
+          // Get the most recent N activities
+          const recentActivities = activities.slice(0, countToUse);
 
-          // Calculate days since that activity
-          const nthActivityInUserTz = toZonedTime(nthActivity.date, userTimezone);
-          const nthActivityMidnight = startOfDay(nthActivityInUserTz);
-          const daysSinceNthActivity = differenceInDays(midnightToday, nthActivityMidnight);
+          // Calculate intervals between consecutive activities
+          const intervals: number[] = [];
 
-          // Average = days since Nth activity / count
-          const average = daysSinceNthActivity / countToUse;
+          for (let i = 0; i < recentActivities.length - 1; i++) {
+            const currentActivityInUserTz = toZonedTime(recentActivities[i].date, userTimezone);
+            const currentActivityMidnight = startOfDay(currentActivityInUserTz);
+
+            const nextActivityInUserTz = toZonedTime(recentActivities[i + 1].date, userTimezone);
+            const nextActivityMidnight = startOfDay(nextActivityInUserTz);
+
+            const interval = differenceInDays(currentActivityMidnight, nextActivityMidnight);
+            intervals.push(interval);
+          }
+
+          // Add the partial interval from the most recent activity to today
+          const lastActivityInUserTz = toZonedTime(recentActivities[0].date, userTimezone);
+          const lastActivityMidnight = startOfDay(lastActivityInUserTz);
+          const partialInterval = differenceInDays(midnightToday, lastActivityMidnight);
+          intervals.push(partialInterval);
+
+          // Calculate the mean of all intervals
+          const sum = intervals.reduce((acc, val) => acc + val, 0);
+          const average = sum / intervals.length;
 
           // Round to 1 decimal place
           return Math.round(average * 10) / 10;
