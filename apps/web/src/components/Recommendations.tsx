@@ -42,9 +42,11 @@ export function Recommendations() {
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchRecommendations();
-    fetchPreferences();
-  }, []);
+    if (user) {
+      fetchRecommendations();
+      fetchPreferences();
+    }
+  }, [user]);
 
   const fetchRecommendations = async () => {
     try {

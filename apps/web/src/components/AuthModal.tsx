@@ -37,9 +37,8 @@ export function AuthModal({ onClose }: AuthModalProps) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>×</button>
+    <div className="modal-overlay">
+      <div className="modal-content">
         <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
         <form onSubmit={handleSubmit}>
           {!isLogin && (

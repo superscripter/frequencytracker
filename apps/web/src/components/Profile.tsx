@@ -38,14 +38,10 @@ export function Profile() {
   const [syncMessage, setSyncMessage] = useState('')
 
   useEffect(() => {
-    if (user?.timezone) {
-      setTimezone(user.timezone)
-    }
-    if (user?.autoSync !== undefined) {
-      setAutoSync(user.autoSync)
-    }
-    if (user?.enableDailyNotifications !== undefined) {
-      setEnableDailyNotifications(user.enableDailyNotifications)
+    if (user) {
+      setTimezone(user.timezone || 'America/New_York')
+      setAutoSync(user.autoSync || false)
+      setEnableDailyNotifications(user.enableDailyNotifications || false)
     }
   }, [user])
 
