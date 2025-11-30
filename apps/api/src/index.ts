@@ -10,6 +10,7 @@ import { recommendationsRoutes } from './routes/recommendations.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import stravaRoutes from './routes/strava.js';
 import notificationRoutes from './routes/notifications.js';
+import { preferencesRoutes } from './routes/preferences.js';
 import { initializeNotificationScheduler } from './services/notification-scheduler.js';
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
@@ -99,6 +100,7 @@ export async function buildServer() {
   await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
   await fastify.register(stravaRoutes, { prefix: '/api/strava' });
   await fastify.register(notificationRoutes, { prefix: '/api/notifications' });
+  await fastify.register(preferencesRoutes, { prefix: '/api/preferences' });
 
   return fastify;
 }

@@ -1,0 +1,156 @@
+.activity-card {
+  background-color: var(--color-card-bg);
+  border-left: 4px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  animation: slide-in 0.3s ease-out;
+}
+
+.activity-card:hover {
+  background-color: var(--color-card-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.activity-card-overdue {
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.6), 0 0 40px rgba(220, 38, 38, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.6), 0 0 40px rgba(220, 38, 38, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.8), 0 0 60px rgba(220, 38, 38, 0.5);
+  }
+}
+
+
+.activity-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.activity-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  flex: 1;
+}
+
+.activity-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.activity-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activity-card-label {
+  font-size: 0.875rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.activity-card-value {
+  font-size: 0.9375rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.activity-card-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.activity-card-description {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.activity-card-detailed-stats {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.activity-card-stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.activity-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activity-card-stat:last-child {
+  margin-left: auto;
+}
+
+.activity-card-stat-full {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.streak-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.activity-card-compact {
+  padding: 1rem;
+}
+
+.activity-card-detailed {
+  padding: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .activity-card {
+    padding: 1rem;
+  }
+
+  .activity-card-title {
+    font-size: 1.125rem;
+  }
+
+  .activity-card-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

@@ -19,6 +19,8 @@ interface RecommendationItem {
   difference: number | null;
   status: 'ahead' | 'due_soon' | 'due_today' | 'overdue' | 'critically_overdue' | 'no_data';
   priorityScore: number;
+  currentStreak: number;
+  currentStreakStart: string | null;
 }
 
 export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -202,6 +204,46 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           trend = 'stable';
         }
 
+        // Calculate current streak (days from most recent valid window extending to today)
+        // A streak is active if the average frequency meets the desired frequency
+        let currentStreak = 0;
+        let currentStreakStart: Date | null = null;
+        if (typeActivities.length >= 1) {
+          const activityMidnights = typeActivities.map((a) => {
+            const inUserTz = toZonedTime(a.date, userTimezone);
+            return startOfDay(inUserTz);
+          });
+
+          // Helper to calculate interval mean for a window
+          const calculateIntervalMean = (startIdx: number, endIdx: number, includeToday: boolean): number => {
+            const intervals: number[] = [];
+            for (let i = startIdx; i < endIdx; i++) {
+              const interval = differenceInDays(activityMidnights[i], activityMidnights[i + 1]);
+              intervals.push(interval);
+            }
+            if (includeToday) {
+              const partialInterval = differenceInDays(midnightToday, activityMidnights[startIdx]);
+              intervals.push(partialInterval);
+            }
+            if (intervals.length === 0) return 0;
+            return intervals.reduce((acc, val) => acc + val, 0) / intervals.length;
+          };
+
+          // Check if there's a valid streak from any starting activity to today
+          for (let startIdx = 0; startIdx < typeActivities.length; startIdx++) {
+            const windowStart = activityMidnights[startIdx];
+            const daysToToday = differenceInDays(midnightToday, windowStart);
+            const avgFreqToToday = calculateIntervalMean(startIdx, typeActivities.length - 1, true);
+
+            if (avgFreqToToday <= type.desiredFrequency && daysToToday > 0) {
+              if (daysToToday > currentStreak) {
+                currentStreak = daysToToday;
+                currentStreakStart = typeActivities[startIdx].date;
+              }
+            }
+          }
+        }
+
         return {
           activityType: {
             id: type.id,
@@ -217,6 +259,8 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           difference,
           status,
           priorityScore,
+          currentStreak,
+          currentStreakStart: currentStreakStart ? currentStreakStart.toISOString() : null,
         };
       });
 

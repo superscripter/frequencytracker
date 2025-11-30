@@ -1,0 +1,29 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-left-width: 4px;
+  border-left-style: solid;
+  padding-left: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.status-badge-small {
+  border-left-width: 3px;
+  padding-left: 0.5rem;
+}
+
+.status-badge-large {
+  border-left-width: 5px;
+  padding-left: 1rem;
+}
+
+.status-badge-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--status-color);
+}
+
+.status-badge:hover {
+  filter: brightness(1.2);
+}

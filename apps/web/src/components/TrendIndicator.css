@@ -1,0 +1,24 @@
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.trend-value {
+  font-weight: 600;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-arrow {
+  font-size: 1.1rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.trend-indicator:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}

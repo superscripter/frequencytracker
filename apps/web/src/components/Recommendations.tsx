@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ActivityCard from './ActivityCard';
 import './Recommendations.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -21,16 +22,28 @@ interface Recommendation {
   difference: number | null;
   status: 'ahead' | 'due_soon' | 'due_today' | 'overdue' | 'critically_overdue' | 'no_data';
   priorityScore: number;
+  currentStreak: number;
+  currentStreakStart: string | null;
+}
+
+interface UserPreferences {
+  highlightOverdueActivities: boolean;
+  showDetailedCardData: boolean;
 }
 
 export function Recommendations() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    highlightOverdueActivities: false,
+    showDetailedCardData: false,
+  });
   const { user } = useAuth();
 
   useEffect(() => {
     fetchRecommendations();
+    fetchPreferences();
   }, []);
 
   const fetchRecommendations = async () => {
@@ -63,94 +76,58 @@ export function Recommendations() {
     }
   };
 
-  const calculateGradientColor = (value: number | null, desiredFrequency: number): string => {
-    if (value === null) {
-      return 'rgba(136, 136, 136, 0.2)';
-    }
+  const fetchPreferences = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-    const difference = value - desiredFrequency;
+      const response = await fetch(`${API_URL}/api/preferences`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-    let r, g, b;
-
-    if (difference > -1 && difference <= 0) {
-      // Due today: yellow rgb(235, 203, 0)
-      r = 235;
-      g = 203;
-      b = 0;
-    } else if (difference > -2 && difference <= -1) {
-      // Due tomorrow: light yellow rgb(242, 220, 72)
-      r = 242;
-      g = 220;
-      b = 85;
-    } else if (difference <= -2) {
-      // Ahead of schedule (not due for over 2 days): green rgb(68, 204, 82)
-      r = 68;
-      g = 204;
-      b = 82;
-    } else {
-      // RED GRADIENT: Overdue
-      // Range: 0 (just overdue) to +5 (very overdue)
-      // Color range: Light red → Dark red
-      const clampedDiff = Math.min(5, difference);
-      const normalizedPosition = clampedDiff / 5; // 0 (just overdue) to 1 (very overdue)
-
-      // Color gradient:
-      // 0.0 (diff 0): Light red/orange rgb(255, 87, 34)
-      // 0.5 (diff 2.5): Medium red rgb(211, 47, 47)
-      // 1.0 (diff 5): Dark red rgb(139, 0, 0)
-
-      if (normalizedPosition < 0.5) {
-        const t = normalizedPosition / 0.5;
-        r = Math.round(255 + (211 - 255) * t);
-        g = Math.round(87 + (47 - 87) * t);
-        b = Math.round(34 + (47 - 34) * t);
-      } else {
-        const t = (normalizedPosition - 0.5) / 0.5;
-        r = Math.round(211 + (139 - 211) * t);
-        g = Math.round(47 + (0 - 47) * t);
-        b = Math.round(47 + (0 - 47) * t);
+      if (!response.ok) {
+        throw new Error('Failed to fetch preferences');
       }
-    }
 
-    return `rgba(${r}, ${g}, ${b}, 0.8)`;
-  };
-
-
-  const formatAverageFrequency = (avg: number | null): string => {
-    if (avg === null) {
-      return 'N/A';
-    }
-    return avg.toFixed(1);
-  };
-
-  const calculateAverageColor = (value: number | null, desiredFrequency: number): string => {
-    if (value === null) {
-      return 'rgba(136, 136, 136, 0.2)';
-    }
-
-    if (value <= desiredFrequency) {
-      // At or under desired average: green rgb(68, 204, 82)
-      return 'rgba(68, 204, 82, 0.8)';
-    } else {
-      // Over desired average: red rgb(230, 44, 44)
-      return 'rgba(230, 44, 44, 0.8)';
+      const data = await response.json();
+      setPreferences(data.preferences);
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
     }
   };
 
-  const getTrendDisplay = (trend: Recommendation['trend']): { icon: string; text: string } => {
-    switch (trend) {
-      case 'improving':
-        return { icon: '⬆️', text: 'Improving' };
-      case 'declining':
-        return { icon: '⬇️', text: 'Declining' };
-      case 'stable':
-        return { icon: '➡️', text: 'Stable' };
-      case 'insufficient_data':
-        return { icon: '—', text: 'N/A' };
-      default:
-        return { icon: '—', text: 'N/A' };
+  const updatePreference = async (key: keyof UserPreferences, value: boolean) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Optimistically update UI
+      setPreferences(prev => ({ ...prev, [key]: value }));
+
+      const response = await fetch(`${API_URL}/api/preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [key]: value }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update preference');
+      }
+
+      const data = await response.json();
+      setPreferences(data.preferences);
+    } catch (err) {
+      console.error('Failed to update preference:', err);
+      // Revert on error
+      fetchPreferences();
     }
   };
+
 
   // Filter recommendations for today (all activities with difference > -1)
   const todayRecommendations = recommendations.filter(rec =>
@@ -162,65 +139,33 @@ export function Recommendations() {
     rec.difference !== null && rec.difference > -2 && rec.difference <= -1
   );
 
-  const renderTable = (items: Recommendation[]) => {
+  // Get IDs of activities shown in today and tomorrow sections
+  const shownActivityIds = new Set([
+    ...todayRecommendations.map(rec => rec.activityType.id),
+    ...tomorrowRecommendations.map(rec => rec.activityType.id)
+  ]);
+
+  // Filter recommendations for all other activities (not shown in today or tomorrow)
+  const otherRecommendations = recommendations.filter(rec =>
+    !shownActivityIds.has(rec.activityType.id)
+  );
+
+  const renderCards = (items: Recommendation[], section: 'today' | 'tomorrow' | 'other') => {
     if (items.length === 0) {
       return <p className="no-recommendations">No recommendations</p>;
     }
 
     return (
-      <div className="recommendations-table-wrapper">
-        <table className="recommendations-table">
-          <thead>
-            <tr>
-              <th>Activity Type</th>
-              <th>Days Since Last Activity</th>
-              <th>Desired Frequency</th>
-              <th>Last 3 Avg</th>
-              <th>Last 10 Avg</th>
-              <th>Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((rec) => {
-              const trendDisplay = getTrendDisplay(rec.trend);
-              return (
-                <tr key={rec.activityType.id}>
-                  <td className="activity-name">
-                    <strong>{rec.activityType.name}</strong>
-                    {rec.activityType.description && (
-                      <div className="activity-description">{rec.activityType.description}</div>
-                    )}
-                  </td>
-                  <td
-                    className="days-since"
-                    style={{ backgroundColor: calculateGradientColor(rec.daysSinceLastActivity, rec.activityType.desiredFrequency) }}
-                  >
-                    {rec.daysSinceLastActivity !== null ? rec.daysSinceLastActivity : 'N/A'}
-                  </td>
-                  <td className="desired-frequency">
-                    {rec.activityType.desiredFrequency.toFixed(1)}
-                  </td>
-                  <td
-                    className="average-frequency"
-                    style={{ backgroundColor: calculateAverageColor(rec.averageFrequencyLast3, rec.activityType.desiredFrequency) }}
-                  >
-                    {formatAverageFrequency(rec.averageFrequencyLast3)}
-                  </td>
-                  <td
-                    className="average-frequency"
-                    style={{ backgroundColor: calculateAverageColor(rec.averageFrequencyLast10, rec.activityType.desiredFrequency) }}
-                  >
-                    {formatAverageFrequency(rec.averageFrequencyLast10)}
-                  </td>
-                  <td className={`trend-cell trend-${rec.trend}`}>
-                    <span className="trend-icon">{trendDisplay.icon}</span>
-                    <span className="trend-text">{trendDisplay.text}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="activity-cards-grid">
+        {items.map((rec) => (
+          <ActivityCard
+            key={rec.activityType.id}
+            recommendation={rec}
+            section={section}
+            highlightOverdue={preferences.highlightOverdueActivities}
+            showDetailedData={preferences.showDetailedCardData}
+          />
+        ))}
       </div>
     );
   };
@@ -247,20 +192,58 @@ export function Recommendations() {
         <>
           {/* Today Recommendations */}
           <div className="recommendations-section">
-            <h3>Today Recommendations</h3>
-            {renderTable(todayRecommendations)}
+            <div className="section-header">
+              <h3 className="section-title-today">Due Today</h3>
+              {todayRecommendations.length > 0 && (
+                <span className="section-count section-count-today">{todayRecommendations.length}</span>
+              )}
+            </div>
+            {renderCards(todayRecommendations, 'today')}
           </div>
 
           {/* Tomorrow Recommendations */}
           <div className="recommendations-section">
-            <h3>Tomorrow Recommendations</h3>
-            {renderTable(tomorrowRecommendations)}
+            <div className="section-header">
+              <h3 className="section-title-tomorrow">Due Tomorrow</h3>
+              {tomorrowRecommendations.length > 0 && (
+                <span className="section-count section-count-tomorrow">{tomorrowRecommendations.length}</span>
+              )}
+            </div>
+            {renderCards(tomorrowRecommendations, 'tomorrow')}
           </div>
 
-          {/* All Recommendations */}
+          {/* All Other Activities */}
           <div className="recommendations-section">
-            <h3>All Activity Recommendations</h3>
-            {renderTable(recommendations)}
+            <div className="section-header">
+              <h3 className="section-title-other">All Other Activities</h3>
+              {otherRecommendations.length > 0 && (
+                <span className="section-count section-count-other">{otherRecommendations.length}</span>
+              )}
+            </div>
+            {renderCards(otherRecommendations, 'other')}
+          </div>
+
+          {/* Preferences Section */}
+          <div className="recommendations-preferences">
+            <h3 className="preferences-title">Display Preferences</h3>
+            <div className="preferences-controls">
+              <label className="preference-item">
+                <input
+                  type="checkbox"
+                  checked={preferences.highlightOverdueActivities}
+                  onChange={(e) => updatePreference('highlightOverdueActivities', e.target.checked)}
+                />
+                <span className="preference-label">Highlight Overdue Activities</span>
+              </label>
+              <label className="preference-item">
+                <input
+                  type="checkbox"
+                  checked={preferences.showDetailedCardData}
+                  onChange={(e) => updatePreference('showDetailedCardData', e.target.checked)}
+                />
+                <span className="preference-label">Show Detailed Card Data</span>
+              </label>
+            </div>
           </div>
         </>
       )}
