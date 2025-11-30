@@ -76,66 +76,6 @@ export function Analytics() {
     );
   };
 
-  const calculateGradientColor = (value: number | null, desiredFrequency: number): string => {
-    if (value === null) {
-      return 'rgba(136, 136, 136, 0.2)';
-    }
-
-    const difference = value - desiredFrequency;
-
-    let r, g, b;
-
-    if (difference <= 0) {
-      // GREEN GRADIENT: Ahead of schedule or on time
-      // Range: -5 (very ahead) to 0 (due today)
-      // Color range: Dark green → Light green
-      const clampedDiff = Math.max(-5, difference);
-      const normalizedPosition = (clampedDiff + 5) / 5; // 0 (very ahead) to 1 (due today)
-
-      // Color gradient:
-      // 0.0 (diff -5): Dark green rgb(0, 80, 0)
-      // 0.5 (diff -2.5): Medium green rgb(34, 139, 34)
-      // 1.0 (diff 0): Light green rgb(76, 175, 80)
-
-      if (normalizedPosition < 0.5) {
-        const t = normalizedPosition / 0.5;
-        r = Math.round(0 + (34 - 0) * t);
-        g = Math.round(80 + (139 - 80) * t);
-        b = Math.round(0 + (34 - 0) * t);
-      } else {
-        const t = (normalizedPosition - 0.5) / 0.5;
-        r = Math.round(34 + (76 - 34) * t);
-        g = Math.round(139 + (175 - 139) * t);
-        b = Math.round(34 + (80 - 34) * t);
-      }
-    } else {
-      // RED GRADIENT: Overdue
-      // Range: 0 (just overdue) to +5 (very overdue)
-      // Color range: Light red → Dark red
-      const clampedDiff = Math.min(5, difference);
-      const normalizedPosition = clampedDiff / 5; // 0 (just overdue) to 1 (very overdue)
-
-      // Color gradient:
-      // 0.0 (diff 0): Light red/orange rgb(255, 87, 34)
-      // 0.5 (diff 2.5): Medium red rgb(211, 47, 47)
-      // 1.0 (diff 5): Dark red rgb(139, 0, 0)
-
-      if (normalizedPosition < 0.5) {
-        const t = normalizedPosition / 0.5;
-        r = Math.round(255 + (211 - 255) * t);
-        g = Math.round(87 + (47 - 87) * t);
-        b = Math.round(34 + (47 - 34) * t);
-      } else {
-        const t = (normalizedPosition - 0.5) / 0.5;
-        r = Math.round(211 + (139 - 211) * t);
-        g = Math.round(47 + (0 - 47) * t);
-        b = Math.round(47 + (0 - 47) * t);
-      }
-    }
-
-    return `rgba(${r}, ${g}, ${b}, 0.8)`;
-  };
-
   if (isLoading) {
     return <div className="analytics-loading">Loading analytics...</div>;
   }
