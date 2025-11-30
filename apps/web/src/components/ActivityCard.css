@@ -40,7 +40,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--text-color-dark);
   flex: 1;
 }
 
@@ -136,6 +136,46 @@
 
 .activity-card-detailed {
   padding: 1.5rem;
+}
+
+/* Light mode support */
+@media (prefers-color-scheme: light) {
+  .activity-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .activity-card-overdue {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.15);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.15);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(220, 38, 38, 0.4), 0 0 60px rgba(220, 38, 38, 0.25);
+    }
+  }
+
+  .activity-card-title {
+    color: var(--text-color-light);
+  }
+
+  .activity-card-label {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .activity-card-value {
+    color: rgba(0, 0, 0, 0.9);
+  }
+
+  .stat-label {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .stat-value {
+    color: rgba(0, 0, 0, 0.9);
+  }
 }
 
 /* Responsive */

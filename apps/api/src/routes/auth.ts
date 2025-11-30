@@ -45,6 +45,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           name: true,
           timezone: true,
           autoSync: true,
+          enableDailyNotifications: true,
+          notificationTime: true,
+          stravaId: true,
           createdAt: true,
         },
       });
@@ -70,6 +73,18 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       // Find user
       const user = await prisma.user.findUnique({
         where: { email: body.email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          password: true,
+          timezone: true,
+          autoSync: true,
+          enableDailyNotifications: true,
+          notificationTime: true,
+          stravaId: true,
+          createdAt: true,
+        },
       });
 
       if (!user) {
@@ -93,6 +108,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           name: user.name,
           timezone: user.timezone,
           autoSync: user.autoSync,
+          enableDailyNotifications: user.enableDailyNotifications,
+          notificationTime: user.notificationTime,
+          stravaId: user.stravaId,
           createdAt: user.createdAt,
         },
         token,

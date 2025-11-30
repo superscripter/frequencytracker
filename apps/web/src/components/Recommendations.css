@@ -287,8 +287,17 @@
 
 /* Light mode support */
 @media (prefers-color-scheme: light) {
-  .recommendations-section h3 {
-    color: #213547;
+  /* Keep section title colors in light mode - must come before generic h3 rule */
+  .section-title-today {
+    color: #2d9e3a !important; /* Darker green for light mode */
+  }
+
+  .section-title-tomorrow {
+    color: #2b7dd6 !important; /* Darker blue for light mode */
+  }
+
+  .section-title-other {
+    color: #7c3fd9 !important; /* Darker purple for light mode */
   }
 
   .no-recommendations {

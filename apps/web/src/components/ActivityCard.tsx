@@ -38,14 +38,14 @@ export default function ActivityCard({
   highlightOverdue = false,
   showDetailedData = false,
 }: ActivityCardProps) {
-  const getSectionColor = (section: 'today' | 'tomorrow' | 'other'): string => {
+  const getSectionColor = (section: 'today' | 'tomorrow' | 'other'): { dark: string; light: string } => {
     switch (section) {
       case 'today':
-        return '#44cc52'; // Green
+        return { dark: '#44cc52', light: '#2d9e3a' }; // Green
       case 'tomorrow':
-        return '#4a9eff'; // Blue
+        return { dark: '#4a9eff', light: '#2b7dd6' }; // Blue
       case 'other':
-        return '#a66fff'; // Vibrant Purple
+        return { dark: '#a66fff', light: '#7c3fd9' }; // Vibrant Purple
     }
   };
 
@@ -63,11 +63,11 @@ export default function ActivityCard({
   };
 
   const getNumberColor = (value: number | null, desiredFrequency: number): string => {
-    if (value === null) return '#ffffff';
+    if (value === null) return 'inherit';
     return value <= desiredFrequency ? '#44cc52' : '#ef4444'; // green if <= desired, red if >
   };
 
-  const cardColor = getSectionColor(section);
+  const sectionColors = getSectionColor(section);
 
   // Check if card is overdue (1 or more days overdue)
   const isOverdue = rec.difference !== null && rec.difference >= 1;
@@ -77,8 +77,9 @@ export default function ActivityCard({
     <div
       className={`activity-card activity-card-${variant} ${shouldHighlight ? 'activity-card-overdue' : ''}`}
       style={{
-        '--border-color': cardColor,
-        '--text-color': cardColor,
+        '--border-color': sectionColors.dark,
+        '--text-color-dark': sectionColors.dark,
+        '--text-color-light': sectionColors.light,
       } as React.CSSProperties}
     >
       <div className="activity-card-header">

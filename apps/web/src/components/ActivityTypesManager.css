@@ -225,22 +225,64 @@
 }
 
 @media (prefers-color-scheme: light) {
+  /* Form inputs */
+  .add-form input {
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #213547;
+  }
+
+  /* Table */
+  .activity-types-table {
+    background-color: white;
+    border: 1px solid #ddd;
+  }
+
+  .activity-types-table th {
+    background-color: #f5f5f5;
+    color: #213547;
+  }
+
+  .activity-types-table td {
+    color: #213547;
+  }
+
   .activity-types-table th,
   .activity-types-table td {
     border-bottom: 1px solid #ddd;
   }
 
-  .activity-types-table {
-    border: 1px solid #ddd;
+  .activity-types-table th.sortable:hover {
+    background-color: rgba(100, 108, 255, 0.1);
   }
 
   .activity-types-table tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(100, 108, 255, 0.05);
   }
 
-  .add-form input,
-  .activity-types-table .editing input {
+  /* Editable cells */
+  .activity-types-table .editable-cell {
+    background-color: white;
+    color: #213547;
     border: 1px solid #ccc;
-    background: white;
+  }
+
+  .activity-types-table .editable-cell:focus {
+    border-color: #646cff;
+    background-color: rgba(100, 108, 255, 0.05);
+  }
+
+  .activity-types-table .editable-cell:hover {
+    border-color: #999;
+  }
+
+  /* Empty state */
+  .empty-state {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Loading message */
+  .activity-types-loading {
+    color: rgba(0, 0, 0, 0.6);
   }
 }
