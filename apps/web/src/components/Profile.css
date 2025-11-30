@@ -24,18 +24,18 @@
   display: flex;
   gap: 1rem;
   padding: 0.75rem;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .info-row .label {
   font-weight: 600;
   min-width: 100px;
-  color: #b8b8b8;
+  color: var(--color-text-secondary);
 }
 
 .info-row .value {
   flex: 1;
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 .timezone-selector {
@@ -48,11 +48,11 @@
 .timezone-dropdown {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid #666;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 1rem;
   background: #0a0a0a;
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
@@ -109,7 +109,7 @@
   padding: 0.75rem;
   border-radius: 4px;
   font-size: 0.9rem;
-  border: 1px solid #666;
+  border: 1px solid var(--color-border);
 }
 
 .save-message.success {
@@ -193,16 +193,16 @@
 
 .strava-sync label {
   font-size: 0.9rem;
-  color: #b8b8b8;
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
 .sync-date-input {
   padding: 0.5rem;
-  border: 1px solid #666;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background-color: #0a0a0a;
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
   cursor: pointer;
   flex: 1;
@@ -250,7 +250,7 @@
 }
 
 .strava-auto-sync label {
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   font-size: 0.9rem;
   cursor: pointer;
 }
@@ -286,7 +286,7 @@
 }
 
 .notification-label {
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   font-size: 0.95rem;
 }
 
@@ -298,18 +298,18 @@
 }
 
 .notification-time label {
-  color: #b8b8b8;
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
   min-width: 50px;
 }
 
 .time-input {
   padding: 0.5rem;
-  border: 1px solid #666;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 1rem;
   background: #0a0a0a;
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
@@ -381,5 +381,56 @@
 
   .sync-date-input {
     max-width: none;
+  }
+}
+
+/* Light mode support */
+@media (prefers-color-scheme: light) {
+  .timezone-dropdown {
+    background: #ffffff;
+    border-color: var(--color-border);
+  }
+
+  .timezone-dropdown option {
+    background: #ffffff;
+  }
+
+  .save-timezone-btn:disabled {
+    background: #e0e0e0;
+    border-color: #d0d0d0;
+    color: #999999;
+  }
+
+  .sync-date-input {
+    background-color: #ffffff;
+    border-color: var(--color-border);
+  }
+
+  .sync-btn:disabled {
+    background-color: #e0e0e0;
+    border-color: #d0d0d0;
+    color: #999999;
+  }
+
+  .time-input {
+    background: #ffffff;
+    border-color: var(--color-border);
+  }
+
+  .save-time-btn:disabled {
+    background-color: #e0e0e0;
+    border-color: #d0d0d0;
+    color: #999999;
+  }
+
+  .disconnect-strava-btn {
+    background: #e0e0e0;
+    border-color: #d0d0d0;
+    color: #213547;
+  }
+
+  .disconnect-strava-btn:hover {
+    background: #d0d0d0;
+    border-color: #c0c0c0;
   }
 }

@@ -11,6 +11,46 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Brand Colors from Banner */
+  --color-primary-bg: #1a4d4d;
+  --color-primary-bg-lighter: #1f5757;
+  --color-primary-bg-dark: #0d2626;
+  --color-primary-gold: #f2c94c;
+  --color-primary-gold-light: #f7d76e;
+  --color-primary-text: #e8dcc4;
+
+  /* Aurora Accents (Northern Lights) */
+  --color-aurora-green: #00ff88;
+  --color-aurora-blue: #4d9fff;
+  --color-aurora-purple: #b366ff;
+  --color-aurora-pink: #ff6bb3;
+  --color-aurora-teal: #00d4aa;
+
+  /* Functional Status Colors */
+  --color-status-ahead: #44cc52;
+  --color-status-due-soon: #f2db48;
+  --color-status-due-today: #ebcb00;
+  --color-status-overdue-light: #ff5722;
+  --color-status-overdue-dark: #d32f2f;
+  --color-status-critically-overdue: #8b0000;
+  --color-status-neutral: #888888;
+
+  /* Trend Colors */
+  --color-trend-improving: var(--color-aurora-green);
+  --color-trend-declining: var(--color-aurora-pink);
+  --color-trend-stable: var(--color-aurora-blue);
+  --color-trend-insufficient: var(--color-status-neutral);
+
+  /* UI Elements */
+  --color-card-bg: rgba(26, 77, 77, 0.12);
+  --color-card-bg-hover: rgba(26, 77, 77, 0.2);
+  --color-border: #555;
+  --color-border-subtle: #444;
+  --color-border-active: var(--color-aurora-teal);
+  --color-text-primary: #e8e8e8;
+  --color-text-secondary: #b8b8b8;
+  --color-text-muted: #888888;
 }
 
 a {
@@ -68,15 +108,105 @@ button:focus-visible {
   }
 }
 
+/* Animations */
+@keyframes aurora-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(77, 159, 255, 0.3);
+  }
+}
+
+@keyframes aurora-glow-green {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+  }
+}
+
+@keyframes aurora-glow-pink {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 107, 179, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 107, 179, 0.5);
+  }
+}
+
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
+    color-scheme: light;
+
+    /* Brand Colors adjusted for light mode */
+    --color-primary-bg: #e8f4f4;
+    --color-primary-bg-lighter: #f0f8f8;
+    --color-primary-bg-dark: #d0e8e8;
+    --color-primary-gold: #c29d1a;
+    --color-primary-gold-light: #d4af2c;
+    --color-primary-text: #2c2416;
+
+    /* Aurora Accents (adjusted for light mode) */
+    --color-aurora-green: #00b366;
+    --color-aurora-blue: #2277dd;
+    --color-aurora-purple: #8844dd;
+    --color-aurora-pink: #dd4488;
+    --color-aurora-teal: #00a088;
+
+    /* Functional Status Colors (adjusted for light mode) */
+    --color-status-ahead: #2d9939;
+    --color-status-due-soon: #c2ab00;
+    --color-status-due-today: #b89d00;
+    --color-status-overdue-light: #d94422;
+    --color-status-overdue-dark: #b92a26;
+    --color-status-critically-overdue: #880000;
+    --color-status-neutral: #666666;
+
+    /* Trend Colors */
+    --color-trend-improving: var(--color-aurora-green);
+    --color-trend-declining: var(--color-aurora-pink);
+    --color-trend-stable: var(--color-aurora-blue);
+    --color-trend-insufficient: var(--color-status-neutral);
+
+    /* UI Elements for light mode */
+    --color-card-bg: rgba(26, 77, 77, 0.05);
+    --color-card-bg-hover: rgba(26, 77, 77, 0.1);
+    --color-border: #cccccc;
+    --color-border-subtle: #dddddd;
+    --color-border-active: var(--color-aurora-teal);
+    --color-text-primary: #213547;
+    --color-text-secondary: #4a5568;
+    --color-text-muted: #718096;
   }
   a:hover {
     color: #747bff;
   }
   button {
     background-color: #f9f9f9;
+    color: #213547;
   }
 }

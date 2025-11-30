@@ -63,9 +63,56 @@
 }
 
 h2 {
-  margin: 0 0 1rem 0;
-  color: #ffffff;
+  margin: 2rem 0 1rem 0;
+  color: var(--color-primary-gold);
   font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.analytics-details {
+  margin-bottom: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-card-bg);
+  overflow: hidden;
+}
+
+.analytics-summary {
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analytics-summary:hover {
+  background-color: var(--color-card-bg-hover);
+  color: var(--color-primary-gold-light);
+}
+
+.analytics-summary::before {
+  content: '▸';
+  display: inline-block;
+  transition: transform 0.3s ease;
+  color: var(--color-aurora-teal);
+  font-size: 0.875rem;
+}
+
+.analytics-details[open] .analytics-summary::before {
+  transform: rotate(90deg);
+}
+
+.analytics-details[open] .analytics-table-wrapper {
+  border-top: 1px solid var(--color-border-subtle);
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
 }
 
 /* Status color classes - background color */

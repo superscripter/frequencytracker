@@ -20,26 +20,22 @@ const stravaRoutes: FastifyPluginAsync = async (fastify) => {
       // Verify the token from query parameter
       const decoded = fastify.jwt.verify(query.token) as { userId: string };
 
-      // DEBUG: Log environment variables
-      fastify.log.info({
-        fastifyConfigKeys: Object.keys(fastify.config),
-        stravaClientId: {
-          fromFastifyConfig: fastify.config.STRAVA_CLIENT_ID,
-          fromProcessEnv: process.env.STRAVA_CLIENT_ID,
-        },
-        stravaRedirectUri: {
-          fromFastifyConfig: fastify.config.STRAVA_REDIRECT_URI,
-          fromProcessEnv: process.env.STRAVA_REDIRECT_URI,
-        }
-      }, 'DEBUG: Strava environment variables');
-
       const clientId = fastify.config.STRAVA_CLIENT_ID || process.env.STRAVA_CLIENT_ID;
       const redirectUri = fastify.config.STRAVA_REDIRECT_URI || process.env.STRAVA_REDIRECT_URI;
 
+      // DEBUG: Log environment variables
+      fastify.log.info({
+        clientId: clientId ? `${clientId.substring(0, 6)}...` : 'NOT_SET',
+        redirectUri: redirectUri || 'NOT_SET',
+        requestHost: request.headers.host,
+        requestProtocol: request.protocol,
+      }, 'Strava OAuth authorize request');
+
       if (!clientId || !redirectUri) {
-        return reply.code(500).send({
-          error: 'Strava OAuth is not configured',
-        });
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        return reply.redirect(
+          `${frontendUrl}/profile?strava_error=${encodeURIComponent('Strava OAuth is not configured on the server')}`
+        );
       }
 
       // Store user ID in state parameter for OAuth callback
@@ -53,12 +49,18 @@ const stravaRoutes: FastifyPluginAsync = async (fastify) => {
       authUrl.searchParams.set('scope', 'activity:read_all,activity:write');
       authUrl.searchParams.set('state', state);
 
+      fastify.log.info({
+        authUrl: authUrl.toString(),
+        redirectUri: redirectUri,
+      }, 'Redirecting to Strava OAuth');
+
       return reply.redirect(authUrl.toString());
     } catch (error) {
       fastify.log.error(error);
-      return reply.code(401).send({
-        error: 'Invalid token',
-      });
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      return reply.redirect(
+        `${frontendUrl}/profile?strava_error=${encodeURIComponent('Authentication failed - please try again')}`
+      );
     }
   });
 
@@ -134,6 +136,23 @@ const stravaRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       connected: !!user?.stravaId,
       stravaId: user?.stravaId,
+    });
+  });
+
+  // GET /api/strava/config - Check Strava configuration (for debugging)
+  fastify.get('/config', async (request, reply) => {
+    const clientId = fastify.config.STRAVA_CLIENT_ID || process.env.STRAVA_CLIENT_ID;
+    const redirectUri = fastify.config.STRAVA_REDIRECT_URI || process.env.STRAVA_REDIRECT_URI;
+
+    return reply.send({
+      configured: !!(clientId && redirectUri),
+      clientId: clientId ? `${clientId.substring(0, 6)}...` : null,
+      redirectUri: redirectUri || null,
+      message: !clientId || !redirectUri
+        ? 'Strava OAuth is not fully configured. Missing: ' +
+          (!clientId ? 'STRAVA_CLIENT_ID ' : '') +
+          (!redirectUri ? 'STRAVA_REDIRECT_URI' : '')
+        : 'Strava OAuth is configured',
     });
   });
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
+import ActivityChart from './ActivityChart';
 import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -147,76 +148,125 @@ export function Analytics() {
     return <div className="analytics-error">Please log in to view analytics</div>;
   }
 
+  // Prepare data for frequency comparison chart
+  const frequencyComparisonData = analytics.map(item => ({
+    name: item.activityType.length > 15 ? item.activityType.substring(0, 15) + '...' : item.activityType,
+    desired: item.desiredFrequency,
+    actual: item.totalAvgFrequency > 0 ? item.totalAvgFrequency : 0
+  }));
+
+  // Prepare data for streaks chart
+  const streaksChartData = streaks
+    .filter(item => item.longestStreak > 0)
+    .map(item => ({
+      name: item.activityType.length > 15 ? item.activityType.substring(0, 15) + '...' : item.activityType,
+      value: item.longestStreak
+    }));
+
   return (
     <div className="analytics-container">
-      <h2>Overview</h2>
+      <h2>Activity Performance</h2>
 
       {analytics.length === 0 ? (
         <div className="analytics-empty">
           <p>No activity types yet. Create some activity types in your Profile!</p>
         </div>
       ) : (
-        <div className="analytics-table-wrapper">
-          <table className="analytics-table">
-            <thead>
-              <tr>
-                <th>Activity Type</th>
-                <th>Desired Frequency</th>
-                <th>Total Avg Frequency</th>
-                <th>Date of First Activity</th>
-                <th>Number of Activities</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analytics.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.activityType}</td>
-                  <td>{item.desiredFrequency.toFixed(1)}</td>
-                  <td
-                    style={{ backgroundColor: calculateGradientColor(item.totalAvgFrequency, item.desiredFrequency) }}
-                  >
-                    {item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}
-                  </td>
-                  <td>{formatDate(item.dateOfFirstActivity)}</td>
-                  <td>{item.numberOfActivities}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <ActivityChart
+            type="comparison-bar"
+            data={frequencyComparisonData}
+            title="Frequency Comparison"
+          />
+
+          <details className="analytics-details" open>
+            <summary className="analytics-summary">Detailed Statistics</summary>
+            <div className="analytics-table-wrapper">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Activity Type</th>
+                    <th>Desired</th>
+                    <th>Total Avg</th>
+                    <th>First Activity</th>
+                    <th>Total Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.map((item, index) => (
+                    <tr key={index}>
+                      <td><strong>{item.activityType}</strong></td>
+                      <td>{item.desiredFrequency.toFixed(1)}</td>
+                      <td
+                        style={{
+                          color: item.totalAvgFrequency <= item.desiredFrequency
+                            ? 'var(--color-status-ahead)'
+                            : 'var(--color-status-overdue-light)'
+                        }}
+                      >
+                        <strong>{item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}</strong>
+                      </td>
+                      <td>{formatDate(item.dateOfFirstActivity)}</td>
+                      <td>{item.numberOfActivities}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </>
       )}
 
-      <h2>Streaks</h2>
+      <h2>Longest Streaks</h2>
 
       {streaks.length === 0 ? (
         <div className="analytics-empty">
           <p>No streaks yet. Add more activities to track streaks!</p>
         </div>
       ) : (
-        <div className="analytics-table-wrapper">
-          <table className="analytics-table">
-            <thead>
-              <tr>
-                <th>Activity Type</th>
-                <th>Longest Streak</th>
-                <th>Average Frequency</th>
-                <th>Streak Start</th>
-                <th>Streak End</th>
-              </tr>
-            </thead>
-            <tbody>
-              {streaks.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.activityType}</td>
-                  <td>{item.longestStreak > 0 ? item.longestStreak : 'N/A'}</td>
-                  <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
-                  <td>{formatDate(item.streakStart)}</td>
-                  <td>{formatDate(item.streakEnd)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {streaksChartData.length > 0 && (
+            <ActivityChart
+              type="horizontal-bar"
+              data={streaksChartData}
+              title="Streak Achievements"
+            />
+          )}
+
+          <details className="analytics-details" open>
+            <summary className="analytics-summary">Streak Details</summary>
+            <div className="analytics-table-wrapper">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Activity Type</th>
+                    <th>Longest Streak</th>
+                    <th>Avg Frequency</th>
+                    <th>Streak Period</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {streaks.map((item, index) => (
+                    <tr key={index}>
+                      <td><strong>{item.activityType}</strong></td>
+                      <td>
+                        <span style={{ color: 'var(--color-aurora-green)', fontWeight: 600 }}>
+                          {item.longestStreak > 0 ? `${item.longestStreak} days` : 'N/A'}
+                        </span>
+                      </td>
+                      <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
+                      <td>
+                        {item.streakStart && item.streakEnd
+                          ? `${formatDate(item.streakStart)} - ${formatDate(item.streakEnd)}`
+                          : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </>
       )}
     </div>
   );
