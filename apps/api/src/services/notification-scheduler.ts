@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { prisma } from '@frequency-tracker/database';
 import webpush from 'web-push';
-import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { startOfDay, subDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { syncStravaActivities } from './strava.js';
 
@@ -122,30 +122,22 @@ async function sendDailyNotifications() {
 
     console.log(`[Notification Scheduler] Found ${usersWithSubscriptions.length} users with notifications enabled`);
 
-    // Filter users who should receive notifications at this time
+    // Check if it's 6:00 AM in Denver time (MST/MDT)
+    // Vercel only allows one cron job per day, so we send to ALL users at 6:00 AM Denver time
     const now = new Date();
-    const usersToNotify = usersWithSubscriptions.filter(user => {
-      // Use America/Denver (MST/MDT) as default timezone to match original behavior
-      const userTimezone = user.timezone || 'America/Denver';
-      const userTime = toZonedTime(now, userTimezone);
-      const userHour = userTime.getHours();
-      const userMinute = userTime.getMinutes();
+    const denverTime = toZonedTime(now, 'America/Denver');
+    const denverHour = denverTime.getHours();
+    const denverMinute = denverTime.getMinutes();
 
-      // Default notification time is 06:00 (6:00 AM) to match UI
-      const notificationTime = user.notificationTime || '06:00';
-      const [targetHour, targetMinute] = notificationTime.split(':').map(Number);
-
-      // Send if current time matches target time (within the same minute)
-      return userHour === targetHour && userMinute === targetMinute;
-    });
-
-    console.log(`[Notification Scheduler] ${usersToNotify.length} users should receive notifications at this time`);
-
-    if (usersToNotify.length === 0) {
-      return; // No users to notify at this time
+    // Only send notifications at 6:00 AM Denver time
+    if (denverHour !== 6 || denverMinute !== 0) {
+      console.log(`[Notification Scheduler] Not 6:00 AM Denver time yet (current: ${denverHour}:${denverMinute.toString().padStart(2, '0')})`);
+      return; // Not the right time yet
     }
 
-    for (const user of usersToNotify) {
+    console.log(`[Notification Scheduler] It's 6:00 AM Denver time - sending to all ${usersWithSubscriptions.length} users`);
+
+    for (const user of usersWithSubscriptions) {
       try {
         // Sync Strava activities if auto-sync is enabled
         if (user.autoSync && user.stravaId) {
