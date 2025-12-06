@@ -141,17 +141,18 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
 
         // Helper function to calculate interval mean from N activities
         // Calculates the average number of days between consecutive activities
-        // Includes the partial interval from the last activity to today
-        const calculateAverageFrequency = (activities: typeof typeActivities, maxCount: number): number | null => {
-          if (activities.length < 1) {
+        // Uses only completed intervals (does NOT include partial interval to today)
+        // For Last N Avg, we use up to N intervals (from up to N+1 activities)
+        const calculateAverageFrequency = (activities: typeof typeActivities, maxIntervalCount: number): number | null => {
+          // We need at least 2 activities to calculate 1 interval
+          if (activities.length < 2) {
             return null;
           }
 
-          // Determine how many activities to use (up to maxCount, but at least what we have)
-          const countToUse = Math.min(maxCount, activities.length);
-
-          // Get the most recent N activities
-          const recentActivities = activities.slice(0, countToUse);
+          // Get up to (maxIntervalCount + 1) activities, or all we have if less
+          // e.g., for Last 3 Avg: get up to 4 activities to calculate up to 3 intervals
+          const activitiesToUse = Math.min(maxIntervalCount + 1, activities.length);
+          const recentActivities = activities.slice(0, activitiesToUse);
 
           // Calculate intervals between consecutive activities
           const intervals: number[] = [];
@@ -166,12 +167,6 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
             const interval = differenceInDays(currentActivityMidnight, nextActivityMidnight);
             intervals.push(interval);
           }
-
-          // Add the partial interval from the most recent activity to today
-          const lastActivityInUserTz = toZonedTime(recentActivities[0].date, userTimezone);
-          const lastActivityMidnight = startOfDay(lastActivityInUserTz);
-          const partialInterval = differenceInDays(midnightToday, lastActivityMidnight);
-          intervals.push(partialInterval);
 
           // Calculate the mean of all intervals
           const sum = intervals.reduce((acc, val) => acc + val, 0);
@@ -204,41 +199,47 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           trend = 'stable';
         }
 
-        // Calculate current streak (days from most recent valid window extending to today)
-        // A streak is active if the average frequency meets the desired frequency
+        // Calculate current streak using same logic as analytics
+        // The end must be the most recent activity (not today)
+        // The start can be any earlier activity where the average interval <= desired frequency
+        // It's possible there won't be a valid streak to show
         let currentStreak = 0;
         let currentStreakStart: Date | null = null;
-        if (typeActivities.length >= 1) {
-          const activityMidnights = typeActivities.map((a) => {
+        if (typeActivities.length >= 2) {
+          // Activities are already in descending order (most recent first)
+          // We need them in ascending order for calculations, so reverse
+          const activitiesAsc = [...typeActivities].reverse();
+
+          const activityMidnights = activitiesAsc.map((a) => {
             const inUserTz = toZonedTime(a.date, userTimezone);
             return startOfDay(inUserTz);
           });
 
-          // Helper to calculate interval mean for a window
-          const calculateIntervalMean = (startIdx: number, endIdx: number, includeToday: boolean): number => {
+          // The end must be the most recent activity (last in ascending array)
+          const endIdx = activitiesAsc.length - 1;
+          const windowEnd = activityMidnights[endIdx];
+
+          // Try each possible starting activity (must be before the end)
+          for (let startIdx = 0; startIdx < endIdx; startIdx++) {
+            const windowStart = activityMidnights[startIdx];
+            const daysInWindow = differenceInDays(windowEnd, windowStart);
+
+            // Calculate intervals between consecutive activities in this window
             const intervals: number[] = [];
             for (let i = startIdx; i < endIdx; i++) {
-              const interval = differenceInDays(activityMidnights[i], activityMidnights[i + 1]);
+              const interval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
               intervals.push(interval);
             }
-            if (includeToday) {
-              const partialInterval = differenceInDays(midnightToday, activityMidnights[startIdx]);
-              intervals.push(partialInterval);
-            }
-            if (intervals.length === 0) return 0;
-            return intervals.reduce((acc, val) => acc + val, 0) / intervals.length;
-          };
 
-          // Check if there's a valid streak from any starting activity to today
-          for (let startIdx = 0; startIdx < typeActivities.length; startIdx++) {
-            const windowStart = activityMidnights[startIdx];
-            const daysToToday = differenceInDays(midnightToday, windowStart);
-            const avgFreqToToday = calculateIntervalMean(startIdx, typeActivities.length - 1, true);
+            // Calculate the mean of all intervals
+            if (intervals.length > 0) {
+              const sum = intervals.reduce((acc, val) => acc + val, 0);
+              const avgFreq = sum / intervals.length;
 
-            if (avgFreqToToday <= type.desiredFrequency && daysToToday > 0) {
-              if (daysToToday > currentStreak) {
-                currentStreak = daysToToday;
-                currentStreakStart = typeActivities[startIdx].date;
+              // Check if this window meets the desired frequency
+              if (avgFreq <= type.desiredFrequency && daysInWindow > currentStreak) {
+                currentStreak = daysInWindow;
+                currentStreakStart = activitiesAsc[startIdx].date;
               }
             }
           }

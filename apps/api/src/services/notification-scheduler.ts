@@ -22,6 +22,7 @@ interface Recommendation {
   status: string;
   priorityScore: number;
   daysSinceLastActivity: number | null;
+  difference: number | null;
 }
 
 async function getUserRecommendations(userId: string, userTimezone: string): Promise<Recommendation[]> {
@@ -57,23 +58,23 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
     // desiredFrequency is already in days between activities
     const expectedFrequencyDays = activityType.desiredFrequency;
 
-    // Calculate how overdue the activity is
-    const daysOverdue = daysSinceLastActivity !== null
+    // Calculate how overdue the activity is (difference from desired frequency)
+    const difference = daysSinceLastActivity !== null
       ? daysSinceLastActivity - expectedFrequencyDays
       : 999; // If never done, treat as very overdue
 
-    // Determine status based on daysOverdue
+    // Determine status based on difference
     // Match the logic from recommendations.ts for consistency
     let status = 'ahead';
-    if (daysOverdue > 4) {
+    if (difference > 4) {
       status = 'critically_overdue';
-    } else if (daysOverdue > 2 && daysOverdue <= 4) {
+    } else if (difference > 2 && difference <= 4) {
       status = 'overdue';
-    } else if (daysOverdue >= 1 && daysOverdue <= 2) {
+    } else if (difference >= 1 && difference <= 2) {
       status = 'due_soon';
-    } else if (daysOverdue >= 0 && daysOverdue < 1) {
+    } else if (difference >= -1 && difference < 1) {
       status = 'due_today';
-    } else if (daysOverdue >= -2 && daysOverdue < 0) {
+    } else if (difference < -1) {
       status = 'ahead';
     }
 
@@ -88,6 +89,7 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
       status,
       priorityScore,
       daysSinceLastActivity,
+      difference,
     });
   }
 
@@ -143,19 +145,16 @@ async function sendDailyNotifications() {
         const userTimezone = user.timezone || 'America/Denver';
         const recommendations = await getUserRecommendations(user.id, userTimezone);
 
-        // Separate recommendations by urgency
+        // Separate recommendations by urgency using difference field
+        // Match the logic from frontend: Recommendations.tsx
+        // Today: difference > -1 (activities that are overdue or due today)
+        // Tomorrow: difference > -2 && difference <= -1 (activities due tomorrow)
         const todayActivities = recommendations.filter(
-          (rec) => rec.status === 'due_today' || rec.status === 'overdue' || rec.status === 'critically_overdue'
+          (rec) => rec.difference !== null && rec.difference > -1
         );
         const tomorrowActivities = recommendations.filter(
-          (rec) => rec.status === 'due_soon'
+          (rec) => rec.difference !== null && rec.difference > -2 && rec.difference <= -1
         );
-
-        // Skip if no activities to show
-        if (todayActivities.length === 0 && tomorrowActivities.length === 0) {
-          console.log(`[Notification Scheduler] No recommendations for user ${user.id}`);
-          continue;
-        }
 
         // Create title with today's activities
         let title = '';
@@ -167,7 +166,7 @@ async function sendDailyNotifications() {
             title = `Today: ${names.join(', ')}`;
           }
         } else {
-          title = 'Frequency Tracker';
+          title = 'No activities due today';
         }
 
         // Create body with tomorrow's activities
@@ -179,8 +178,8 @@ async function sendDailyNotifications() {
           } else {
             body = `Tomorrow: ${names.join(', ')}`;
           }
-        } else if (todayActivities.length === 0) {
-          body = 'Check your activity recommendations';
+        } else {
+          body = 'No activities due tomorrow';
         }
 
         const payload = JSON.stringify({

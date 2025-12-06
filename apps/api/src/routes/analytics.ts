@@ -65,9 +65,9 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         if (numberOfActivities > 0) {
           dateOfFirstActivity = activities[0].date.toISOString();
 
-          // Calculate total avg frequency using interval mean
-          // This measures the average number of days between consecutive activities
-          if (numberOfActivities >= 1) {
+          // Calculate total avg frequency as average interval between activities
+          // Only considers the period from first to last activity (does not include time after last activity)
+          if (numberOfActivities >= 2) {
             const intervals: number[] = [];
 
             // Calculate intervals between consecutive activities
@@ -81,12 +81,6 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
               const interval = differenceInDays(nextActivityMidnight, currentActivityMidnight);
               intervals.push(interval);
             }
-
-            // Add the partial interval from the most recent activity to today
-            const lastActivityInUserTz = toZonedTime(activities[activities.length - 1].date, userTimezone);
-            const lastActivityMidnight = startOfDay(lastActivityInUserTz);
-            const partialInterval = differenceInDays(midnightToday, lastActivityMidnight);
-            intervals.push(partialInterval);
 
             // Calculate the mean of all intervals
             if (intervals.length > 0) {
@@ -106,8 +100,9 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       // Calculate streaks for each activity type
-      // A streak is the longest window of time where the average frequency <= desired frequency
-      // We need to find the optimal window, not just greedily extend from start
+      // A streak is the longest period between two activity dates where the average interval <= desired frequency
+      // The start and end dates must be actual activity dates (not today)
+      // Days since the most recent activity are NOT included in the calculation
       const streaks: StreakData[] = activityTypes.map((type) => {
         const activities = type.activities;
         const desiredFrequency = type.desiredFrequency;
@@ -117,75 +112,41 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         let longestStreakStart: Date | null = null;
         let longestStreakEnd: Date | null = null;
 
-        // Need at least 1 activity to calculate a streak
-        if (activities.length >= 1) {
+        // Need at least 2 activities to calculate a meaningful streak with intervals
+        if (activities.length >= 2) {
           // Pre-calculate all activity dates in user timezone as midnight
           const activityMidnights = activities.map((a) => {
             const inUserTz = toZonedTime(a.date, userTimezone);
             return startOfDay(inUserTz);
           });
 
-          // For each possible starting activity, find the longest valid window
+          // For each possible starting activity, find the longest valid window ending at an activity
           for (let startIdx = 0; startIdx < activities.length; startIdx++) {
             const windowStart = activityMidnights[startIdx];
 
-            // Helper function to calculate interval mean for a window of activities
-            const calculateIntervalMean = (startIdx: number, endIdx: number, includeToday: boolean): number => {
-              const intervals: number[] = [];
+            // Try each possible ending activity (must be after start)
+            for (let endIdx = startIdx + 1; endIdx < activities.length; endIdx++) {
+              const windowEnd = activityMidnights[endIdx];
+              const daysInWindow = differenceInDays(windowEnd, windowStart);
 
-              // Calculate intervals between consecutive activities in the window
+              // Calculate intervals between consecutive activities in this window
+              const intervals: number[] = [];
               for (let i = startIdx; i < endIdx; i++) {
                 const interval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
                 intervals.push(interval);
               }
 
-              // If including today, add the partial interval from the last activity to today
-              if (includeToday) {
-                const partialInterval = differenceInDays(midnightToday, activityMidnights[endIdx]);
-                intervals.push(partialInterval);
-              }
-
               // Calculate the mean of all intervals
-              if (intervals.length === 0) return 0;
-              const sum = intervals.reduce((acc, val) => acc + val, 0);
-              return sum / intervals.length;
-            };
+              if (intervals.length > 0) {
+                const sum = intervals.reduce((acc, val) => acc + val, 0);
+                const avgFreq = sum / intervals.length;
 
-            // Try extending to today first (if this is a current/ongoing streak)
-            // Check if we can include all activities from startIdx to end AND extend to today
-            const daysToToday = differenceInDays(midnightToday, windowStart);
-            const avgFreqToToday = calculateIntervalMean(startIdx, activities.length - 1, true);
-
-            if (avgFreqToToday <= desiredFrequency && daysToToday > 0) {
-              // The entire window from this start to today is valid
-              if (daysToToday > longestStreak) {
-                longestStreak = daysToToday;
-                longestStreakStart = activities[startIdx].date;
-                longestStreakEnd = nowUtc; // Current time means streak extends to today
-                longestStreakAvgFreq = Math.round(avgFreqToToday * 10) / 10;
-              }
-            } else {
-              // Can't extend to today, find the furthest end point that works
-              // Use binary search or linear scan to find the longest valid window
-              for (let endIdx = activities.length - 1; endIdx >= startIdx; endIdx--) {
-                const windowEnd = activityMidnights[endIdx];
-                const daysInWindow = differenceInDays(windowEnd, windowStart);
-
-                // Need at least 1 day span to have a meaningful frequency
-                if (daysInWindow <= 0) continue;
-
-                const avgFreq = calculateIntervalMean(startIdx, endIdx, false);
-
-                if (avgFreq <= desiredFrequency) {
-                  // This window is valid - check if it's the longest
-                  if (daysInWindow > longestStreak) {
-                    longestStreak = daysInWindow;
-                    longestStreakStart = activities[startIdx].date;
-                    longestStreakEnd = activities[endIdx].date;
-                    longestStreakAvgFreq = Math.round(avgFreq * 10) / 10;
-                  }
-                  // Found the longest valid window for this start, no need to check shorter ones
-                  break;
+                // Check if this window meets the desired frequency
+                if (avgFreq <= desiredFrequency && daysInWindow > longestStreak) {
+                  longestStreak = daysInWindow;
+                  longestStreakStart = activities[startIdx].date;
+                  longestStreakEnd = activities[endIdx].date;
+                  longestStreakAvgFreq = Math.round(avgFreq * 10) / 10;
                 }
               }
             }
