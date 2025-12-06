@@ -98,14 +98,9 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
 }
 
 async function sendDailyNotifications() {
-  console.log('[Notification Scheduler] Starting daily notification send...');
+  console.log('[Notification Scheduler] Checking if it\'s time to send notifications...');
 
   try {
-    // Get the current time in server timezone
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
     // Get all users with push subscriptions and notifications enabled
     const usersWithSubscriptions = await prisma.user.findMany({
       where: {
@@ -118,6 +113,7 @@ async function sendDailyNotifications() {
         id: true,
         name: true,
         timezone: true,
+        notificationTime: true,
         autoSync: true,
         stravaId: true,
         pushSubscriptions: true,
@@ -126,7 +122,29 @@ async function sendDailyNotifications() {
 
     console.log(`[Notification Scheduler] Found ${usersWithSubscriptions.length} users with notifications enabled`);
 
-    for (const user of usersWithSubscriptions) {
+    // Filter users who should receive notifications at this time
+    const now = new Date();
+    const usersToNotify = usersWithSubscriptions.filter(user => {
+      const userTimezone = user.timezone || 'America/Denver';
+      const userTime = toZonedTime(now, userTimezone);
+      const userHour = userTime.getHours();
+      const userMinute = userTime.getMinutes();
+
+      // Default notification time is 08:00 (8:00 AM)
+      const notificationTime = user.notificationTime || '08:00';
+      const [targetHour, targetMinute] = notificationTime.split(':').map(Number);
+
+      // Send if current time matches target time (within the same minute)
+      return userHour === targetHour && userMinute === targetMinute;
+    });
+
+    console.log(`[Notification Scheduler] ${usersToNotify.length} users should receive notifications at this time`);
+
+    if (usersToNotify.length === 0) {
+      return; // No users to notify at this time
+    }
+
+    for (const user of usersToNotify) {
       try {
         // Sync Strava activities if auto-sync is enabled
         if (user.autoSync && user.stravaId) {

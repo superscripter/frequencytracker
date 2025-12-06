@@ -225,6 +225,34 @@ function getPossibleActivityTypeNames(stravaType: string, sportType: string): st
 }
 
 /**
+ * Check if activity name matches any user-defined sync rules
+ * Returns the activity type if a rule matches (case-insensitive)
+ */
+async function checkSyncRules(
+  userId: string,
+  activityName: string
+): Promise<{ id: string; name: string } | null> {
+  // Fetch user's sync rules
+  const rules = await prisma.stravaSyncRule.findMany({
+    where: { userId },
+    include: {
+      activityType: {
+        select: { id: true, name: true },
+      },
+    },
+  });
+
+  // Check each rule (case-insensitive)
+  for (const rule of rules) {
+    if (activityName.toLowerCase().includes(rule.containsText.toLowerCase())) {
+      return rule.activityType;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Find matching activity type for a Strava activity
  * Returns the user's activity type if a match is found (case-insensitive)
  */
@@ -290,12 +318,17 @@ export async function syncStravaActivities(
         continue;
       }
 
-      // Try to find a matching activity type from user's existing types
-      const matchingActivityType = await findMatchingActivityType(
-        userId,
-        stravaActivity.type,
-        stravaActivity.sport_type
-      );
+      // First, check if activity name matches any user-defined sync rules
+      let matchingActivityType = await checkSyncRules(userId, stravaActivity.name);
+
+      // If no rule matched, try the default type matching
+      if (!matchingActivityType) {
+        matchingActivityType = await findMatchingActivityType(
+          userId,
+          stravaActivity.type,
+          stravaActivity.sport_type
+        );
+      }
 
       if (!matchingActivityType) {
         // No matching activity type found - skip this activity

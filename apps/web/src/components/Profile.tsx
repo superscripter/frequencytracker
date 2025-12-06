@@ -15,6 +15,18 @@ const US_TIMEZONES = [
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
+interface ActivityType {
+  id: string
+  name: string
+}
+
+interface SyncRule {
+  id: string
+  containsText: string
+  activityTypeId: string
+  activityType: ActivityType
+}
+
 export function Profile() {
   const { user, logout, refreshUser } = useAuth()
   const [timezone, setTimezone] = useState<string>('')
@@ -36,6 +48,13 @@ export function Profile() {
   })
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState('')
+
+  // Sync rules state
+  const [syncRules, setSyncRules] = useState<SyncRule[]>([])
+  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
+  const [newRuleText, setNewRuleText] = useState('')
+  const [newRuleActivityTypeId, setNewRuleActivityTypeId] = useState('')
+  const [isAddingRule, setIsAddingRule] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -63,6 +82,50 @@ export function Profile() {
       setTimeout(() => setStravaMessage(''), 5000)
     }
   }, [])
+
+  // Fetch sync rules when user has Strava connected
+  useEffect(() => {
+    if (user?.stravaId) {
+      fetchSyncRules()
+      fetchActivityTypes()
+    }
+  }, [user?.stravaId])
+
+  const fetchSyncRules = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/strava/sync-rules`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setSyncRules(data)
+      }
+    } catch (error) {
+      console.error('Error fetching sync rules:', error)
+    }
+  }
+
+  const fetchActivityTypes = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/activity-types`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setActivityTypes(data)
+      }
+    } catch (error) {
+      console.error('Error fetching activity types:', error)
+    }
+  }
 
   const handleSaveTimezone = async () => {
     try {
@@ -191,6 +254,65 @@ export function Profile() {
   const handleEnableNotificationsChange = (checked: boolean) => {
     setEnableDailyNotifications(checked)
     handleNotificationSettingsChange({ enableDailyNotifications: checked })
+  }
+
+  const handleAddSyncRule = async () => {
+    if (!newRuleText.trim() || !newRuleActivityTypeId) {
+      return
+    }
+
+    try {
+      setIsAddingRule(true)
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/strava/sync-rules`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          containsText: newRuleText.trim(),
+          activityTypeId: newRuleActivityTypeId,
+        }),
+      })
+
+      if (response.ok) {
+        const newRule = await response.json()
+        setSyncRules([...syncRules, newRule])
+        setNewRuleText('')
+        setNewRuleActivityTypeId('')
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Failed to add sync rule')
+      }
+    } catch (error) {
+      console.error('Error adding sync rule:', error)
+      alert('Failed to add sync rule')
+    } finally {
+      setIsAddingRule(false)
+    }
+  }
+
+  const handleDeleteSyncRule = async (ruleId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/strava/sync-rules/${ruleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        setSyncRules(syncRules.filter((rule) => rule.id !== ruleId))
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Failed to delete sync rule')
+      }
+    } catch (error) {
+      console.error('Error deleting sync rule:', error)
+      alert('Failed to delete sync rule')
+    }
   }
 
   const handleSyncActivities = async () => {
@@ -333,6 +455,64 @@ export function Profile() {
                     />
                     <label htmlFor="auto-sync">Auto-sync on page load</label>
                   </div>
+                  <details className="strava-sync-rules">
+                    <summary className="sync-rules-summary">Syncing Rules</summary>
+                    <div className="sync-rules-content">
+                      <p className="sync-rules-description">
+                        Create rules to automatically classify Strava activities based on their name.
+                      </p>
+                      {syncRules.length > 0 && (
+                        <div className="sync-rules-list">
+                          {syncRules.map((rule) => (
+                            <div key={rule.id} className="sync-rule-item">
+                              <span className="rule-text">
+                                If name contains "<strong>{rule.containsText}</strong>"
+                              </span>
+                              <span className="rule-arrow">→</span>
+                              <span className="rule-type">{rule.activityType.name}</span>
+                              <button
+                                onClick={() => handleDeleteSyncRule(rule.id)}
+                                className="delete-rule-btn"
+                                title="Delete rule"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="add-rule-form">
+                        <span className="add-rule-label">If name contains</span>
+                        <input
+                          type="text"
+                          value={newRuleText}
+                          onChange={(e) => setNewRuleText(e.target.value)}
+                          placeholder="e.g., flexibility"
+                          className="rule-text-input"
+                        />
+                        <span className="add-rule-arrow">→</span>
+                        <select
+                          value={newRuleActivityTypeId}
+                          onChange={(e) => setNewRuleActivityTypeId(e.target.value)}
+                          className="rule-type-select"
+                        >
+                          <option value="">Select activity type</option>
+                          {activityTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                              {type.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={handleAddSyncRule}
+                          disabled={isAddingRule || !newRuleText.trim() || !newRuleActivityTypeId}
+                          className="add-rule-btn"
+                        >
+                          {isAddingRule ? 'Adding...' : 'Add Rule'}
+                        </button>
+                      </div>
+                    </div>
+                  </details>
                 </>
               ) : (
                 <button onClick={handleConnectStrava} className="connect-strava-btn">

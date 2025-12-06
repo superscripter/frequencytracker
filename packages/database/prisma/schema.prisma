@@ -39,6 +39,7 @@ model User {
   activities        Activity[]
   activityTypes     ActivityType[]
   pushSubscriptions PushSubscription[]
+  stravaSyncRules   StravaSyncRule[]
 
   @@map("users")
 }
@@ -53,8 +54,9 @@ model ActivityType {
   updatedAt        DateTime @default(now()) @updatedAt
 
   // Relations
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activities Activity[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities      Activity[]
+  stravaSyncRules StravaSyncRule[]
 
   @@unique([userId, name]) // Name must be unique per user
   @@index([userId])
@@ -99,4 +101,21 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+model StravaSyncRule {
+  id             String   @id @default(cuid())
+  userId         String
+  containsText   String   // Text to search for in activity name (case-insensitive)
+  activityTypeId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityType ActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, containsText]) // Each user can only have one rule per text match
+  @@index([userId])
+  @@map("strava_sync_rules")
 }

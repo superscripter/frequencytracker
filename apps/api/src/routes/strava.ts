@@ -198,6 +198,134 @@ const stravaRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+
+  // GET /api/strava/sync-rules - Get user's sync rules
+  fastify.get('/sync-rules', async (request, reply) => {
+    await request.jwtVerify();
+
+    try {
+      const rules = await fastify.prisma.stravaSyncRule.findMany({
+        where: { userId: request.user.userId },
+        include: {
+          activityType: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      return reply.send(rules);
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Failed to fetch sync rules',
+      });
+    }
+  });
+
+  // POST /api/strava/sync-rules - Create a new sync rule
+  fastify.post('/sync-rules', async (request, reply) => {
+    await request.jwtVerify();
+
+    const bodySchema = z.object({
+      containsText: z.string().min(1),
+      activityTypeId: z.string(),
+    });
+
+    try {
+      const body = bodySchema.parse(request.body);
+
+      // Verify the activity type exists and belongs to the user
+      const activityType = await fastify.prisma.activityType.findFirst({
+        where: {
+          id: body.activityTypeId,
+          userId: request.user.userId,
+        },
+      });
+
+      if (!activityType) {
+        return reply.code(404).send({
+          error: 'Activity type not found',
+        });
+      }
+
+      // Create the sync rule
+      const rule = await fastify.prisma.stravaSyncRule.create({
+        data: {
+          userId: request.user.userId,
+          containsText: body.containsText,
+          activityTypeId: body.activityTypeId,
+        },
+        include: {
+          activityType: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      return reply.code(201).send(rule);
+    } catch (error) {
+      fastify.log.error(error);
+
+      // Handle unique constraint violation (duplicate rule)
+      if (error instanceof Error && error.message.includes('Unique constraint')) {
+        return reply.code(409).send({
+          error: 'A rule with this text already exists',
+        });
+      }
+
+      return reply.code(500).send({
+        error: 'Failed to create sync rule',
+      });
+    }
+  });
+
+  // DELETE /api/strava/sync-rules/:id - Delete a sync rule
+  fastify.delete('/sync-rules/:id', async (request, reply) => {
+    await request.jwtVerify();
+
+    const paramsSchema = z.object({
+      id: z.string(),
+    });
+
+    try {
+      const params = paramsSchema.parse(request.params);
+
+      // Verify the rule exists and belongs to the user
+      const rule = await fastify.prisma.stravaSyncRule.findFirst({
+        where: {
+          id: params.id,
+          userId: request.user.userId,
+        },
+      });
+
+      if (!rule) {
+        return reply.code(404).send({
+          error: 'Sync rule not found',
+        });
+      }
+
+      // Delete the rule
+      await fastify.prisma.stravaSyncRule.delete({
+        where: { id: params.id },
+      });
+
+      return reply.send({
+        message: 'Sync rule deleted successfully',
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.code(500).send({
+        error: 'Failed to delete sync rule',
+      });
+    }
+  });
 };
 
 export default stravaRoutes;
