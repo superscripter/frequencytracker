@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
 import ActivityCard from './ActivityCard';
 import './Recommendations.css';
+import './ActivitiesManager.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -41,12 +43,31 @@ export function Recommendations() {
   });
   const { user } = useAuth();
 
+  // Get user timezone or default to Eastern Time
+  const userTimezone = user?.timezone || 'America/New_York';
+
+  // Add activity form state
+  const [addTypeId, setAddTypeId] = useState<string>('');
+  const [addDate, setAddDate] = useState<string>(() => {
+    // Get current date in user's timezone
+    return formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd');
+  });
+  const [addTime, setAddTime] = useState<string>('12:00');
+
+  // Extract unique activity types from recommendations
+  const activityTypes = recommendations.map(rec => rec.activityType);
+
   useEffect(() => {
     if (user) {
       fetchRecommendations();
       fetchPreferences();
     }
   }, [user]);
+
+  // Update the date picker default when timezone changes
+  useEffect(() => {
+    setAddDate(formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd'));
+  }, [userTimezone]);
 
   const fetchRecommendations = async () => {
     try {
@@ -130,6 +151,57 @@ export function Recommendations() {
     }
   };
 
+  const handleSubmitActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!addTypeId) {
+      setError('Please select an activity type');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const selectedType = activityTypes.find(t => t.id === addTypeId);
+
+      // Combine date and time in user's timezone, then convert to UTC
+      const dateTimeString = `${addDate}T${addTime}`;
+      const utcDate = formatInTimeZone(
+        new Date(dateTimeString),
+        userTimezone,
+        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+      );
+
+      const response = await fetch(`${API_URL}/api/activities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          typeId: addTypeId,
+          name: selectedType?.name || 'Activity',
+          date: new Date(utcDate).toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add activity');
+      }
+
+      // Reset form
+      setAddTypeId('');
+      setAddDate(formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd'));
+      setAddTime('12:00');
+
+      // Refresh recommendations
+      await fetchRecommendations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add activity');
+    }
+  };
+
 
   // Filter recommendations for today (all activities with difference > -1)
   const todayRecommendations = recommendations.filter(rec =>
@@ -186,6 +258,44 @@ export function Recommendations() {
 
   return (
     <div className="recommendations-container">
+      {/* Add Activity Form */}
+      {activityTypes.length > 0 && (
+        <form className="add-activity-form" onSubmit={handleSubmitActivity}>
+          <select
+            value={addTypeId}
+            onChange={(e) => setAddTypeId(e.target.value)}
+            className="activity-type-select"
+            required
+          >
+            <option value="">Select Activity Type</option>
+            {activityTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={addDate}
+            onChange={(e) => setAddDate(e.target.value)}
+            className="activity-date-input"
+            required
+          />
+          <input
+            type="time"
+            value={addTime}
+            onChange={(e) => setAddTime(e.target.value)}
+            className="activity-time-input"
+            required
+          />
+          <button type="submit" className="add-activity-btn">
+            Add Activity
+          </button>
+        </form>
+      )}
+
+      {error && <div className="error-message">{error}</div>}
+
       {recommendations.length === 0 ? (
         <div className="recommendations-empty">
           <p>No activity types found. Create some activity types to see recommendations.</p>
