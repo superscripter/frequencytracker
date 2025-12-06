@@ -98,7 +98,7 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
 }
 
 async function sendDailyNotifications() {
-  console.log('[Notification Scheduler] Checking if it\'s time to send notifications...');
+  console.log('[Notification Scheduler] Starting daily notification send...');
 
   try {
     // Get all users with push subscriptions and notifications enabled
@@ -113,29 +113,13 @@ async function sendDailyNotifications() {
         id: true,
         name: true,
         timezone: true,
-        notificationTime: true,
         autoSync: true,
         stravaId: true,
         pushSubscriptions: true,
       },
     });
 
-    console.log(`[Notification Scheduler] Found ${usersWithSubscriptions.length} users with notifications enabled`);
-
-    // Check if it's 6:00 AM in Denver time (MST/MDT)
-    // Vercel only allows one cron job per day, so we send to ALL users at 6:00 AM Denver time
-    const now = new Date();
-    const denverTime = toZonedTime(now, 'America/Denver');
-    const denverHour = denverTime.getHours();
-    const denverMinute = denverTime.getMinutes();
-
-    // Only send notifications at 6:00 AM Denver time
-    if (denverHour !== 6 || denverMinute !== 0) {
-      console.log(`[Notification Scheduler] Not 6:00 AM Denver time yet (current: ${denverHour}:${denverMinute.toString().padStart(2, '0')})`);
-      return; // Not the right time yet
-    }
-
-    console.log(`[Notification Scheduler] It's 6:00 AM Denver time - sending to all ${usersWithSubscriptions.length} users`);
+    console.log(`[Notification Scheduler] Sending to ${usersWithSubscriptions.length} users with notifications enabled`);
 
     for (const user of usersWithSubscriptions) {
       try {
@@ -249,17 +233,21 @@ export function initializeNotificationScheduler() {
   // Initialize VAPID configuration
   initVapid();
 
-  // Schedule notifications to run every minute
-  // This checks each minute if it's time to send notifications to any users based on their preferences
-  const cronSchedule = process.env.NOTIFICATION_CRON_SCHEDULE || '* * * * *'; // Every minute
+  // In production, Vercel cron handles scheduling (configured in vercel.json)
+  // In development, we use node-cron for local testing
+  if (process.env.NODE_ENV !== 'production') {
+    const cronSchedule = process.env.NOTIFICATION_CRON_SCHEDULE || '0 6 * * *'; // 6:00 AM daily for local testing
 
-  console.log(`[Notification Scheduler] Scheduling notification checks with cron: ${cronSchedule}`);
+    console.log(`[Notification Scheduler] Scheduling notifications with cron: ${cronSchedule}`);
 
-  cron.schedule(cronSchedule, sendDailyNotifications, {
-    timezone: 'America/New_York', // Server timezone for cron scheduling
-  });
+    cron.schedule(cronSchedule, sendDailyNotifications, {
+      timezone: 'America/Denver',
+    });
 
-  console.log('[Notification Scheduler] Scheduler initialized');
+    console.log('[Notification Scheduler] Local scheduler initialized');
+  } else {
+    console.log('[Notification Scheduler] Running in production - Vercel cron handles scheduling');
+  }
 
   // For testing: Send immediately if in development and SEND_TEST_NOTIFICATION is set
   if (process.env.NODE_ENV !== 'production' && process.env.SEND_TEST_NOTIFICATION === 'true') {
