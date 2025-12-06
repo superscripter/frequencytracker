@@ -20,7 +20,7 @@ model User {
 
   // Notification preferences
   enableDailyNotifications Boolean @default(false) // Enable daily push notifications
-  notificationTime         String? @default("08:00") // Time to send notifications (HH:MM format in user's timezone)
+  notificationTime         String? @default("06:00") // Time to send notifications (HH:MM format in user's timezone)
 
   // UI preferences
   highlightOverdueActivities Boolean @default(false) // Highlight overdue activities with red glow

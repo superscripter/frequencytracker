@@ -125,13 +125,14 @@ async function sendDailyNotifications() {
     // Filter users who should receive notifications at this time
     const now = new Date();
     const usersToNotify = usersWithSubscriptions.filter(user => {
+      // Use America/Denver (MST/MDT) as default timezone to match original behavior
       const userTimezone = user.timezone || 'America/Denver';
       const userTime = toZonedTime(now, userTimezone);
       const userHour = userTime.getHours();
       const userMinute = userTime.getMinutes();
 
-      // Default notification time is 08:00 (8:00 AM)
-      const notificationTime = user.notificationTime || '08:00';
+      // Default notification time is 06:00 (6:00 AM) to match UI
+      const notificationTime = user.notificationTime || '06:00';
       const [targetHour, targetMinute] = notificationTime.split(':').map(Number);
 
       // Send if current time matches target time (within the same minute)
