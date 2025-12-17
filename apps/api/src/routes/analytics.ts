@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@frequency-tracker/database';
 import { toZonedTime } from 'date-fns-tz';
 import { differenceInDays, startOfDay } from 'date-fns';
+import { getUserOffTimes, filterActivitiesByOffTime } from '../utils/offTimeCalculations.js';
 
 interface AnalyticsData {
   activityType: string;
@@ -43,6 +44,9 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       const nowInUserTz = toZonedTime(nowUtc, userTimezone);
       const midnightToday = startOfDay(nowInUserTz);
 
+      // Get off-times for this user to exclude from calculations
+      const offTimes = await getUserOffTimes(userId);
+
       // Get all activity types for the user
       const activityTypes = await prisma.activityType.findMany({
         where: { userId },
@@ -56,7 +60,8 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Calculate analytics for each activity type
       const analytics: AnalyticsData[] = activityTypes.map((type) => {
-        const activities = type.activities;
+        // Filter out activities that occurred during off-time periods
+        const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
         const numberOfActivities = activities.length;
 
         let totalAvgFrequency = 0;
@@ -104,7 +109,8 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       // The start and end dates must be actual activity dates (not today)
       // Days since the most recent activity are NOT included in the calculation
       const streaks: StreakData[] = activityTypes.map((type) => {
-        const activities = type.activities;
+        // Filter out activities that occurred during off-time periods
+        const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
         const desiredFrequency = type.desiredFrequency;
 
         let longestStreak = 0;

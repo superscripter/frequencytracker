@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import './ActivityTypesManager.css'
 
+interface Tag {
+  id: string
+  name: string
+  color: string | null
+}
+
 interface ActivityType {
   id: string
   name: string
   description?: string
   desiredFrequency: number
+  tagId?: string | null
+  tag?: Tag | null
 }
 
 type SortField = 'name' | 'desiredFrequency'
@@ -13,8 +21,13 @@ type SortOrder = 'asc' | 'desc'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-export function ActivityTypesManager() {
+interface ActivityTypesManagerProps {
+  tagsRefreshTrigger?: number
+}
+
+export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManagerProps) {
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -25,10 +38,19 @@ export function ActivityTypesManager() {
   // Form state
   const [formName, setFormName] = useState('')
   const [formFrequency, setFormFrequency] = useState(1)
+  const [formTagId, setFormTagId] = useState<string>('')
 
   useEffect(() => {
     fetchActivityTypes()
+    fetchTags()
   }, [])
+
+  // Refetch tags when the refresh trigger changes
+  useEffect(() => {
+    if (tagsRefreshTrigger !== undefined && tagsRefreshTrigger > 0) {
+      fetchTags()
+    }
+  }, [tagsRefreshTrigger])
 
   const fetchActivityTypes = async () => {
     try {
@@ -45,6 +67,22 @@ export function ActivityTypesManager() {
       setError(err instanceof Error ? err.message : 'Failed to load activity types')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchTags = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/tags`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (!response.ok) throw new Error('Failed to fetch tags')
+      const data = await response.json()
+      setTags(data)
+    } catch (err) {
+      console.error('Error fetching tags:', err)
     }
   }
 
@@ -87,6 +125,7 @@ export function ActivityTypesManager() {
         body: JSON.stringify({
           name: formName,
           desiredFrequency: formFrequency,
+          tagId: formTagId || null,
         }),
       })
 
@@ -98,13 +137,14 @@ export function ActivityTypesManager() {
       await fetchActivityTypes()
       setFormName('')
       setFormFrequency(1)
+      setFormTagId('')
       setIsAdding(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add activity type')
     }
   }
 
-  const handleUpdate = async (id: string, name: string, frequency: number) => {
+  const handleUpdate = async (id: string, name: string, frequency: number, tagId: string | null) => {
     setError('')
 
     try {
@@ -118,6 +158,7 @@ export function ActivityTypesManager() {
         body: JSON.stringify({
           name,
           desiredFrequency: frequency,
+          tagId: tagId || null,
         }),
       })
 
@@ -191,6 +232,18 @@ export function ActivityTypesManager() {
             onChange={(e) => setFormFrequency(Number(e.target.value))}
             required
           />
+          <select
+            value={formTagId}
+            onChange={(e) => setFormTagId(e.target.value)}
+            className="tag-select"
+          >
+            <option value="">No tag</option>
+            {tags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="save-btn">Add</button>
         </form>
       )}
@@ -204,13 +257,14 @@ export function ActivityTypesManager() {
             <th onClick={() => handleSort('desiredFrequency')} className="sortable">
               Desired Frequency {sortField === 'desiredFrequency' && (sortOrder === 'asc' ? '↑' : '↓')}
             </th>
+            <th>Tag</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {sortedActivityTypes.length === 0 ? (
             <tr>
-              <td colSpan={3} className="empty-state">
+              <td colSpan={4} className="empty-state">
                 No activity types yet. Add one to get started!
               </td>
             </tr>
@@ -219,6 +273,7 @@ export function ActivityTypesManager() {
               <ActivityTypeRow
                 key={type.id}
                 type={type}
+                tags={tags}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
                 isEditing={editingId === type.id}
@@ -234,23 +289,25 @@ export function ActivityTypesManager() {
 
 interface ActivityTypeRowProps {
   type: ActivityType
-  onUpdate: (id: string, name: string, frequency: number) => void
+  tags: Tag[]
+  onUpdate: (id: string, name: string, frequency: number, tagId: string | null) => void
   onDelete: (id: string) => void
   isEditing: boolean
   setIsEditing: (editing: boolean) => void
 }
 
-function ActivityTypeRow({ type, onUpdate, onDelete, isEditing, setIsEditing }: ActivityTypeRowProps) {
+function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditing }: ActivityTypeRowProps) {
   const [editName, setEditName] = useState(type.name)
   const [editFrequency, setEditFrequency] = useState(type.desiredFrequency)
+  const [editTagId, setEditTagId] = useState<string>(type.tagId || '')
 
   const handleEdit = () => {
     setIsEditing(true)
   }
 
   const handleSave = () => {
-    if (editName.trim() !== '' && (editName !== type.name || editFrequency !== type.desiredFrequency)) {
-      onUpdate(type.id, editName, editFrequency)
+    if (editName.trim() !== '' && (editName !== type.name || editFrequency !== type.desiredFrequency || editTagId !== (type.tagId || ''))) {
+      onUpdate(type.id, editName, editFrequency, editTagId || null)
     }
     setIsEditing(false)
   }
@@ -258,6 +315,7 @@ function ActivityTypeRow({ type, onUpdate, onDelete, isEditing, setIsEditing }: 
   const handleCancel = () => {
     setEditName(type.name)
     setEditFrequency(type.desiredFrequency)
+    setEditTagId(type.tagId || '')
     setIsEditing(false)
   }
 
@@ -288,6 +346,36 @@ function ActivityTypeRow({ type, onUpdate, onDelete, isEditing, setIsEditing }: 
           />
         ) : (
           <span>{type.desiredFrequency}</span>
+        )}
+      </td>
+      <td>
+        {isEditing ? (
+          <select
+            value={editTagId}
+            onChange={(e) => setEditTagId(e.target.value)}
+            className="tag-select-inline"
+          >
+            <option value="">No tag</option>
+            {tags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="tag-display-inline">
+            {type.tag ? (
+              <>
+                <span
+                  className="tag-color-dot"
+                  style={{ backgroundColor: type.tag.color || '#3b82f6' }}
+                />
+                {type.tag.name}
+              </>
+            ) : (
+              <span className="no-tag">—</span>
+            )}
+          </span>
         )}
       </td>
       <td className="actions-cell">

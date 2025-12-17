@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '@frequency-tracker/database';
+import { isDateInOffTime, getUserOffTimes } from '../utils/offTimeCalculations.js';
 
 const createActivitySchema = z.object({
   typeId: z.string(),
@@ -93,12 +94,35 @@ export const activityRoutes: FastifyPluginAsync = async (fastify) => {
       const { userId } = request.user as { userId: string };
       const body = createActivitySchema.parse(request.body);
 
+      // Get user to check timezone
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const userTimezone = user.timezone || 'America/New_York';
+      const activityDate = new Date(body.date);
+
+      // Check if this activity falls within an off-time period
+      const offTimes = await getUserOffTimes(userId);
+      const isInOffTime = isDateInOffTime(body.typeId, activityDate, offTimes, userTimezone);
+
+      if (isInOffTime) {
+        return reply.status(400).send({
+          error: 'Activity cannot be created during an off-time period for this activity type',
+          isOffTime: true
+        });
+      }
+
       const activity = await prisma.activity.create({
         data: {
           userId,
           typeId: body.typeId,
           name: body.name,
-          date: new Date(body.date),
+          date: activityDate,
           duration: body.duration,
           distance: body.distance,
           notes: body.notes,
@@ -132,6 +156,32 @@ export const activityRoutes: FastifyPluginAsync = async (fastify) => {
 
       if (!existingActivity) {
         return reply.status(404).send({ error: 'Activity not found' });
+      }
+
+      // Get user to check timezone
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return reply.status(404).send({ error: 'User not found' });
+      }
+
+      const userTimezone = user.timezone || 'America/New_York';
+
+      // Determine the final typeId and date after the update
+      const finalTypeId = body.typeId || existingActivity.typeId;
+      const finalDate = body.date ? new Date(body.date) : existingActivity.date;
+
+      // Check if the updated activity falls within an off-time period
+      const offTimes = await getUserOffTimes(userId);
+      const isInOffTime = isDateInOffTime(finalTypeId, finalDate, offTimes, userTimezone);
+
+      if (isInOffTime) {
+        return reply.status(400).send({
+          error: 'Activity cannot be updated to fall during an off-time period for this activity type',
+          isOffTime: true
+        });
       }
 
       const activity = await prisma.activity.update({

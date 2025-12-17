@@ -40,6 +40,8 @@ model User {
   activityTypes     ActivityType[]
   pushSubscriptions PushSubscription[]
   stravaSyncRules   StravaSyncRule[]
+  tags              Tag[]
+  offTimes          OffTime[]
 
   @@map("users")
 }
@@ -50,16 +52,19 @@ model ActivityType {
   name             String   // e.g., "Run", "Bike", "Swim", "Strength Training"
   description      String?
   desiredFrequency Float    @default(1) // Desired frequency per week
+  tagId            String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 
   // Relations
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag             Tag?             @relation(fields: [tagId], references: [id], onDelete: SetNull)
   activities      Activity[]
   stravaSyncRules StravaSyncRule[]
 
   @@unique([userId, name]) // Name must be unique per user
   @@index([userId])
+  @@index([tagId])
   @@map("activity_types")
 }
 
@@ -118,4 +123,41 @@ model StravaSyncRule {
   @@unique([userId, containsText]) // Each user can only have one rule per text match
   @@index([userId])
   @@map("strava_sync_rules")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   // e.g., "Active", "Leisure", "Competitive"
+  color     String?  // Optional hex color for visual grouping
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityTypes ActivityType[]
+  offTimes      OffTime[]
+
+  @@unique([userId, name]) // Name must be unique per user
+  @@index([userId])
+  @@map("tags")
+}
+
+model OffTime {
+  id        String   @id @default(cuid())
+  userId    String
+  tagId     String
+  startDate DateTime // Start date of off time period (inclusive)
+  endDate   DateTime // End date of off time period (inclusive)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tagId])
+  @@index([startDate, endDate]) // For efficient date range queries
+  @@map("off_times")
 }

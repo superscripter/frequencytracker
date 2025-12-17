@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { differenceInDays, subDays, startOfDay } from 'date-fns';
 import { prisma } from '@frequency-tracker/database';
+import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
 
 interface RecommendationItem {
   activityType: {
@@ -54,6 +55,9 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
       const nowInUserTz = toZonedTime(nowUtc, userTimezone);
       const midnightToday = startOfDay(nowInUserTz);
 
+      // Get off-times for this user to exclude from calculations
+      const offTimes = await getUserOffTimes(userId);
+
       // Get all activity types for this user
       const activityTypes = await prisma.activityType.findMany({
         where: { userId },
@@ -73,9 +77,12 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
+      // Filter out activities that occurred during off-time periods
+      const filteredActivities = filterActivitiesByOffTime(allActivitiesByType, offTimes, userTimezone);
+
       // Group activities by type
-      const activitiesByType = new Map<string, typeof allActivitiesByType>();
-      for (const activity of allActivitiesByType) {
+      const activitiesByType = new Map<string, typeof filteredActivities>();
+      for (const activity of filteredActivities) {
         if (!activitiesByType.has(activity.typeId)) {
           activitiesByType.set(activity.typeId, []);
         }
@@ -101,7 +108,18 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
 
           // Calculate days since last activity using calendar days (midnight-to-midnight)
           // This ensures "1 day ago" means "yesterday" regardless of the time of day
-          daysSinceLastActivity = differenceInDays(midnightToday, lastActivityMidnight);
+          const rawDaysSince = differenceInDays(midnightToday, lastActivityMidnight);
+
+          // Subtract off-time days that fall between the last activity and today
+          const offTimeDays = calculateOffTimeDays(
+            type.id,
+            lastActivityMidnight,
+            midnightToday,
+            offTimes,
+            userTimezone
+          );
+
+          daysSinceLastActivity = rawDaysSince - offTimeDays;
 
           // Calculate difference (positive means overdue, negative means ahead)
           difference = daysSinceLastActivity - type.desiredFrequency;

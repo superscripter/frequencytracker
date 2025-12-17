@@ -2,79 +2,77 @@ import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '@frequency-tracker/database';
 
-const createActivityTypeSchema = z.object({
+const createTagSchema = z.object({
   name: z.string().min(1),
-  description: z.string().optional(),
-  desiredFrequency: z.number().min(0),
-  tagId: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
 });
 
-const updateActivityTypeSchema = z.object({
+const updateTagSchema = z.object({
   name: z.string().min(1).optional(),
-  description: z.string().optional().nullable(),
-  desiredFrequency: z.number().min(0).optional(),
-  tagId: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
 });
 
-export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
-  // Get all activity types for the authenticated user
+export const tagRoutes: FastifyPluginAsync = async (fastify) => {
+  // Get all tags for the authenticated user
   fastify.get('/', async (request, reply) => {
     await request.jwtVerify();
 
     try {
-      const activityTypes = await prisma.activityType.findMany({
+      const tags = await prisma.tag.findMany({
         where: { userId: request.user.userId },
         orderBy: { name: 'asc' },
         include: {
-          tag: true,
+          _count: {
+            select: { activityTypes: true },
+          },
         },
       });
-      return reply.send(activityTypes);
+      return reply.send(tags);
     } catch (error) {
       fastify.log.error(error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
 
-  // Get activity type by ID
+  // Get tag by ID
   fastify.get('/:id', async (request, reply) => {
     await request.jwtVerify();
 
     try {
       const { id } = request.params as { id: string };
 
-      const activityType = await prisma.activityType.findFirst({
+      const tag = await prisma.tag.findFirst({
         where: {
           id,
           userId: request.user.userId,
         },
         include: {
           _count: {
-            select: { activities: true },
+            select: { activityTypes: true },
           },
         },
       });
 
-      if (!activityType) {
-        return reply.status(404).send({ error: 'Activity type not found' });
+      if (!tag) {
+        return reply.status(404).send({ error: 'Tag not found' });
       }
 
-      return reply.send(activityType);
+      return reply.send(tag);
     } catch (error) {
       fastify.log.error(error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
 
-  // Create activity type
+  // Create tag
   fastify.post('/', async (request, reply) => {
     await request.jwtVerify();
 
     try {
-      const body = createActivityTypeSchema.parse(request.body);
+      const body = createTagSchema.parse(request.body);
 
-      // Check if activity type with this name already exists for this user
-      const existing = await prisma.activityType.findFirst({
+      // Check if tag with this name already exists for this user
+      const existing = await prisma.tag.findFirst({
         where: {
           userId: request.user.userId,
           name: body.name,
@@ -82,23 +80,18 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       if (existing) {
-        return reply.status(400).send({ error: 'Activity type with this name already exists' });
+        return reply.status(400).send({ error: 'Tag with this name already exists' });
       }
 
-      const activityType = await prisma.activityType.create({
+      const tag = await prisma.tag.create({
         data: {
           userId: request.user.userId,
           name: body.name,
-          description: body.description,
-          desiredFrequency: body.desiredFrequency,
-          tagId: body.tagId,
-        },
-        include: {
-          tag: true,
+          color: body.color,
         },
       });
 
-      return reply.status(201).send(activityType);
+      return reply.status(201).send(tag);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: error.errors });
@@ -108,16 +101,16 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Update activity type
+  // Update tag
   fastify.put('/:id', async (request, reply) => {
     await request.jwtVerify();
 
     try {
       const { id } = request.params as { id: string };
-      const body = updateActivityTypeSchema.parse(request.body);
+      const body = updateTagSchema.parse(request.body);
 
-      // Check if activity type exists and belongs to user
-      const existing = await prisma.activityType.findFirst({
+      // Check if tag exists and belongs to user
+      const existing = await prisma.tag.findFirst({
         where: {
           id,
           userId: request.user.userId,
@@ -125,12 +118,12 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       if (!existing) {
-        return reply.status(404).send({ error: 'Activity type not found' });
+        return reply.status(404).send({ error: 'Tag not found' });
       }
 
       // If updating name, check for duplicates
       if (body.name && body.name !== existing.name) {
-        const duplicate = await prisma.activityType.findFirst({
+        const duplicate = await prisma.tag.findFirst({
           where: {
             userId: request.user.userId,
             name: body.name,
@@ -138,24 +131,19 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         });
 
         if (duplicate) {
-          return reply.status(400).send({ error: 'Activity type with this name already exists' });
+          return reply.status(400).send({ error: 'Tag with this name already exists' });
         }
       }
 
-      const activityType = await prisma.activityType.update({
+      const tag = await prisma.tag.update({
         where: { id },
         data: {
           name: body.name,
-          description: body.description,
-          desiredFrequency: body.desiredFrequency,
-          tagId: body.tagId,
-        },
-        include: {
-          tag: true,
+          color: body.color,
         },
       });
 
-      return reply.send(activityType);
+      return reply.send(tag);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: error.errors });
@@ -165,38 +153,33 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Delete activity type
+  // Delete tag
   fastify.delete('/:id', async (request, reply) => {
     await request.jwtVerify();
 
     try {
       const { id } = request.params as { id: string };
 
-      // Check if activity type exists and belongs to user
-      const existing = await prisma.activityType.findFirst({
+      // Check if tag exists and belongs to user
+      const existing = await prisma.tag.findFirst({
         where: {
           id,
           userId: request.user.userId,
         },
         include: {
           _count: {
-            select: { activities: true },
+            select: { activityTypes: true },
           },
         },
       });
 
       if (!existing) {
-        return reply.status(404).send({ error: 'Activity type not found' });
+        return reply.status(404).send({ error: 'Tag not found' });
       }
 
-      // Check if there are activities using this type
-      if (existing._count.activities > 0) {
-        return reply.status(400).send({
-          error: `Cannot delete activity type with ${existing._count.activities} associated activities`
-        });
-      }
-
-      await prisma.activityType.delete({
+      // Allow deletion even if activity types are using this tag
+      // The tag field will be set to null due to onDelete: SetNull
+      await prisma.tag.delete({
         where: { id },
       });
 

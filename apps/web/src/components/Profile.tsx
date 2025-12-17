@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { formatInTimeZone } from 'date-fns-tz'
 import { useAuth } from '../context/AuthContext'
+import { TagsManager } from './TagsManager'
+import { OffTimeManager } from './OffTimeManager'
 import './Profile.css'
 
 const US_TIMEZONES = [
@@ -27,7 +29,11 @@ interface SyncRule {
   activityType: ActivityType
 }
 
-export function Profile() {
+interface ProfileProps {
+  onTagsChange?: () => void
+}
+
+export function Profile({ onTagsChange }: ProfileProps) {
   const { user, logout, refreshUser } = useAuth()
   const [timezone, setTimezone] = useState<string>('')
   const [autoSync, setAutoSync] = useState<boolean>(false)
@@ -524,6 +530,8 @@ export function Profile() {
         </div>
         <button className="signout-btn" onClick={logout}>Sign Out</button>
       </div>
+      <TagsManager onTagsChange={onTagsChange} />
+      <OffTimeManager />
       {saveMessage && (
         <div className={`save-message ${saveMessage.includes('success') ? 'success' : 'error'}`}>
           {saveMessage}

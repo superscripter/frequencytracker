@@ -1,0 +1,182 @@
+.tags-manager {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tags-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tags-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+}
+
+.add-tag-toggle-btn {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.add-tag-toggle-btn:hover {
+  background: #2563eb;
+}
+
+.error-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.add-tag-form,
+.edit-tag-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.tag-name-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.tag-color-input {
+  width: 40px;
+  height: 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-tag-btn,
+.cancel-tag-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.save-tag-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.save-tag-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.save-tag-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.cancel-tag-btn {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.cancel-tag-btn:hover {
+  background: #d1d5db;
+}
+
+.no-tags-message {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+.tags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tag-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  transition: background 0.2s;
+}
+
+.tag-display:hover {
+  background: #f9fafb;
+}
+
+.tag-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tag-color-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+}
+
+.tag-name {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.tag-count {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.tag-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-tag-btn,
+.delete-tag-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  transition: transform 0.2s;
+}
+
+.edit-tag-btn:hover,
+.delete-tag-btn:hover {
+  transform: scale(1.1);
+}
+
+.edit-tag-form {
+  margin: 0;
+}

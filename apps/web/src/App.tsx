@@ -14,6 +14,7 @@ type View = 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
 function App() {
   const [currentView, setCurrentView] = useState<View>('Recommendations')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [tagsRefreshTrigger, setTagsRefreshTrigger] = useState(0)
   const { user, isLoading } = useAuth()
 
   // Show auth modal if user is not logged in
@@ -78,9 +79,9 @@ function App() {
             {currentView === 'Analytics' && <Analytics />}
             {currentView === 'Profile' && (
               <div className="profile-view">
-                <Profile />
+                <Profile onTagsChange={() => setTagsRefreshTrigger(prev => prev + 1)} />
                 <div className="divider"></div>
-                <ActivityTypesManager />
+                <ActivityTypesManager tagsRefreshTrigger={tagsRefreshTrigger} />
               </div>
             )}
           </div>
