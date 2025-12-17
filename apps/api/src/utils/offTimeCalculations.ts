@@ -34,20 +34,24 @@ export function calculateOffTimeDays(
   let excludedDays = 0;
 
   // Normalize dates to midnight in user's timezone
-  const startMidnight = startOfDay(toZonedTime(startDate, userTimezone));
-  const endMidnight = startOfDay(toZonedTime(endDate, userTimezone));
+  const startInUserTz = toZonedTime(startDate, userTimezone);
+  const endInUserTz = toZonedTime(endDate, userTimezone);
+  const startMidnight = startOfDay(startInUserTz);
+  const endMidnight = startOfDay(endInUserTz);
 
-  // Extract calendar date components
-  const startYear = startMidnight.getFullYear();
-  const startMonth = startMidnight.getMonth();
-  const startDay = startMidnight.getDate();
+  // Extract calendar date components - use UTC methods since toZonedTime returns a Date in UTC
+  // that represents the user's local time
+  const startYear = startMidnight.getUTCFullYear();
+  const startMonth = startMidnight.getUTCMonth();
+  const startDay = startMidnight.getUTCDate();
 
-  const endYear = endMidnight.getFullYear();
-  const endMonth = endMidnight.getMonth();
-  const endDay = endMidnight.getDate();
+  const endYear = endMidnight.getUTCFullYear();
+  const endMonth = endMidnight.getUTCMonth();
+  const endDay = endMidnight.getUTCDate();
 
-  const periodStart = new Date(startYear, startMonth, startDay);
-  const periodEnd = new Date(endYear, endMonth, endDay);
+  // Create Date objects for comparison using UTC
+  const periodStart = new Date(Date.UTC(startYear, startMonth, startDay));
+  const periodEnd = new Date(Date.UTC(endYear, endMonth, endDay));
 
   for (const offTime of offTimes) {
     // Check if this off-time applies to the activity type (via tag)
@@ -66,8 +70,9 @@ export function calculateOffTimeDays(
     const offEndMonth = offTime.endDate.getUTCMonth();
     const offEndDay = offTime.endDate.getUTCDate();
 
-    const offStart = new Date(offStartYear, offStartMonth, offStartDay);
-    const offEnd = new Date(offEndYear, offEndMonth, offEndDay);
+    // Create Date objects using UTC to match periodStart/periodEnd
+    const offStart = new Date(Date.UTC(offStartYear, offStartMonth, offStartDay));
+    const offEnd = new Date(Date.UTC(offEndYear, offEndMonth, offEndDay));
 
     // Find the overlap between the period and the off-time
     const overlapStart = periodStart > offStart ? periodStart : offStart;
@@ -98,10 +103,10 @@ export function isDateInOffTime(
   const activityDateInUserTz = toZonedTime(date, userTimezone);
   const activityMidnight = startOfDay(activityDateInUserTz);
 
-  // Extract just the calendar date components (YYYY-MM-DD) to compare
-  const activityYear = activityMidnight.getFullYear();
-  const activityMonth = activityMidnight.getMonth();
-  const activityDay = activityMidnight.getDate();
+  // Extract just the calendar date components - use UTC methods since toZonedTime returns UTC
+  const activityYear = activityMidnight.getUTCFullYear();
+  const activityMonth = activityMidnight.getUTCMonth();
+  const activityDay = activityMidnight.getUTCDate();
 
   for (const offTime of offTimes) {
     // Check if this off-time applies to the activity type (via tag)
@@ -121,10 +126,10 @@ export function isDateInOffTime(
     const endMonth = offTime.endDate.getUTCMonth();
     const endDay = offTime.endDate.getUTCDate();
 
-    // Create Date objects for comparison using local date components
-    const offStartDate = new Date(startYear, startMonth, startDay);
-    const offEndDate = new Date(endYear, endMonth, endDay);
-    const activityDate = new Date(activityYear, activityMonth, activityDay);
+    // Create Date objects for comparison using UTC to avoid server timezone issues
+    const offStartDate = new Date(Date.UTC(startYear, startMonth, startDay));
+    const offEndDate = new Date(Date.UTC(endYear, endMonth, endDay));
+    const activityDate = new Date(Date.UTC(activityYear, activityMonth, activityDay));
 
     // Check if date falls within this off-time period (inclusive on both ends)
     if (activityDate >= offStartDate && activityDate <= offEndDate) {
