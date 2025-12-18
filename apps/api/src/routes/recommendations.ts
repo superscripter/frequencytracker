@@ -106,9 +106,21 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           const lastActivityMidnight = startOfDay(lastActivityInUserTz);
           lastPerformedDate = lastActivity.date.toISOString();
 
-          // Calculate days since last activity using calendar days (midnight-to-midnight)
-          // This ensures "1 day ago" means "yesterday" regardless of the time of day
-          const rawDaysSince = differenceInDays(midnightToday, lastActivityMidnight);
+          // Calculate days since last activity using UTC-based calendar dates to avoid timezone issues
+          // Extract UTC date components from the user-timezone-adjusted dates
+          const todayYear = midnightToday.getUTCFullYear();
+          const todayMonth = midnightToday.getUTCMonth();
+          const todayDay = midnightToday.getUTCDate();
+
+          const lastYear = lastActivityMidnight.getUTCFullYear();
+          const lastMonth = lastActivityMidnight.getUTCMonth();
+          const lastDay = lastActivityMidnight.getUTCDate();
+
+          // Create UTC Date objects for comparison
+          const todayUTC = new Date(Date.UTC(todayYear, todayMonth, todayDay));
+          const lastActivityUTC = new Date(Date.UTC(lastYear, lastMonth, lastDay));
+
+          const rawDaysSince = differenceInDays(todayUTC, lastActivityUTC);
 
           // Subtract off-time days that fall between the last activity and today
           const offTimeDays = calculateOffTimeDays(
