@@ -299,6 +299,125 @@
   }
 }
 
+/* Breakdown section styles */
+.breakdown-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: rgba(100, 108, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(100, 108, 255, 0.2);
+}
+
+.breakdown-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.breakdown-header h3 {
+  margin: 0;
+  color: #e8e8e8;
+  font-size: 1.4rem;
+}
+
+.breakdown-type-select {
+  padding: 0.5rem;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.breakdown-type-select:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.breakdown-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #b8b8b8;
+}
+
+.breakdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.breakdown-subsection {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(100, 108, 255, 0.2);
+}
+
+.breakdown-subsection h4 {
+  margin: 0 0 1rem 0;
+  color: #646cff;
+  font-size: 1.1rem;
+}
+
+.breakdown-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.breakdown-item {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(100, 108, 255, 0.1);
+}
+
+.breakdown-item:last-child {
+  border-bottom: none;
+}
+
+.breakdown-label {
+  font-weight: 600;
+  color: #b8b8b8;
+}
+
+.breakdown-value {
+  color: #e8e8e8;
+}
+
+.off-time-period {
+  padding: 0.25rem 0;
+  color: #e8e8e8;
+}
+
+@media (max-width: 768px) {
+  .breakdown-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .breakdown-type-select {
+    width: 100%;
+  }
+
+  .breakdown-item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .breakdown-label {
+    font-size: 0.85rem;
+  }
+
+  .breakdown-value {
+    font-size: 0.9rem;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   /* Form inputs */
   .activity-type-select,
@@ -381,5 +500,50 @@
 
   .activities-loading {
     color: rgba(0, 0, 0, 0.6);
+  }
+
+  /* Breakdown section light mode */
+  .breakdown-section {
+    background-color: rgba(100, 108, 255, 0.05);
+    border: 1px solid rgba(100, 108, 255, 0.2);
+  }
+
+  .breakdown-header h3 {
+    color: #213547;
+  }
+
+  .breakdown-type-select {
+    background-color: white;
+    color: #213547;
+    border: 1px solid #ccc;
+  }
+
+  .breakdown-loading {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .breakdown-subsection {
+    background-color: rgba(100, 108, 255, 0.05);
+    border: 1px solid rgba(100, 108, 255, 0.15);
+  }
+
+  .breakdown-subsection h4 {
+    color: #535bf2;
+  }
+
+  .breakdown-label {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .breakdown-value {
+    color: #213547;
+  }
+
+  .breakdown-item {
+    border-bottom: 1px solid rgba(100, 108, 255, 0.1);
+  }
+
+  .off-time-period {
+    color: #213547;
   }
 }

@@ -96,8 +96,8 @@ export function OffTimeManager() {
         },
         body: JSON.stringify({
           tagId: newTagId,
-          startDate: newStartDate + 'T00:00:00.000Z',
-          endDate: newEndDate + 'T00:00:00.000Z',
+          startDate: newStartDate,
+          endDate: newEndDate,
         }),
       })
 
@@ -137,8 +137,8 @@ export function OffTimeManager() {
         },
         body: JSON.stringify({
           tagId: editTagId,
-          startDate: editStartDate + 'T00:00:00.000Z',
-          endDate: editEndDate + 'T00:00:00.000Z',
+          startDate: editStartDate,
+          endDate: editEndDate,
         }),
       })
 

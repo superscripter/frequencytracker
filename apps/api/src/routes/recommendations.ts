@@ -194,7 +194,18 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
             const nextActivityInUserTz = toZonedTime(recentActivities[i + 1].date, userTimezone);
             const nextActivityMidnight = startOfDay(nextActivityInUserTz);
 
-            const interval = differenceInDays(currentActivityMidnight, nextActivityMidnight);
+            const rawInterval = differenceInDays(currentActivityMidnight, nextActivityMidnight);
+
+            // Calculate off-time days for this interval
+            const offTimeDaysInInterval = calculateOffTimeDays(
+              type.id,
+              nextActivityMidnight,
+              currentActivityMidnight,
+              offTimes,
+              userTimezone
+            );
+
+            const interval = rawInterval - offTimeDaysInInterval;
             intervals.push(interval);
           }
 
@@ -252,12 +263,34 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           // Try each possible starting activity (must be before the end)
           for (let startIdx = 0; startIdx < endIdx; startIdx++) {
             const windowStart = activityMidnights[startIdx];
-            const daysInWindow = differenceInDays(windowEnd, windowStart);
+            const rawDaysInWindow = differenceInDays(windowEnd, windowStart);
+
+            // Calculate off-time days for the entire window
+            const offTimeDaysInWindow = calculateOffTimeDays(
+              type.id,
+              windowStart,
+              windowEnd,
+              offTimes,
+              userTimezone
+            );
+
+            const daysInWindow = rawDaysInWindow - offTimeDaysInWindow;
 
             // Calculate intervals between consecutive activities in this window
             const intervals: number[] = [];
             for (let i = startIdx; i < endIdx; i++) {
-              const interval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+              const rawInterval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+
+              // Calculate off-time days for this interval
+              const offTimeDaysInInterval = calculateOffTimeDays(
+                type.id,
+                activityMidnights[i],
+                activityMidnights[i + 1],
+                offTimes,
+                userTimezone
+              );
+
+              const interval = rawInterval - offTimeDaysInInterval;
               intervals.push(interval);
             }
 

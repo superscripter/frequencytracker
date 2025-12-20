@@ -4,14 +4,14 @@ import { prisma } from '@frequency-tracker/database';
 
 const createOffTimeSchema = z.object({
   tagId: z.string().min(1),
-  startDate: z.string().datetime(), // ISO 8601 date string
-  endDate: z.string().datetime(),   // ISO 8601 date string
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD date string
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),   // YYYY-MM-DD date string
 });
 
 const updateOffTimeSchema = z.object({
   tagId: z.string().min(1).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
@@ -69,11 +69,8 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const body = createOffTimeSchema.parse(request.body);
 
-      // Validate dates
-      const startDate = new Date(body.startDate);
-      const endDate = new Date(body.endDate);
-
-      if (endDate < startDate) {
+      // Validate dates - simple string comparison works for YYYY-MM-DD
+      if (body.endDate < body.startDate) {
         return reply.status(400).send({ error: 'End date must be on or after start date' });
       }
 
@@ -88,6 +85,10 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
       if (!tag) {
         return reply.status(400).send({ error: 'Tag not found' });
       }
+
+      // Store dates as UTC midnight - this represents the calendar date
+      const startDate = new Date(body.startDate + 'T00:00:00.000Z');
+      const endDate = new Date(body.endDate + 'T00:00:00.000Z');
 
       const offTime = await prisma.offTime.create({
         data: {
@@ -151,16 +152,16 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       if (body.startDate) {
-        updateData.startDate = new Date(body.startDate);
+        updateData.startDate = new Date(body.startDate + 'T00:00:00.000Z');
       }
 
       if (body.endDate) {
-        updateData.endDate = new Date(body.endDate);
+        updateData.endDate = new Date(body.endDate + 'T00:00:00.000Z');
       }
 
-      // Validate dates if both are being updated or one is being updated
-      const finalStartDate = updateData.startDate || existing.startDate;
-      const finalEndDate = updateData.endDate || existing.endDate;
+      // Validate dates - extract calendar dates for comparison
+      const finalStartDate = body.startDate || existing.startDate.toISOString().split('T')[0];
+      const finalEndDate = body.endDate || existing.endDate.toISOString().split('T')[0];
 
       if (finalEndDate < finalStartDate) {
         return reply.status(400).send({ error: 'End date must be on or after start date' });
