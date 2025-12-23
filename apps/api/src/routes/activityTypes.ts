@@ -181,23 +181,19 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           id,
           userId: request.user.userId,
         },
-        include: {
-          _count: {
-            select: { activities: true },
-          },
-        },
       });
 
       if (!existing) {
         return reply.status(404).send({ error: 'Activity type not found' });
       }
 
-      // Check if there are activities using this type
-      if (existing._count.activities > 0) {
-        return reply.status(400).send({
-          error: `Cannot delete activity type with ${existing._count.activities} associated activities`
-        });
-      }
+      // Delete all associated activities first, then delete the activity type
+      await prisma.activity.deleteMany({
+        where: {
+          typeId: id,
+          userId: request.user.userId,
+        },
+      });
 
       await prisma.activityType.delete({
         where: { id },

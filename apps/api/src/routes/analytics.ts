@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@frequency-tracker/database';
 import { toZonedTime } from 'date-fns-tz';
 import { differenceInDays, startOfDay } from 'date-fns';
-import { getUserOffTimes, filterActivitiesByOffTime } from '../utils/offTimeCalculations.js';
+import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
 
 interface AnalyticsData {
   activityType: string;
@@ -10,6 +10,10 @@ interface AnalyticsData {
   totalAvgFrequency: number;
   dateOfFirstActivity: string | null;
   numberOfActivities: number;
+  tag: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface StreakData {
@@ -54,6 +58,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
           activities: {
             orderBy: { date: 'asc' },
           },
+          tag: true,
         },
         orderBy: { name: 'asc' },
       });
@@ -83,7 +88,18 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
               const nextActivityInUserTz = toZonedTime(activities[i + 1].date, userTimezone);
               const nextActivityMidnight = startOfDay(nextActivityInUserTz);
 
-              const interval = differenceInDays(nextActivityMidnight, currentActivityMidnight);
+              const rawInterval = differenceInDays(nextActivityMidnight, currentActivityMidnight);
+
+              // Calculate off-time days for this interval
+              const offTimeDaysInInterval = calculateOffTimeDays(
+                type.id,
+                currentActivityMidnight,
+                nextActivityMidnight,
+                offTimes,
+                userTimezone
+              );
+
+              const interval = rawInterval - offTimeDaysInInterval;
               intervals.push(interval);
             }
 
@@ -101,6 +117,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
           totalAvgFrequency,
           dateOfFirstActivity,
           numberOfActivities,
+          tag: type.tag ? { id: type.tag.id, name: type.tag.name } : null,
         };
       });
 
@@ -133,12 +150,34 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
             // Try each possible ending activity (must be after start)
             for (let endIdx = startIdx + 1; endIdx < activities.length; endIdx++) {
               const windowEnd = activityMidnights[endIdx];
-              const daysInWindow = differenceInDays(windowEnd, windowStart);
+              const rawDaysInWindow = differenceInDays(windowEnd, windowStart);
+
+              // Calculate off-time days for the entire window
+              const offTimeDaysInWindow = calculateOffTimeDays(
+                type.id,
+                windowStart,
+                windowEnd,
+                offTimes,
+                userTimezone
+              );
+
+              const daysInWindow = rawDaysInWindow - offTimeDaysInWindow;
 
               // Calculate intervals between consecutive activities in this window
               const intervals: number[] = [];
               for (let i = startIdx; i < endIdx; i++) {
-                const interval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+                const rawInterval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+
+                // Calculate off-time days for this interval
+                const offTimeDaysInInterval = calculateOffTimeDays(
+                  type.id,
+                  activityMidnights[i],
+                  activityMidnights[i + 1],
+                  offTimes,
+                  userTimezone
+                );
+
+                const interval = rawInterval - offTimeDaysInInterval;
                 intervals.push(interval);
               }
 

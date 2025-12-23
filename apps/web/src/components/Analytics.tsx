@@ -12,6 +12,10 @@ interface AnalyticsData {
   totalAvgFrequency: number;
   dateOfFirstActivity: string | null;
   numberOfActivities: number;
+  tag: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface StreakData {
@@ -80,6 +84,9 @@ export function Analytics() {
   const [breakdownTypeId, setBreakdownTypeId] = useState<string>('');
   const [breakdownData, setBreakdownData] = useState<BreakdownData | null>(null);
   const [isLoadingBreakdown, setIsLoadingBreakdown] = useState(false);
+
+  // Filter state
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all');
 
   // Get user timezone or default to Eastern Time
   const userTimezone = user?.timezone || 'America/New_York';
@@ -208,6 +215,22 @@ export function Analytics() {
     return <div className="analytics-error">Please log in to view analytics</div>;
   }
 
+  // Get unique tags from analytics data using Map for deduplication
+  const tagMap = new Map<string, { id: string; name: string }>();
+  analytics.forEach(item => {
+    if (item.tag && !tagMap.has(item.tag.id)) {
+      tagMap.set(item.tag.id, item.tag);
+    }
+  });
+  const uniqueTags = Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+  // Filter analytics based on selected tag
+  const filteredAnalytics = selectedTagFilter === 'all'
+    ? analytics
+    : selectedTagFilter === 'untagged'
+    ? analytics.filter(item => item.tag === null)
+    : analytics.filter(item => item.tag?.id === selectedTagFilter);
+
   // Prepare data for streaks chart
   const streaksChartData = streaks
     .filter(item => item.longestStreak > 0)
@@ -227,6 +250,27 @@ export function Analytics() {
       ) : (
         <details className="analytics-details" open>
           <summary className="analytics-summary">Detailed Statistics</summary>
+          <div style={{ marginBottom: '1rem' }}>
+            <label htmlFor="tag-filter" style={{ marginRight: '0.5rem' }}>Filter by Tag:</label>
+            <select
+              id="tag-filter"
+              value={selectedTagFilter}
+              onChange={(e) => setSelectedTagFilter(e.target.value)}
+              style={{
+                padding: '0.5rem',
+                borderRadius: '4px',
+                border: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-bg)',
+                color: 'var(--color-text)'
+              }}
+            >
+              <option value="all">All Tags</option>
+              <option value="untagged">Untagged</option>
+              {uniqueTags.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+          </div>
           <div className="analytics-table-wrapper">
             <table className="analytics-table">
               <thead>
@@ -239,7 +283,7 @@ export function Analytics() {
                 </tr>
               </thead>
               <tbody>
-                {analytics.map((item, index) => (
+                {filteredAnalytics.map((item, index) => (
                   <tr key={index}>
                     <td><strong>{item.activityType}</strong></td>
                     <td>{item.desiredFrequency.toFixed(1)}</td>
