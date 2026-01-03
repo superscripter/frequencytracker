@@ -22,10 +22,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 interface ActivitiesManagerProps {
   selectedTypeId: string
-  onTypeFilterChange: (typeId: string) => void
 }
 
-export function ActivitiesManager({ selectedTypeId, onTypeFilterChange }: ActivitiesManagerProps) {
+export function ActivitiesManager({ selectedTypeId }: ActivitiesManagerProps) {
   const { user } = useAuth()
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])

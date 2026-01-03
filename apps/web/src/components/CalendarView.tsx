@@ -115,9 +115,6 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
       const token = localStorage.getItem('token');
 
       // Fetch activities for the entire month (no pagination)
-      const monthStart = startOfMonth(currentDate);
-      const monthEnd = endOfMonth(currentDate);
-
       const params = new URLSearchParams({ limit: '1000' });
       if (selectedTypeId !== 'all') {
         params.append('typeId', selectedTypeId);
@@ -158,10 +155,6 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
 
   const handleNextMonth = () => {
     setCurrentDate(addMonths(currentDate, 1));
-  };
-
-  const handleToday = () => {
-    setCurrentDate(toZonedTime(new Date(), userTimezone));
   };
 
   const handleActivityRightClick = (e: React.MouseEvent, activityId: string) => {

@@ -247,7 +247,6 @@ export function Analytics() {
       tagMap.set(item.tag.id, item.tag);
     }
   });
-  const uniqueTags = Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
   // Filter analytics based on selected tag and type
   const filteredAnalytics = analytics.filter(item => {

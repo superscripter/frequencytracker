@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import type { ReactElement } from 'react'
 import * as TablerIcons from '@tabler/icons-react'
 import { IconPicker } from './IconPicker'
 import './ActivityTypesManager.css'
@@ -351,7 +352,7 @@ interface ActivityTypeRowProps {
   onDelete: (id: string) => void
   isEditing: boolean
   setIsEditing: (editing: boolean) => void
-  renderIcon: (iconName?: string) => JSX.Element | null
+  renderIcon: (iconName?: string) => ReactElement | null
   onOpenIconPicker: (id: string) => void
 }
 
