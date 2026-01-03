@@ -112,6 +112,6 @@
   }
 
   .icon-option.selected {
-    background: rgba(0, 212, 170, 0.15);
+    background: var(--color-aurora-teal);
   }
 }

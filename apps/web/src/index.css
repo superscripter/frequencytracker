@@ -20,12 +20,12 @@
   --color-primary-gold-light: #f7d76e;
   --color-primary-text: #e8dcc4;
 
-  /* Aurora Accents (Northern Lights) */
+  /* Aurora Accents (Northern Lights) #00d4aa; */
   --color-aurora-green: #00ff88;
   --color-aurora-blue: #4d9fff;
   --color-aurora-purple: #b366ff;
   --color-aurora-pink: #ff6bb3;
-  --color-aurora-teal: #00d4aa;
+  --color-aurora-teal: #06454d;
 
   /* Functional Status Colors */
   --color-status-ahead: #44cc52;
@@ -44,7 +44,7 @@
 
   /* UI Elements */
   --color-card-bg: rgba(26, 77, 77, 0.12);
-  --color-card-bg-hover: rgba(26, 77, 77, 0.2);
+  --color-card-bg-hover: #222222;
   --color-border: #555;
   --color-border-subtle: #444;
   --color-border-active: var(--color-aurora-teal);

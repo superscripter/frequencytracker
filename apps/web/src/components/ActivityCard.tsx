@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import * as TablerIcons from '@tabler/icons-react';
 import StatusBadge from './StatusBadge';
+import ContextMenu from './ContextMenu';
 import './ActivityCard.css';
 
 interface ActivityType {
@@ -36,6 +38,7 @@ interface ActivityCardProps {
   section?: 'today' | 'tomorrow' | 'other';
   highlightOverdue?: boolean;
   showDetailedData?: boolean;
+  onCompletedToday?: (activityTypeId: string) => void;
 }
 
 export default function ActivityCard({
@@ -44,7 +47,9 @@ export default function ActivityCard({
   section = 'other',
   highlightOverdue = false,
   showDetailedData = false,
+  onCompletedToday,
 }: ActivityCardProps) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const renderIcon = (iconName: string, color?: string | null) => {
     const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
     return IconComponent ? <IconComponent size={32} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
@@ -85,15 +90,32 @@ export default function ActivityCard({
   const isOverdue = rec.difference !== null && rec.difference >= 1;
   const shouldHighlight = highlightOverdue && isOverdue;
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleCompletedToday = () => {
+    if (onCompletedToday) {
+      onCompletedToday(rec.activityType.id);
+    }
+  };
+
   return (
-    <div
-      className={`activity-card activity-card-${variant} ${shouldHighlight ? 'activity-card-overdue' : ''}`}
-      style={{
-        '--border-color': sectionColors.dark,
-        '--text-color-dark': sectionColors.dark,
-        '--text-color-light': sectionColors.light,
-      } as React.CSSProperties}
-    >
+    <>
+      <div
+        className={`activity-card activity-card-${variant} ${shouldHighlight ? 'activity-card-overdue' : ''}`}
+        style={{
+          '--border-color': sectionColors.dark,
+          '--text-color-dark': sectionColors.dark,
+          '--text-color-light': sectionColors.light,
+        } as React.CSSProperties}
+        onContextMenu={handleContextMenu}
+      >
       <div className="activity-card-header">
         <div className="activity-card-title-section">
           <h3 className="activity-card-title">{rec.activityType.name}</h3>
@@ -185,5 +207,15 @@ export default function ActivityCard({
         </div>
       )}
     </div>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={handleCloseContextMenu}
+          onCompletedToday={handleCompletedToday}
+        />
+      )}
+    </>
   );
 }

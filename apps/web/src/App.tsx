@@ -65,12 +65,9 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <img src="/frequencytrackerbanner.png" alt="Frequency Tracker" className="header-banner" />
-      </header>
-
-      <div className="container">
-        <main className="main">
-          <nav className="tabs">
+        <div className="header-content">
+          <img src="/frequencytrackericon.png" alt="Frequency Tracker" className="header-logo" />
+          <nav className="header-nav">
             <button
               className={currentView === 'Activities' ? 'active' : ''}
               onClick={() => setCurrentView('Activities')}
@@ -96,6 +93,11 @@ function App() {
               Profile
             </button>
           </nav>
+        </div>
+      </header>
+
+      <div className="container">
+        <main className="main">
 
           <div className="content">
             {currentView === 'Activities' && (

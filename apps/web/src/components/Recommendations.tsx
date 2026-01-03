@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
 import ActivityCard from './ActivityCard';
 import { RecommendationsControls } from './RecommendationsControls';
@@ -142,6 +143,52 @@ export function Recommendations() {
     }
   };
 
+  const handleCompletedToday = async (activityTypeId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token || !user) return;
+
+      const userTimezone = user.timezone || 'America/New_York';
+
+      // Create a date for today at noon in the user's timezone
+      const today = new Date();
+      const dateAtNoon = `${formatInTimeZone(today, userTimezone, 'yyyy-MM-dd')}T12:00`;
+      const utcDate = formatInTimeZone(
+        new Date(dateAtNoon),
+        userTimezone,
+        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
+      );
+
+      // Find the activity type name
+      const recommendation = recommendations.find(rec => rec.activityType.id === activityTypeId);
+      const activityName = recommendation?.activityType.name || 'Activity';
+
+      const response = await fetch(`${API_URL}/api/activities`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          typeId: activityTypeId,
+          name: activityName,
+          date: new Date(utcDate).toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add activity');
+      }
+
+      // Refresh recommendations after adding activity
+      fetchRecommendations();
+    } catch (err) {
+      console.error('Failed to mark activity as completed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to mark activity as completed');
+    }
+  };
+
 
   // Apply filters to recommendations
   const filteredRecommendations = recommendations.filter(rec => {
@@ -197,6 +244,7 @@ export function Recommendations() {
             section={section}
             highlightOverdue={preferences.highlightOverdueActivities}
             showDetailedData={preferences.showDetailedCardData}
+            onCompletedToday={handleCompletedToday}
           />
         ))}
       </div>
