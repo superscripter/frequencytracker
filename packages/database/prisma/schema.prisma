@@ -53,6 +53,7 @@ model ActivityType {
   description      String?
   desiredFrequency Float    @default(1) // Desired frequency per week
   tagId            String?
+  icon             String?  @default("Run") // Tabler icon name for visual representation
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 

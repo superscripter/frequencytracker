@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
 import ActivityChart from './ActivityChart';
+import { AnalyticsControls } from './AnalyticsControls';
 import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -30,6 +31,11 @@ interface ActivityType {
   id: string;
   name: string;
   desiredFrequency: number;
+}
+
+interface Tag {
+  id: string;
+  name: string;
 }
 
 interface OffTime {
@@ -78,6 +84,7 @@ export function Analytics() {
   const [streaks, setStreaks] = useState<StreakData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [tags, setTags] = useState<Tag[]>([]);
 
   // Breakdown section state
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
@@ -87,6 +94,7 @@ export function Analytics() {
 
   // Filter state
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all');
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
 
   // Get user timezone or default to Eastern Time
   const userTimezone = user?.timezone || 'America/New_York';
@@ -94,6 +102,7 @@ export function Analytics() {
   useEffect(() => {
     fetchAnalytics();
     fetchActivityTypes();
+    fetchTags();
   }, []);
 
   // Fetch breakdown data when selected type changes
@@ -149,6 +158,22 @@ export function Analytics() {
       setActivityTypes(data);
     } catch (err) {
       console.error('Failed to load activity types:', err);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/tags`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch tags');
+      const data = await response.json();
+      setTags(data);
+    } catch (err) {
+      console.error('Failed to load tags:', err);
     }
   };
 
@@ -224,12 +249,26 @@ export function Analytics() {
   });
   const uniqueTags = Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
-  // Filter analytics based on selected tag
-  const filteredAnalytics = selectedTagFilter === 'all'
-    ? analytics
-    : selectedTagFilter === 'untagged'
-    ? analytics.filter(item => item.tag === null)
-    : analytics.filter(item => item.tag?.id === selectedTagFilter);
+  // Filter analytics based on selected tag and type
+  const filteredAnalytics = analytics.filter(item => {
+    // Filter by tag first
+    if (selectedTagFilter !== 'all') {
+      if (selectedTagFilter === 'untagged') {
+        if (item.tag !== null) return false;
+      } else {
+        if (item.tag?.id !== selectedTagFilter) return false;
+      }
+    }
+
+    // Then filter by activity type
+    if (selectedTypeId !== 'all') {
+      // Find the activity type that matches this analytics item
+      const matchingType = activityTypes.find(type => type.name === item.activityType);
+      if (!matchingType || matchingType.id !== selectedTypeId) return false;
+    }
+
+    return true;
+  });
 
   // Prepare data for streaks chart
   const streaksChartData = streaks
@@ -241,6 +280,16 @@ export function Analytics() {
 
   return (
     <div className="analytics-container">
+      {/* Controls Section */}
+      <AnalyticsControls
+        onActivityAdded={fetchAnalytics}
+        selectedTagFilter={selectedTagFilter}
+        onTagFilterChange={setSelectedTagFilter}
+        selectedTypeId={selectedTypeId}
+        onTypeFilterChange={setSelectedTypeId}
+        tags={tags}
+      />
+
       <h2>Activity Performance</h2>
 
       {analytics.length === 0 ? (
@@ -250,27 +299,6 @@ export function Analytics() {
       ) : (
         <details className="analytics-details" open>
           <summary className="analytics-summary">Detailed Statistics</summary>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="tag-filter" style={{ marginRight: '0.5rem' }}>Filter by Tag:</label>
-            <select
-              id="tag-filter"
-              value={selectedTagFilter}
-              onChange={(e) => setSelectedTagFilter(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                borderRadius: '4px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-bg)',
-                color: 'var(--color-text)'
-              }}
-            >
-              <option value="all">All Tags</option>
-              <option value="untagged">Untagged</option>
-              {uniqueTags.map(tag => (
-                <option key={tag.id} value={tag.id}>{tag.name}</option>
-              ))}
-            </select>
-          </div>
           <div className="analytics-table-wrapper">
             <table className="analytics-table">
               <thead>

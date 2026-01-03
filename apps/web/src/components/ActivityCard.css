@@ -36,12 +36,27 @@
   margin-bottom: 1rem;
 }
 
+.activity-card-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
 .activity-card-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-color-dark);
   flex: 1;
+}
+
+.activity-card-icon {
+  font-size: 2rem;
+  line-height: 1;
+  opacity: 0.8;
+  flex-shrink: 0;
 }
 
 .activity-card-body {

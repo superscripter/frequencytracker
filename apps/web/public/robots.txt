@@ -1,0 +1,10 @@
+# robots.txt for frequencytracker.com
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://frequencytracker.com/sitemap.xml
+
+# Disallow sensitive paths (if any)
+Disallow: /api/
+Disallow: /.well-known/

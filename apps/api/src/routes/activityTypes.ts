@@ -10,6 +10,7 @@ const createActivityTypeSchema = z.object({
   description: z.string().optional(),
   desiredFrequency: z.number().min(0),
   tagId: z.string().optional().nullable(),
+  icon: z.string().optional().default('Run'),
 });
 
 const updateActivityTypeSchema = z.object({
@@ -17,6 +18,7 @@ const updateActivityTypeSchema = z.object({
   description: z.string().optional().nullable(),
   desiredFrequency: z.number().min(0).optional(),
   tagId: z.string().optional().nullable(),
+  icon: z.string().optional(),
 });
 
 export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
@@ -95,6 +97,7 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           description: body.description,
           desiredFrequency: body.desiredFrequency,
           tagId: body.tagId,
+          icon: body.icon || 'Run',
         },
         include: {
           tag: true,
@@ -152,6 +155,7 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           description: body.description,
           desiredFrequency: body.desiredFrequency,
           tagId: body.tagId,
+          icon: body.icon,
         },
         include: {
           tag: true,

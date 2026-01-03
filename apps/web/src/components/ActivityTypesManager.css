@@ -27,11 +27,47 @@
 
 .add-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 1rem;
   background-color: rgba(100, 108, 255, 0.15);
   border-radius: 4px;
   border: 1px solid rgba(100, 108, 255, 0.3);
+}
+
+.icon-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(100, 108, 255, 0.2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: all 0.2s;
+}
+
+.icon-select-btn:hover {
+  background-color: rgba(100, 108, 255, 0.3);
+  border-color: var(--color-aurora-teal);
+}
+
+.icon-cell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  transition: all 0.2s;
+}
+
+.icon-cell-btn:hover {
+  transform: scale(1.2);
+  color: var(--color-aurora-teal);
 }
 
 .add-form input {

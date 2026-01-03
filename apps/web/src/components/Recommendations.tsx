@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
-import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
 import ActivityCard from './ActivityCard';
+import { RecommendationsControls } from './RecommendationsControls';
 import './Recommendations.css';
 import './ActivitiesManager.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+interface Tag {
+  id: string;
+  name: string;
+  color: string | null;
+}
 
 interface ActivityType {
   id: string;
   name: string;
   description: string | null;
   desiredFrequency: number;
+  icon: string | null;
+  tag?: Tag | null;
 }
 
 interface Recommendation {
@@ -41,21 +49,9 @@ export function Recommendations() {
     highlightOverdueActivities: false,
     showDetailedCardData: false,
   });
+  const [selectedTagId, setSelectedTagId] = useState<string>('all');
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
   const { user } = useAuth();
-
-  // Get user timezone or default to Eastern Time
-  const userTimezone = user?.timezone || 'America/New_York';
-
-  // Add activity form state
-  const [addTypeId, setAddTypeId] = useState<string>('');
-  const [addDate, setAddDate] = useState<string>(() => {
-    // Get current date in user's timezone
-    return formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd');
-  });
-  const [addTime, setAddTime] = useState<string>('12:00');
-
-  // Extract unique activity types from recommendations
-  const activityTypes = recommendations.map(rec => rec.activityType);
 
   useEffect(() => {
     if (user) {
@@ -63,11 +59,6 @@ export function Recommendations() {
       fetchPreferences();
     }
   }, [user]);
-
-  // Update the date picker default when timezone changes
-  useEffect(() => {
-    setAddDate(formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd'));
-  }, [userTimezone]);
 
   const fetchRecommendations = async () => {
     try {
@@ -151,65 +142,33 @@ export function Recommendations() {
     }
   };
 
-  const handleSubmitActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
 
-    if (!addTypeId) {
-      setError('Please select an activity type');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      const selectedType = activityTypes.find(t => t.id === addTypeId);
-
-      // Combine date and time in user's timezone, then convert to UTC
-      const dateTimeString = `${addDate}T${addTime}`;
-      const utcDate = formatInTimeZone(
-        new Date(dateTimeString),
-        userTimezone,
-        "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"
-      );
-
-      const response = await fetch(`${API_URL}/api/activities`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          typeId: addTypeId,
-          name: selectedType?.name || 'Activity',
-          date: new Date(utcDate).toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to add activity');
+  // Apply filters to recommendations
+  const filteredRecommendations = recommendations.filter(rec => {
+    // Filter by tag first
+    if (selectedTagId !== 'all') {
+      if (!rec.activityType.tag || rec.activityType.tag.id !== selectedTagId) {
+        return false;
       }
-
-      // Reset form
-      setAddTypeId('');
-      setAddDate(formatInTimeZone(new Date(), userTimezone, 'yyyy-MM-dd'));
-      setAddTime('12:00');
-
-      // Refresh recommendations
-      await fetchRecommendations();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add activity');
     }
-  };
 
+    // Then filter by activity type
+    if (selectedTypeId !== 'all') {
+      if (rec.activityType.id !== selectedTypeId) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // Filter recommendations for today (all activities with difference > -1)
-  const todayRecommendations = recommendations.filter(rec =>
+  const todayRecommendations = filteredRecommendations.filter(rec =>
     rec.difference !== null && rec.difference > -1
   );
 
   // Filter recommendations for tomorrow (activities with difference > -2 and <= -1)
-  const tomorrowRecommendations = recommendations.filter(rec =>
+  const tomorrowRecommendations = filteredRecommendations.filter(rec =>
     rec.difference !== null && rec.difference > -2 && rec.difference <= -1
   );
 
@@ -220,7 +179,7 @@ export function Recommendations() {
   ]);
 
   // Filter recommendations for all other activities (not shown in today or tomorrow)
-  const otherRecommendations = recommendations.filter(rec =>
+  const otherRecommendations = filteredRecommendations.filter(rec =>
     !shownActivityIds.has(rec.activityType.id)
   );
 
@@ -258,41 +217,16 @@ export function Recommendations() {
 
   return (
     <div className="recommendations-container">
-      {/* Add Activity Form */}
-      {activityTypes.length > 0 && (
-        <form className="add-activity-form" onSubmit={handleSubmitActivity}>
-          <select
-            value={addTypeId}
-            onChange={(e) => setAddTypeId(e.target.value)}
-            className="activity-type-select"
-            required
-          >
-            <option value="">Select Activity Type</option>
-            {activityTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={addDate}
-            onChange={(e) => setAddDate(e.target.value)}
-            className="activity-date-input"
-            required
-          />
-          <input
-            type="time"
-            value={addTime}
-            onChange={(e) => setAddTime(e.target.value)}
-            className="activity-time-input"
-            required
-          />
-          <button type="submit" className="add-activity-btn">
-            Add Activity
-          </button>
-        </form>
-      )}
+      {/* Controls Section */}
+      <RecommendationsControls
+        onActivityAdded={fetchRecommendations}
+        preferences={preferences}
+        onPreferenceChange={updatePreference}
+        selectedTagId={selectedTagId}
+        onTagFilterChange={setSelectedTagId}
+        selectedTypeId={selectedTypeId}
+        onTypeFilterChange={setSelectedTypeId}
+      />
 
       {error && <div className="error-message">{error}</div>}
 
@@ -333,29 +267,6 @@ export function Recommendations() {
               )}
             </div>
             {renderCards(otherRecommendations, 'other')}
-          </div>
-
-          {/* Preferences Section */}
-          <div className="recommendations-preferences">
-            <h3 className="preferences-title">Display Preferences</h3>
-            <div className="preferences-controls">
-              <label className="preference-item">
-                <input
-                  type="checkbox"
-                  checked={preferences.highlightOverdueActivities}
-                  onChange={(e) => updatePreference('highlightOverdueActivities', e.target.checked)}
-                />
-                <span className="preference-label">Highlight Overdue Activities</span>
-              </label>
-              <label className="preference-item">
-                <input
-                  type="checkbox"
-                  checked={preferences.showDetailedCardData}
-                  onChange={(e) => updatePreference('showDetailedCardData', e.target.checked)}
-                />
-                <span className="preference-label">Show Detailed Card Data</span>
-              </label>
-            </div>
           </div>
         </>
       )}

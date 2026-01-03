@@ -11,6 +11,12 @@ interface RecommendationItem {
     name: string;
     description: string | null;
     desiredFrequency: number;
+    icon: string | null;
+    tag?: {
+      id: string;
+      name: string;
+      color: string | null;
+    } | null;
   };
   lastPerformedDate: string | null;
   daysSinceLastActivity: number | null;
@@ -58,11 +64,29 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
       // Get off-times for this user to exclude from calculations
       const offTimes = await getUserOffTimes(userId);
 
-      // Get all activity types for this user
+      // Get all activity types for this user with their tags
       const activityTypes = await prisma.activityType.findMany({
         where: { userId },
         orderBy: { name: 'asc' },
-      });
+      }) as Array<{
+        id: string;
+        userId: string;
+        name: string;
+        description: string | null;
+        desiredFrequency: number;
+        tagId: string | null;
+        icon: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>;
+
+      // Get all tags for this user
+      const allTags = await prisma.$queryRaw<Array<{ id: string; name: string; color: string | null }>>`
+        SELECT id, name, color FROM tags WHERE "userId" = ${userId}
+      `;
+
+      // Create a map of tag IDs to tag objects for quick lookup
+      const tagMap = new Map(allTags.map((tag: { id: string; name: string; color: string | null }) => [tag.id, { id: tag.id, name: tag.name, color: tag.color }]));
 
       // Get all activities for the user
       const allActivitiesByType = await prisma.activity.findMany({
@@ -314,6 +338,8 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
             name: type.name,
             description: type.description,
             desiredFrequency: type.desiredFrequency,
+            icon: type.icon,
+            tag: type.tagId ? tagMap.get(type.tagId) || null : null,
           },
           lastPerformedDate,
           daysSinceLastActivity,

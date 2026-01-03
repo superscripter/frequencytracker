@@ -20,11 +20,15 @@ interface ActivityType {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-export function ActivitiesManager() {
+interface ActivitiesManagerProps {
+  selectedTypeId: string
+  onTypeFilterChange: (typeId: string) => void
+}
+
+export function ActivitiesManager({ selectedTypeId, onTypeFilterChange }: ActivitiesManagerProps) {
   const { user } = useAuth()
   const [activities, setActivities] = useState<Activity[]>([])
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
-  const [selectedTypeId, setSelectedTypeId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -225,62 +229,46 @@ export function ActivitiesManager() {
 
   return (
     <div className="activities-manager">
-      <form className="add-activity-form" onSubmit={handleSubmitActivity}>
-        <select
-          value={addTypeId}
-          onChange={(e) => setAddTypeId(e.target.value)}
-          className="activity-type-select"
-          required
-        >
-          <option value="">Select Activity Type</option>
-          {activityTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          value={addDate}
-          onChange={(e) => setAddDate(e.target.value)}
-          className="activity-date-input"
-          required
-        />
-        <input
-          type="time"
-          value={addTime}
-          onChange={(e) => setAddTime(e.target.value)}
-          className="activity-time-input"
-          required
-        />
-        <button type="submit" className="add-activity-btn">
-          {editingActivity ? 'Update Activity' : 'Add Activity'}
-        </button>
-        {editingActivity && (
+      {/* Edit Activity Form */}
+      {editingActivity && (
+        <form className="add-activity-form" onSubmit={handleSubmitActivity}>
+          <select
+            value={addTypeId}
+            onChange={(e) => setAddTypeId(e.target.value)}
+            className="activity-type-select"
+            required
+          >
+            <option value="">Select Activity Type</option>
+            {activityTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={addDate}
+            onChange={(e) => setAddDate(e.target.value)}
+            className="activity-date-input"
+            required
+          />
+          <input
+            type="time"
+            value={addTime}
+            onChange={(e) => setAddTime(e.target.value)}
+            className="activity-time-input"
+            required
+          />
+          <button type="submit" className="add-activity-btn">
+            Update Activity
+          </button>
           <button type="button" onClick={handleCancelEdit} className="cancel-edit-btn">
             Cancel
           </button>
-        )}
-      </form>
+        </form>
+      )}
 
       {error && <div className="error-message">{error}</div>}
-
-      <div className="filter-group">
-        <label htmlFor="type-filter">Filter Table by Activity Type:</label>
-        <select
-          id="type-filter"
-          value={selectedTypeId}
-          onChange={(e) => setSelectedTypeId(e.target.value)}
-          className="type-filter"
-        >
-          <option value="all">All Activities</option>
-          {activityTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <table className="activities-table">
         <thead>

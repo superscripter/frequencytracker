@@ -5,7 +5,7 @@
 
   color-scheme: dark;
   color: #e8e8e8;
-  background-color: #000000;
+  background-color: #004747;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -64,8 +64,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -159,7 +157,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: #004747;
     color-scheme: light;
 
     /* Brand Colors adjusted for light mode */

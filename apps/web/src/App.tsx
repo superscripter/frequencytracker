@@ -4,6 +4,8 @@ import { useAuth } from './context/AuthContext'
 import { AuthModal } from './components/AuthModal'
 import { ActivityTypesManager } from './components/ActivityTypesManager'
 import { ActivitiesManager } from './components/ActivitiesManager'
+import { CalendarView } from './components/CalendarView'
+import { ActivitiesControls } from './components/ActivitiesControls'
 import { Profile } from './components/Profile'
 import { Recommendations } from './components/Recommendations'
 import { Analytics } from './components/Analytics'
@@ -13,8 +15,17 @@ type View = 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('Recommendations')
+  const [activitiesViewMode, setActivitiesViewMode] = useState<'calendar' | 'list'>('calendar')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [tagsRefreshTrigger, setTagsRefreshTrigger] = useState(0)
+  const [activitiesRefreshTrigger, setActivitiesRefreshTrigger] = useState(0)
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('all')
+  const [selectedTagId, setSelectedTagId] = useState<string>('all')
+  const [defaultView, setDefaultView] = useState<'calendar' | 'list'>(() => {
+    // Load from localStorage or default to 'calendar'
+    const saved = localStorage.getItem('activitiesDefaultView')
+    return (saved as 'calendar' | 'list') || 'calendar'
+  })
   const { user, isLoading } = useAuth()
 
   // Show auth modal if user is not logged in
@@ -23,6 +34,23 @@ function App() {
       setShowAuthModal(true)
     }
   }, [user, isLoading])
+
+  // Save preference to localStorage when it changes (but don't update current view)
+  useEffect(() => {
+    localStorage.setItem('activitiesDefaultView', defaultView)
+  }, [defaultView])
+
+  // Apply preference when Activities tab is shown
+  useEffect(() => {
+    if (currentView === 'Activities') {
+      setActivitiesViewMode(defaultView)
+    }
+  }, [currentView, defaultView])
+
+  // Handler for view mode change (doesn't update preference)
+  const handleViewModeChange = (mode: 'calendar' | 'list') => {
+    setActivitiesViewMode(mode)
+  }
 
   if (isLoading) {
     return (
@@ -36,11 +64,11 @@ function App() {
 
   return (
     <div className="app">
-      <div className="container">
-        <header className="header">
-          <img src="/frequencytrackerbanner.png" alt="Frequency Tracker" className="header-banner" />
-        </header>
+      <header className="header">
+        <img src="/frequencytrackerbanner.png" alt="Frequency Tracker" className="header-banner" />
+      </header>
 
+      <div className="container">
         <main className="main">
           <nav className="tabs">
             <button
@@ -72,7 +100,44 @@ function App() {
           <div className="content">
             {currentView === 'Activities' && (
               <div className="activities-view">
-                <ActivitiesManager />
+                <ActivitiesControls
+                  onActivityAdded={() => setActivitiesRefreshTrigger(prev => prev + 1)}
+                  selectedTypeId={selectedTypeId}
+                  onTypeFilterChange={setSelectedTypeId}
+                  selectedTagId={selectedTagId}
+                  onTagFilterChange={setSelectedTagId}
+                  defaultView={defaultView}
+                  onDefaultViewChange={setDefaultView}
+                />
+
+                <div className="view-toggle">
+                  <button
+                    className={activitiesViewMode === 'calendar' ? 'active' : ''}
+                    onClick={() => handleViewModeChange('calendar')}
+                  >
+                    Calendar View
+                  </button>
+                  <button
+                    className={activitiesViewMode === 'list' ? 'active' : ''}
+                    onClick={() => handleViewModeChange('list')}
+                  >
+                    List View
+                  </button>
+                </div>
+
+                {activitiesViewMode === 'calendar' ? (
+                  <CalendarView
+                    key={activitiesRefreshTrigger}
+                    selectedTypeId={selectedTypeId}
+                    selectedTagId={selectedTagId}
+                  />
+                ) : (
+                  <ActivitiesManager
+                    key={activitiesRefreshTrigger}
+                    selectedTypeId={selectedTypeId}
+                    onTypeFilterChange={setSelectedTypeId}
+                  />
+                )}
               </div>
             )}
             {currentView === 'Recommendations' && <Recommendations />}

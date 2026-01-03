@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import * as TablerIcons from '@tabler/icons-react'
+import { IconPicker } from './IconPicker'
 import './ActivityTypesManager.css'
 
 interface Tag {
@@ -14,6 +16,7 @@ interface ActivityType {
   desiredFrequency: number
   tagId?: string | null
   tag?: Tag | null
+  icon?: string
 }
 
 type SortField = 'name' | 'desiredFrequency'
@@ -35,10 +38,15 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
   const [editingId, setEditingId] = useState<string | null>(null)
 
+  // Icon picker state
+  const [showIconPicker, setShowIconPicker] = useState(false)
+  const [iconPickerTargetId, setIconPickerTargetId] = useState<string | null>(null)
+
   // Form state
   const [formName, setFormName] = useState('')
   const [formFrequency, setFormFrequency] = useState(1)
   const [formTagId, setFormTagId] = useState<string>('')
+  const [formIcon, setFormIcon] = useState('Run')
 
   useEffect(() => {
     fetchActivityTypes()
@@ -110,6 +118,14 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
       : (bValue as number) - (aValue as number)
   })
 
+  const renderIcon = (iconName?: string) => {
+    if (!iconName) iconName = 'Run'
+    const IconComponent = (TablerIcons as any)[`Icon${iconName}`]
+    // Fallback to Run icon if the icon doesn't exist
+    const FallbackIcon = IconComponent || (TablerIcons as any)['IconRun']
+    return FallbackIcon ? <FallbackIcon size={20} stroke={1.5} /> : null
+  }
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -126,6 +142,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
           name: formName,
           desiredFrequency: formFrequency,
           tagId: formTagId || null,
+          icon: formIcon,
         }),
       })
 
@@ -138,13 +155,14 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
       setFormName('')
       setFormFrequency(1)
       setFormTagId('')
+      setFormIcon('Run')
       setIsAdding(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add activity type')
     }
   }
 
-  const handleUpdate = async (id: string, name: string, frequency: number, tagId: string | null) => {
+  const handleUpdate = async (id: string, name: string, frequency: number, tagId: string | null, icon?: string) => {
     setError('')
 
     try {
@@ -159,6 +177,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
           name,
           desiredFrequency: frequency,
           tagId: tagId || null,
+          icon,
         }),
       })
 
@@ -244,6 +263,17 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            className="icon-select-btn"
+            onClick={() => {
+              setIconPickerTargetId('new')
+              setShowIconPicker(true)
+            }}
+          >
+            {renderIcon(formIcon)}
+            <span>{formIcon}</span>
+          </button>
           <button type="submit" className="save-btn">Add</button>
         </form>
       )}
@@ -251,6 +281,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
       <table className="activity-types-table">
         <thead>
           <tr>
+            <th>Icon</th>
             <th onClick={() => handleSort('name')} className="sortable">
               Activity Type {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
             </th>
@@ -264,7 +295,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         <tbody>
           {sortedActivityTypes.length === 0 ? (
             <tr>
-              <td colSpan={4} className="empty-state">
+              <td colSpan={5} className="empty-state">
                 No activity types yet. Add one to get started!
               </td>
             </tr>
@@ -278,11 +309,37 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
                 onDelete={handleDelete}
                 isEditing={editingId === type.id}
                 setIsEditing={(editing) => setEditingId(editing ? type.id : null)}
+                renderIcon={renderIcon}
+                onOpenIconPicker={(id) => {
+                  setIconPickerTargetId(id)
+                  setShowIconPicker(true)
+                }}
               />
             ))
           )}
         </tbody>
       </table>
+
+      {showIconPicker && (
+        <IconPicker
+          selectedIcon={iconPickerTargetId === 'new' ? formIcon : activityTypes.find(t => t.id === iconPickerTargetId)?.icon || 'Activity'}
+          onSelectIcon={(icon) => {
+            if (iconPickerTargetId === 'new') {
+              setFormIcon(icon)
+            } else {
+              // Find the type being edited and update it
+              const typeToUpdate = activityTypes.find(t => t.id === iconPickerTargetId)
+              if (typeToUpdate) {
+                handleUpdate(typeToUpdate.id, typeToUpdate.name, typeToUpdate.desiredFrequency, typeToUpdate.tagId || null, icon)
+              }
+            }
+          }}
+          onClose={() => {
+            setShowIconPicker(false)
+            setIconPickerTargetId(null)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -290,24 +347,27 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
 interface ActivityTypeRowProps {
   type: ActivityType
   tags: Tag[]
-  onUpdate: (id: string, name: string, frequency: number, tagId: string | null) => void
+  onUpdate: (id: string, name: string, frequency: number, tagId: string | null, icon?: string) => void
   onDelete: (id: string) => void
   isEditing: boolean
   setIsEditing: (editing: boolean) => void
+  renderIcon: (iconName?: string) => JSX.Element | null
+  onOpenIconPicker: (id: string) => void
 }
 
-function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditing }: ActivityTypeRowProps) {
+function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditing, renderIcon, onOpenIconPicker }: ActivityTypeRowProps) {
   const [editName, setEditName] = useState(type.name)
   const [editFrequency, setEditFrequency] = useState(type.desiredFrequency)
   const [editTagId, setEditTagId] = useState<string>(type.tagId || '')
+  const [editIcon, setEditIcon] = useState<string>(type.icon || 'Run')
 
   const handleEdit = () => {
     setIsEditing(true)
   }
 
   const handleSave = () => {
-    if (editName.trim() !== '' && (editName !== type.name || editFrequency !== type.desiredFrequency || editTagId !== (type.tagId || ''))) {
-      onUpdate(type.id, editName, editFrequency, editTagId || null)
+    if (editName.trim() !== '' && (editName !== type.name || editFrequency !== type.desiredFrequency || editTagId !== (type.tagId || '') || editIcon !== (type.icon || 'Run'))) {
+      onUpdate(type.id, editName, editFrequency, editTagId || null, editIcon)
     }
     setIsEditing(false)
   }
@@ -316,11 +376,21 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
     setEditName(type.name)
     setEditFrequency(type.desiredFrequency)
     setEditTagId(type.tagId || '')
+    setEditIcon(type.icon || 'Run')
     setIsEditing(false)
   }
 
   return (
     <tr>
+      <td>
+        <button
+          className="icon-cell-btn"
+          onClick={() => onOpenIconPicker(type.id)}
+          title="Change icon"
+        >
+          {renderIcon(type.icon)}
+        </button>
+      </td>
       <td>
         {isEditing ? (
           <input

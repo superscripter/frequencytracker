@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import * as TablerIcons from '@tabler/icons-react';
 import StatusBadge from './StatusBadge';
 import './ActivityCard.css';
 
@@ -7,6 +8,12 @@ interface ActivityType {
   name: string;
   description: string | null;
   desiredFrequency: number;
+  icon: string | null;
+  tag?: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
 }
 
 interface Recommendation {
@@ -38,6 +45,11 @@ export default function ActivityCard({
   highlightOverdue = false,
   showDetailedData = false,
 }: ActivityCardProps) {
+  const renderIcon = (iconName: string, color?: string | null) => {
+    const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
+    return IconComponent ? <IconComponent size={32} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
+  };
+
   const getSectionColor = (section: 'today' | 'tomorrow' | 'other'): { dark: string; light: string } => {
     switch (section) {
       case 'today':
@@ -83,8 +95,13 @@ export default function ActivityCard({
       } as React.CSSProperties}
     >
       <div className="activity-card-header">
-        <h3 className="activity-card-title">{rec.activityType.name}</h3>
-        <StatusBadge status={rec.status} size="small" />
+        <div className="activity-card-title-section">
+          <h3 className="activity-card-title">{rec.activityType.name}</h3>
+          <StatusBadge status={rec.status} size="small" />
+        </div>
+        {rec.activityType.icon && (
+          <div className="activity-card-icon">{renderIcon(rec.activityType.icon, rec.activityType.tag?.color)}</div>
+        )}
       </div>
 
       <div className="activity-card-body">
