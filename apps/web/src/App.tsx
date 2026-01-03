@@ -135,7 +135,6 @@ function App() {
                   <ActivitiesManager
                     key={activitiesRefreshTrigger}
                     selectedTypeId={selectedTypeId}
-                    onTypeFilterChange={setSelectedTypeId}
                   />
                 )}
               </div>
