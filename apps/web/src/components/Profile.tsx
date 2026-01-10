@@ -31,7 +31,7 @@ interface ProfileProps {
   onTagsChange?: () => void
 }
 
-export function Profile({ onTagsChange }: ProfileProps) {
+export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
   const { user, logout, refreshUser } = useAuth()
   const [timezone, setTimezone] = useState<string>('')
   const [autoSync, setAutoSync] = useState<boolean>(false)

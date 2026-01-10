@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useAuth } from '../context/AuthContext';
-import ActivityChart from './ActivityChart';
 import { AnalyticsControls } from './AnalyticsControls';
 import './Analytics.css';
 
@@ -268,14 +267,6 @@ export function Analytics() {
 
     return true;
   });
-
-  // Prepare data for streaks chart
-  const streaksChartData = streaks
-    .filter(item => item.longestStreak > 0)
-    .map(item => ({
-      name: item.activityType.length > 15 ? item.activityType.substring(0, 15) + '...' : item.activityType,
-      value: item.longestStreak
-    }));
 
   return (
     <div className="analytics-container">
