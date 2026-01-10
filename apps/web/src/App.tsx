@@ -10,8 +10,10 @@ import { Profile } from './components/Profile'
 import { Recommendations } from './components/Recommendations'
 import { Analytics } from './components/Analytics'
 import { NotificationPrompt } from './components/NotificationPrompt'
+import { TagsManager } from './components/TagsManager'
+import { OffTimeManager } from './components/OffTimeManager'
 
-type View = 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
+type View = 'Log' | 'Activities' | 'Recommendations' | 'Analytics' | 'Profile'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('Recommendations')
@@ -40,9 +42,9 @@ function App() {
     localStorage.setItem('activitiesDefaultView', defaultView)
   }, [defaultView])
 
-  // Apply preference when Activities tab is shown
+  // Apply preference when Log tab is shown
   useEffect(() => {
-    if (currentView === 'Activities') {
+    if (currentView === 'Log') {
       setActivitiesViewMode(defaultView)
     }
   }, [currentView, defaultView])
@@ -68,6 +70,12 @@ function App() {
         <div className="header-content">
           <img src="/frequencytrackericon.png" alt="Frequency Tracker" className="header-logo" />
           <nav className="header-nav">
+            <button
+              className={currentView === 'Log' ? 'active' : ''}
+              onClick={() => setCurrentView('Log')}
+            >
+              Log
+            </button>
             <button
               className={currentView === 'Activities' ? 'active' : ''}
               onClick={() => setCurrentView('Activities')}
@@ -100,7 +108,7 @@ function App() {
         <main className="main">
 
           <div className="content">
-            {currentView === 'Activities' && (
+            {currentView === 'Log' && (
               <div className="activities-view">
                 <ActivitiesControls
                   onActivityAdded={() => setActivitiesRefreshTrigger(prev => prev + 1)}
@@ -141,13 +149,21 @@ function App() {
                 )}
               </div>
             )}
+            {currentView === 'Activities' && (
+              <div className="activities-management-view">
+                <h2>Activity Types</h2>
+                <ActivityTypesManager tagsRefreshTrigger={tagsRefreshTrigger} />
+                <div className="divider"></div>
+                <TagsManager onTagsChange={() => setTagsRefreshTrigger(prev => prev + 1)} />
+                <div className="divider"></div>
+                <OffTimeManager />
+              </div>
+            )}
             {currentView === 'Recommendations' && <Recommendations />}
             {currentView === 'Analytics' && <Analytics />}
             {currentView === 'Profile' && (
               <div className="profile-view">
                 <Profile onTagsChange={() => setTagsRefreshTrigger(prev => prev + 1)} />
-                <div className="divider"></div>
-                <ActivityTypesManager tagsRefreshTrigger={tagsRefreshTrigger} />
               </div>
             )}
           </div>

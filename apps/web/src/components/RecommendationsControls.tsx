@@ -18,6 +18,7 @@ interface Tag {
 interface UserPreferences {
   highlightOverdueActivities: boolean
   showDetailedCardData: boolean
+  showStreakFlame: boolean
 }
 
 interface RecommendationsControlsProps {
@@ -285,6 +286,16 @@ export function RecommendationsControls({
                     onChange={(e) => onPreferenceChange('showDetailedCardData', e.target.checked)}
                   />
                   <span style={{ marginLeft: '0.5rem' }}>Show Detailed Card Data</span>
+                </label>
+              </div>
+              <div className="preference-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={preferences.showStreakFlame}
+                    onChange={(e) => onPreferenceChange('showStreakFlame', e.target.checked)}
+                  />
+                  <span style={{ marginLeft: '0.5rem' }}>Show Streak Flame</span>
                 </label>
               </div>
             </div>

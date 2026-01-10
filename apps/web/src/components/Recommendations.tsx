@@ -35,11 +35,13 @@ interface Recommendation {
   priorityScore: number;
   currentStreak: number;
   currentStreakStart: string | null;
+  firstActivityDate: string | null;
 }
 
 interface UserPreferences {
   highlightOverdueActivities: boolean;
   showDetailedCardData: boolean;
+  showStreakFlame: boolean;
 }
 
 export function Recommendations() {
@@ -49,11 +51,21 @@ export function Recommendations() {
   const [preferences, setPreferences] = useState<UserPreferences>({
     highlightOverdueActivities: false,
     showDetailedCardData: false,
+    showStreakFlame: true,
   });
   const [selectedTagId, setSelectedTagId] = useState<string>('all');
   const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
   const { user } = useAuth();
 
+  // Fetch data on mount AND whenever component becomes visible
+  useEffect(() => {
+    if (user) {
+      fetchRecommendations();
+      fetchPreferences();
+    }
+  }, []); // Empty dependency array - run on every mount
+
+  // Also listen for user changes in case of login/logout
   useEffect(() => {
     if (user) {
       fetchRecommendations();
@@ -244,6 +256,7 @@ export function Recommendations() {
             section={section}
             highlightOverdue={preferences.highlightOverdueActivities}
             showDetailedData={preferences.showDetailedCardData}
+            showStreakFlame={preferences.showStreakFlame}
             onCompletedToday={handleCompletedToday}
           />
         ))}

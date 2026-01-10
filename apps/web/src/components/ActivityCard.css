@@ -52,11 +52,43 @@
   flex: 1;
 }
 
+.activity-card-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .activity-card-icon {
   font-size: 2rem;
   line-height: 1;
   opacity: 0.8;
   flex-shrink: 0;
+}
+
+.streak-flame-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px currentColor);
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
+
+.streak-flame-silver {
+  color: #c0c0c0;
+}
+
+.streak-flame-gold {
+  color: #ffd700;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 12px currentColor);
+  }
 }
 
 .activity-card-body {

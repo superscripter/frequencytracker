@@ -10,7 +10,10 @@ const createActivityTypeSchema = z.object({
   description: z.string().optional(),
   desiredFrequency: z.number().min(0),
   tagId: z.string().optional().nullable(),
-  icon: z.string().optional().default('Run'),
+  icon: z.string().optional().default('Run').refine(
+    (icon) => icon !== 'Flame',
+    { message: 'The Flame icon is reserved for streaks and cannot be used for activity types' }
+  ),
 });
 
 const updateActivityTypeSchema = z.object({
@@ -18,7 +21,10 @@ const updateActivityTypeSchema = z.object({
   description: z.string().optional().nullable(),
   desiredFrequency: z.number().min(0).optional(),
   tagId: z.string().optional().nullable(),
-  icon: z.string().optional(),
+  icon: z.string().optional().refine(
+    (icon) => !icon || icon !== 'Flame',
+    { message: 'The Flame icon is reserved for streaks and cannot be used for activity types' }
+  ),
 });
 
 export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {

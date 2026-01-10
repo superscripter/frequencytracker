@@ -30,6 +30,7 @@ interface Recommendation {
   priorityScore: number;
   currentStreak: number;
   currentStreakStart: string | null;
+  firstActivityDate: string | null;
 }
 
 interface ActivityCardProps {
@@ -38,6 +39,7 @@ interface ActivityCardProps {
   section?: 'today' | 'tomorrow' | 'other';
   highlightOverdue?: boolean;
   showDetailedData?: boolean;
+  showStreakFlame?: boolean;
   onCompletedToday?: (activityTypeId: string) => void;
 }
 
@@ -47,6 +49,7 @@ export default function ActivityCard({
   section = 'other',
   highlightOverdue = false,
   showDetailedData = false,
+  showStreakFlame = true,
   onCompletedToday,
 }: ActivityCardProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -105,6 +108,32 @@ export default function ActivityCard({
     }
   };
 
+  // Determine if we should show the streak flame icon
+  const shouldShowStreakFlame = (): { show: boolean; isGold: boolean } => {
+    // Must have a current streak
+    if (rec.currentStreak === 0 || !rec.currentStreakStart) {
+      return { show: false, isGold: false };
+    }
+
+    // Calculate if streak is at least 3 intervals (3 * desired frequency)
+    const minStreakDays = rec.activityType.desiredFrequency * 3;
+    if (rec.currentStreak < minStreakDays) {
+      return { show: false, isGold: false };
+    }
+
+    // Check if this is a current streak (last activity was recent enough)
+    if (rec.daysSinceLastActivity !== null && rec.daysSinceLastActivity > rec.activityType.desiredFrequency) {
+      return { show: false, isGold: false };
+    }
+
+    // Check if streak goes back to the first activity (gold flame)
+    const isGold = rec.currentStreakStart === rec.firstActivityDate;
+
+    return { show: true, isGold };
+  };
+
+  const streakFlame = shouldShowStreakFlame();
+
   return (
     <>
       <div
@@ -121,9 +150,16 @@ export default function ActivityCard({
           <h3 className="activity-card-title">{rec.activityType.name}</h3>
           <StatusBadge status={rec.status} size="small" />
         </div>
-        {rec.activityType.icon && (
-          <div className="activity-card-icon">{renderIcon(rec.activityType.icon, rec.activityType.tag?.color)}</div>
-        )}
+        <div className="activity-card-icons">
+          {showStreakFlame && streakFlame.show && (
+            <div className={`streak-flame-icon ${streakFlame.isGold ? 'streak-flame-gold' : 'streak-flame-silver'}`}>
+              <TablerIcons.IconFlame size={28} stroke={1.5} />
+            </div>
+          )}
+          {rec.activityType.icon && (
+            <div className="activity-card-icon">{renderIcon(rec.activityType.icon, rec.activityType.tag?.color)}</div>
+          )}
+        </div>
       </div>
 
       <div className="activity-card-body">

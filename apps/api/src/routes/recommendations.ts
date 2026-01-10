@@ -28,6 +28,7 @@ interface RecommendationItem {
   priorityScore: number;
   currentStreak: number;
   currentStreakStart: string | null;
+  firstActivityDate: string | null;
 }
 
 export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -116,6 +117,11 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
       // Calculate recommendations for each activity type
       const recommendations: RecommendationItem[] = activityTypes.map((type) => {
         const typeActivities = activitiesByType.get(type.id) || [];
+
+        // Get the first activity date (oldest activity)
+        const firstActivityDate = typeActivities.length > 0
+          ? typeActivities[typeActivities.length - 1].date.toISOString()
+          : null;
 
         let daysSinceLastActivity: number | null = null;
         let lastPerformedDate: string | null = null;
@@ -351,6 +357,7 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           priorityScore,
           currentStreak,
           currentStreakStart: currentStreakStart ? currentStreakStart.toISOString() : null,
+          firstActivityDate,
         };
       });
 

@@ -45,7 +45,7 @@ export function IconPicker({ selectedIcon, onSelectIcon, onClose }: IconPickerPr
     ],
     outdoor: [
       'Mountain', 'Trees', 'Tree', 'Tent', 'Compass', 'Map', 'MapPin',
-      'Flame', 'Cloud', 'CloudRain', 'CloudSnow', 'Sunset', 'Sunrise',
+      'Cloud', 'CloudRain', 'CloudSnow', 'Sunset', 'Sunrise',
       'Beach', 'Campfire'
     ],
     other: [
@@ -56,7 +56,8 @@ export function IconPicker({ selectedIcon, onSelectIcon, onClose }: IconPickerPr
   };
 
   // Flatten icons for searching and remove duplicates
-  const allIcons = [...new Set(Object.values(iconCategories).flat())];
+  // Filter out reserved icons (Flame is reserved for streaks)
+  const allIcons = [...new Set(Object.values(iconCategories).flat())].filter(icon => icon !== 'Flame');
 
   const filteredIcons = searchTerm
     ? allIcons.filter(icon => icon.toLowerCase().includes(searchTerm.toLowerCase()))

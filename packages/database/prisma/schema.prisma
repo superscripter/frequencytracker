@@ -25,6 +25,7 @@ model User {
   // UI preferences
   highlightOverdueActivities Boolean @default(false) // Highlight overdue activities with red glow
   showDetailedCardData       Boolean @default(false) // Show detailed stats on activity cards
+  showStreakFlame            Boolean @default(true)  // Show flame icon for activity streaks
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

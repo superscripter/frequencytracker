@@ -5,6 +5,7 @@ import { prisma } from '@frequency-tracker/database';
 const updatePreferencesSchema = z.object({
   highlightOverdueActivities: z.boolean().optional(),
   showDetailedCardData: z.boolean().optional(),
+  showStreakFlame: z.boolean().optional(),
 });
 
 export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
@@ -28,6 +29,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         select: {
           highlightOverdueActivities: true,
           showDetailedCardData: true,
+          showStreakFlame: true,
         },
       });
 
@@ -39,6 +41,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         preferences: {
           highlightOverdueActivities: user.highlightOverdueActivities,
           showDetailedCardData: user.showDetailedCardData,
+          showStreakFlame: user.showStreakFlame,
         },
       });
     } catch (error) {
@@ -68,7 +71,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request body', details: result.error });
       }
 
-      const { highlightOverdueActivities, showDetailedCardData } = result.data;
+      const { highlightOverdueActivities, showDetailedCardData, showStreakFlame } = result.data;
 
       // Build update object with only provided fields
       const updateData: any = {};
@@ -78,6 +81,9 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
       if (showDetailedCardData !== undefined) {
         updateData.showDetailedCardData = showDetailedCardData;
       }
+      if (showStreakFlame !== undefined) {
+        updateData.showStreakFlame = showStreakFlame;
+      }
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -85,6 +91,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         select: {
           highlightOverdueActivities: true,
           showDetailedCardData: true,
+          showStreakFlame: true,
         },
       });
 
@@ -92,6 +99,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         preferences: {
           highlightOverdueActivities: updatedUser.highlightOverdueActivities,
           showDetailedCardData: updatedUser.showDetailedCardData,
+          showStreakFlame: updatedUser.showStreakFlame,
         },
       });
     } catch (error) {
