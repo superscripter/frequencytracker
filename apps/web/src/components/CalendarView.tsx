@@ -71,6 +71,7 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
   const [showSubmenu, setShowSubmenu] = useState(false);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchMonthData();
@@ -78,7 +79,7 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
 
   // Close context menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (
         contextMenuRef.current &&
         !contextMenuRef.current.contains(event.target as Node) &&
@@ -100,10 +101,17 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
     };
 
     if (contextMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscape);
+      // Add a small delay to prevent immediate closure from the long-press
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside as EventListener, true);
+        document.addEventListener('touchstart', handleClickOutside as EventListener, true);
+        document.addEventListener('keydown', handleEscape);
+      }, 100);
+
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside as EventListener, true);
+        document.removeEventListener('touchstart', handleClickOutside as EventListener, true);
         document.removeEventListener('keydown', handleEscape);
       };
     }
@@ -177,6 +185,11 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
   };
 
   const handleDayRightClick = (e: React.MouseEvent, dateKey: string) => {
+    // Only allow right-click context menu on desktop (not touch devices)
+    if ('ontouchstart' in window) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     setContextMenu({
       x: e.clientX,
@@ -184,6 +197,29 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
       type: 'day',
       date: dateKey,
     });
+  };
+
+  const handleDayTouchStart = (dateKey: string) => {
+    const timer = setTimeout(() => {
+      // Long press detected - show context menu at center of viewport
+      const x = window.innerWidth / 2;
+      const y = window.innerHeight / 2;
+      setContextMenu({
+        x,
+        y,
+        type: 'day',
+        date: dateKey,
+      });
+    }, 500); // 500ms for long press
+
+    setLongPressTimer(timer);
+  };
+
+  const handleDayTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   };
 
   const handleDeleteActivity = async () => {
@@ -353,6 +389,9 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
               key={dateKey}
               className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
               onContextMenu={(e) => handleDayRightClick(e, dateKey)}
+              onTouchStart={() => handleDayTouchStart(dateKey)}
+              onTouchEnd={handleDayTouchEnd}
+              onTouchCancel={handleDayTouchEnd}
             >
               <div className="day-number">{format(day, 'd')}</div>
 
