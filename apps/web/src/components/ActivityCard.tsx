@@ -155,7 +155,7 @@ export default function ActivityCard({
   };
 
   // Long press handlers for touch
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = () => {
     const timer = setTimeout(() => {
       if (onLongPressStart) {
         onLongPressStart(rec.activityType.id);
