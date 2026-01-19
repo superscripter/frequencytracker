@@ -49,20 +49,6 @@ interface CurrentStreakData {
   } | null;
 }
 
-interface PerfectStreakData {
-  activityType: string;
-  icon: string | null;
-  perfectStreak: number;
-  averageFrequency: number;
-  streakStart: string | null;
-  lastActivity: string | null;
-  tag: {
-    id: string;
-    name: string;
-    color: string | null;
-  } | null;
-}
-
 interface ActivityType {
   id: string;
   name: string;
