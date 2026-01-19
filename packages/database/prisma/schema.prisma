@@ -26,6 +26,7 @@ model User {
   highlightOverdueActivities Boolean @default(false) // Highlight overdue activities with red glow
   showDetailedCardData       Boolean @default(false) // Show detailed stats on activity cards
   showStreakFlame            Boolean @default(true)  // Show flame icon for activity streaks
+  cardSize                   String  @default("medium") // Card size: "small", "medium", "large"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,6 +64,7 @@ model ActivityType {
   tag             Tag?             @relation(fields: [tagId], references: [id], onDelete: SetNull)
   activities      Activity[]
   stravaSyncRules StravaSyncRule[]
+  offTimes        OffTime[]
 
   @@unique([userId, name]) // Name must be unique per user
   @@index([userId])
@@ -146,20 +148,23 @@ model Tag {
 }
 
 model OffTime {
-  id        String   @id @default(cuid())
-  userId    String
-  tagId     String
-  startDate DateTime // Start date of off time period (inclusive)
-  endDate   DateTime // End date of off time period (inclusive)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String
+  tagId          String?  // Optional - for tag-based off time
+  activityTypeId String?  // Optional - for activity-type-based off time
+  startDate      DateTime // Start date of off time period (inclusive)
+  endDate        DateTime // End date of off time period (inclusive)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag          Tag?          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  activityType ActivityType? @relation(fields: [activityTypeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([tagId])
+  @@index([activityTypeId])
   @@index([startDate, endDate]) // For efficient date range queries
   @@map("off_times")
 }

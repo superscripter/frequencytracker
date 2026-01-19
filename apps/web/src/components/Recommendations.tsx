@@ -42,6 +42,7 @@ interface UserPreferences {
   highlightOverdueActivities: boolean;
   showDetailedCardData: boolean;
   showStreakFlame: boolean;
+  cardSize: 'small' | 'medium' | 'large';
 }
 
 export function Recommendations() {
@@ -52,9 +53,11 @@ export function Recommendations() {
     highlightOverdueActivities: false,
     showDetailedCardData: false,
     showStreakFlame: true,
+    cardSize: 'medium',
   });
   const [selectedTagId, setSelectedTagId] = useState<string>('all');
   const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Fetch data on mount AND whenever component becomes visible
@@ -125,7 +128,7 @@ export function Recommendations() {
     }
   };
 
-  const updatePreference = async (key: keyof UserPreferences, value: boolean) => {
+  const updatePreference = async (key: keyof UserPreferences, value: boolean | string) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -242,22 +245,32 @@ export function Recommendations() {
     !shownActivityIds.has(rec.activityType.id)
   );
 
+  const handleLongPressStart = (activityTypeId: string) => {
+    setExpandedCardId(activityTypeId);
+  };
+
+  const handleLongPressEnd = () => {
+    setExpandedCardId(null);
+  };
+
   const renderCards = (items: Recommendation[], section: 'today' | 'tomorrow' | 'other') => {
     if (items.length === 0) {
       return <p className="no-recommendations">No recommendations</p>;
     }
 
     return (
-      <div className="activity-cards-grid">
+      <div className={`activity-cards-grid activity-cards-grid-${preferences.cardSize}`}>
         {items.map((rec) => (
           <ActivityCard
             key={rec.activityType.id}
             recommendation={rec}
             section={section}
             highlightOverdue={preferences.highlightOverdueActivities}
-            showDetailedData={preferences.showDetailedCardData}
+            showDetailedData={preferences.showDetailedCardData || expandedCardId === rec.activityType.id}
             showStreakFlame={preferences.showStreakFlame}
             onCompletedToday={handleCompletedToday}
+            onLongPressStart={handleLongPressStart}
+            onLongPressEnd={handleLongPressEnd}
           />
         ))}
       </div>

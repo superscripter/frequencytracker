@@ -19,12 +19,13 @@ interface UserPreferences {
   highlightOverdueActivities: boolean
   showDetailedCardData: boolean
   showStreakFlame: boolean
+  cardSize: 'small' | 'medium' | 'large'
 }
 
 interface RecommendationsControlsProps {
   onActivityAdded?: () => void
   preferences: UserPreferences
-  onPreferenceChange: (key: keyof UserPreferences, value: boolean) => void
+  onPreferenceChange: (key: keyof UserPreferences, value: boolean | string) => void
   selectedTagId: string
   onTagFilterChange: (tagId: string) => void
   selectedTypeId: string
@@ -297,6 +298,22 @@ export function RecommendationsControls({
                   />
                   <span style={{ marginLeft: '0.5rem' }}>Show Streak Flame</span>
                 </label>
+              </div>
+              <div className="preference-group">
+                <label htmlFor="card-size-select" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  Card Size:
+                </label>
+                <select
+                  id="card-size-select"
+                  value={preferences.cardSize}
+                  onChange={(e) => onPreferenceChange('cardSize', e.target.value)}
+                  className="filter-select"
+                  style={{ width: '100%' }}
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
               </div>
             </div>
           )}

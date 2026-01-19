@@ -8,8 +8,8 @@
 }
 
 .recommendations-section {
-  margin-bottom: 3.5rem;
-  padding-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -18,7 +18,7 @@
 }
 
 .recommendations-section h3 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.5rem 0;
   font-weight: 600;
   font-size: 1.5rem;
 }
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .section-count {
@@ -65,14 +65,28 @@
 /* Card Grid Layout */
 .activity-cards-grid {
   display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Large cards: 3 per row */
+.activity-cards-grid-large {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1rem;
+}
+
+/* Medium cards: 4 per row */
+.activity-cards-grid-medium {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+/* Small cards: 5 per row */
+.activity-cards-grid-small {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .no-recommendations {
   text-align: center;
-  padding: 1rem;
+  padding: 0.5rem;
   color: #888;
   font-style: italic;
 }

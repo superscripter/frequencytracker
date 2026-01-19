@@ -7,8 +7,10 @@ import {
   isSameMonth,
   startOfWeek,
   endOfWeek,
-  addMonths,
-  subMonths,
+  setMonth,
+  setYear,
+  getMonth,
+  getYear,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
@@ -149,13 +151,19 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
     }
   };
 
-  const handlePrevMonth = () => {
-    setCurrentDate(subMonths(currentDate, 1));
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMonth = parseInt(e.target.value);
+    setCurrentDate(setMonth(currentDate, newMonth));
   };
 
-  const handleNextMonth = () => {
-    setCurrentDate(addMonths(currentDate, 1));
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = parseInt(e.target.value);
+    setCurrentDate(setYear(currentDate, newYear));
   };
+
+  // Generate year options (current year and past 50 years, most recent first)
+  const currentYear = getYear(new Date());
+  const yearOptions = Array.from({ length: 51 }, (_, i) => currentYear - i);
 
   const handleActivityRightClick = (e: React.MouseEvent, activityId: string) => {
     e.preventDefault();
@@ -291,17 +299,36 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
   return (
     <div className="calendar-view">
       <div className="calendar-header">
-        <button className="nav-btn" onClick={handlePrevMonth} title="Previous month">
-          <IconChevronLeft size={24} stroke={1.5} />
-        </button>
-
-        <div className="calendar-title">
-          <h2>{format(currentDate, 'MMMM yyyy')}</h2>
+        <div className="calendar-selectors">
+          <select
+            className="month-select"
+            value={getMonth(currentDate)}
+            onChange={handleMonthChange}
+          >
+            <option value={0}>January</option>
+            <option value={1}>February</option>
+            <option value={2}>March</option>
+            <option value={3}>April</option>
+            <option value={4}>May</option>
+            <option value={5}>June</option>
+            <option value={6}>July</option>
+            <option value={7}>August</option>
+            <option value={8}>September</option>
+            <option value={9}>October</option>
+            <option value={10}>November</option>
+            <option value={11}>December</option>
+          </select>
+          <select
+            className="year-select"
+            value={getYear(currentDate)}
+            onChange={handleYearChange}
+            size="1"
+          >
+            {yearOptions.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
         </div>
-
-        <button className="nav-btn" onClick={handleNextMonth} title="Next month">
-          <IconChevronRight size={24} stroke={1.5} />
-        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}

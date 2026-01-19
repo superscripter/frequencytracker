@@ -3,7 +3,7 @@ import { startOfDay, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 /**
- * Get all off-time periods for a user's activity types with specific tags
+ * Get all off-time periods for a user's activity types with specific tags or activity types
  */
 export async function getUserOffTimes(userId: string) {
   return await prisma.offTime.findMany({
@@ -14,6 +14,7 @@ export async function getUserOffTimes(userId: string) {
           activityTypes: true,
         },
       },
+      activityType: true,
     },
   });
 }
@@ -47,10 +48,13 @@ export function calculateOffTimeDays(
   const periodEnd = new Date(Date.UTC(periodEndYear, periodEndMonth, periodEndDay));
 
   for (const offTime of offTimes) {
-    // Check if this off-time applies to the activity type (via tag)
-    const appliesToType = offTime.tag.activityTypes.some(
-      (type) => type.id === activityTypeId
-    );
+    // Check if this off-time applies to the activity type
+    // It applies if:
+    // 1. It's set for a specific activity type that matches, OR
+    // 2. It's set for a tag and the activity type has that tag
+    const appliesToType =
+      (offTime.activityTypeId && offTime.activityTypeId === activityTypeId) ||
+      (offTime.tag && offTime.tag.activityTypes.some((type) => type.id === activityTypeId));
 
     if (!appliesToType) continue;
 
@@ -103,10 +107,13 @@ export function isDateInOffTime(
   const activityDate = new Date(Date.UTC(activityYear, activityMonth, activityDay));
 
   for (const offTime of offTimes) {
-    // Check if this off-time applies to the activity type (via tag)
-    const appliesToType = offTime.tag.activityTypes.some(
-      (type) => type.id === activityTypeId
-    );
+    // Check if this off-time applies to the activity type
+    // It applies if:
+    // 1. It's set for a specific activity type that matches, OR
+    // 2. It's set for a tag and the activity type has that tag
+    const appliesToType =
+      (offTime.activityTypeId && offTime.activityTypeId === activityTypeId) ||
+      (offTime.tag && offTime.tag.activityTypes.some((type) => type.id === activityTypeId));
 
     if (!appliesToType) continue;
 

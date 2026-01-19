@@ -47,7 +47,7 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.75rem 0.5rem;
-  background: rgba(100, 108, 255, 0.1);
+  background: transparent;
   border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
@@ -56,22 +56,19 @@
 }
 
 .icon-option:hover {
-  background: rgba(100, 108, 255, 0.2);
-  border-color: var(--color-aurora-teal);
+  background: rgba(242, 201, 76, 0.2);
+  border-color: var(--color-primary-gold);
   transform: scale(1.05);
 }
 
 .icon-option.selected {
-  background: rgba(0, 212, 170, 0.2);
-  border-color: var(--color-aurora-teal);
+  background: rgba(242, 201, 76, 0.3);
+  border-color: var(--color-primary-gold);
   border-width: 2px;
 }
 
 .icon-name {
-  font-size: 0.7rem;
-  color: var(--color-text-secondary);
-  text-align: center;
-  word-break: break-word;
+  display: none;
 }
 
 .no-icons {
@@ -104,14 +101,16 @@
   }
 
   .icon-option {
-    background: rgba(100, 108, 255, 0.05);
+    background: transparent;
   }
 
   .icon-option:hover {
-    background: rgba(100, 108, 255, 0.15);
+    background: rgba(242, 201, 76, 0.2);
+    border-color: var(--color-primary-gold);
   }
 
   .icon-option.selected {
-    background: var(--color-aurora-teal);
+    background: rgba(242, 201, 76, 0.3);
+    border-color: var(--color-primary-gold);
   }
 }

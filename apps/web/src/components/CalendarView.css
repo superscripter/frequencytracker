@@ -8,64 +8,58 @@
 
 .calendar-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 1rem 1.25rem;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
   margin-bottom: 1rem;
 }
 
-.calendar-title {
+.calendar-selectors {
   display: flex;
+  gap: 0.5rem;
   align-items: center;
-  gap: 1rem;
 }
 
-.calendar-title h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #e8e8e8;
-}
-
-.nav-btn {
-  padding: 0.5rem;
-  background: rgba(0, 0, 0, 0.3);
+.month-select,
+.year-select {
+  padding: 0.45rem 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #e8e8e8;
+  font-size: 0.85rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: all 0.2s ease;
-  color: #b8b8b8;
-  min-width: 36px;
-  min-height: 36px;
 }
 
-.nav-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.25);
+.month-select option,
+.year-select option {
+  background: #1a1a1a;
   color: #e8e8e8;
 }
 
-.today-btn {
-  padding: 0.5rem 1rem;
-  background: var(--color-aurora-teal);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+.month-select {
+  min-width: 120px;
 }
 
-.today-btn:hover {
-  background: #00bfa0;
-  transform: translateY(-1px);
+.year-select {
+  min-width: 80px;
+}
+
+.year-select option:first-child:not(:only-child) {
+  font-weight: 600;
+}
+
+.month-select:focus,
+.year-select:focus {
+  outline: none;
+  border-color: var(--color-aurora-teal);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.month-select:hover,
+.year-select:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .calendar-grid {

@@ -3,13 +3,18 @@ import { z } from 'zod';
 import { prisma } from '@frequency-tracker/database';
 
 const createOffTimeSchema = z.object({
-  tagId: z.string().min(1),
+  tagId: z.string().min(1).optional(),
+  activityTypeId: z.string().min(1).optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD date string
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),   // YYYY-MM-DD date string
-});
+}).refine(
+  (data) => data.tagId || data.activityTypeId,
+  { message: "Either tagId or activityTypeId must be provided" }
+);
 
 const updateOffTimeSchema = z.object({
-  tagId: z.string().min(1).optional(),
+  tagId: z.string().min(1).optional().nullable(),
+  activityTypeId: z.string().min(1).optional().nullable(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
@@ -25,6 +30,7 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
         orderBy: { startDate: 'desc' },
         include: {
           tag: true,
+          activityType: true,
         },
       });
       return reply.send(offTimes);
@@ -48,6 +54,7 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
         },
         include: {
           tag: true,
+          activityType: true,
         },
       });
 
@@ -74,16 +81,32 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'End date must be on or after start date' });
       }
 
-      // Verify tag exists and belongs to user
-      const tag = await prisma.tag.findFirst({
-        where: {
-          id: body.tagId,
-          userId: request.user.userId,
-        },
-      });
+      // Verify tag exists and belongs to user (if tagId provided)
+      if (body.tagId) {
+        const tag = await prisma.tag.findFirst({
+          where: {
+            id: body.tagId,
+            userId: request.user.userId,
+          },
+        });
 
-      if (!tag) {
-        return reply.status(400).send({ error: 'Tag not found' });
+        if (!tag) {
+          return reply.status(400).send({ error: 'Tag not found' });
+        }
+      }
+
+      // Verify activity type exists and belongs to user (if activityTypeId provided)
+      if (body.activityTypeId) {
+        const activityType = await prisma.activityType.findFirst({
+          where: {
+            id: body.activityTypeId,
+            userId: request.user.userId,
+          },
+        });
+
+        if (!activityType) {
+          return reply.status(400).send({ error: 'Activity type not found' });
+        }
       }
 
       // Store dates as UTC midnight - this represents the calendar date
@@ -93,12 +116,14 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
       const offTime = await prisma.offTime.create({
         data: {
           userId: request.user.userId,
-          tagId: body.tagId,
+          tagId: body.tagId || null,
+          activityTypeId: body.activityTypeId || null,
           startDate,
           endDate,
         },
         include: {
           tag: true,
+          activityType: true,
         },
       });
 
@@ -135,20 +160,38 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
       // Build update data
       const updateData: any = {};
 
-      if (body.tagId) {
-        // Verify tag exists and belongs to user
-        const tag = await prisma.tag.findFirst({
-          where: {
-            id: body.tagId,
-            userId: request.user.userId,
-          },
-        });
+      if (body.tagId !== undefined) {
+        if (body.tagId) {
+          // Verify tag exists and belongs to user
+          const tag = await prisma.tag.findFirst({
+            where: {
+              id: body.tagId,
+              userId: request.user.userId,
+            },
+          });
 
-        if (!tag) {
-          return reply.status(400).send({ error: 'Tag not found' });
+          if (!tag) {
+            return reply.status(400).send({ error: 'Tag not found' });
+          }
         }
-
         updateData.tagId = body.tagId;
+      }
+
+      if (body.activityTypeId !== undefined) {
+        if (body.activityTypeId) {
+          // Verify activity type exists and belongs to user
+          const activityType = await prisma.activityType.findFirst({
+            where: {
+              id: body.activityTypeId,
+              userId: request.user.userId,
+            },
+          });
+
+          if (!activityType) {
+            return reply.status(400).send({ error: 'Activity type not found' });
+          }
+        }
+        updateData.activityTypeId = body.activityTypeId;
       }
 
       if (body.startDate) {
@@ -172,6 +215,7 @@ export const offTimeRoutes: FastifyPluginAsync = async (fastify) => {
         data: updateData,
         include: {
           tag: true,
+          activityType: true,
         },
       });
 

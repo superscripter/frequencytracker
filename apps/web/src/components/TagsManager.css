@@ -1,9 +1,9 @@
 .tags-manager {
   margin-top: 2rem;
   padding: 1.5rem;
-  background: white;
+  background: transparent;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .tags-header {
@@ -21,17 +21,18 @@
 
 .add-tag-toggle-btn {
   padding: 0.5rem 1rem;
-  background: #3b82f6;
-  color: white;
+  background: var(--color-primary-gold);
+  color: #000000;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.875rem;
+  font-weight: 600;
   transition: background 0.2s;
 }
 
 .add-tag-toggle-btn:hover {
-  background: #2563eb;
+  background: var(--color-primary-gold-light);
 }
 
 .error-message {
@@ -81,12 +82,13 @@
 }
 
 .save-tag-btn {
-  background: #3b82f6;
-  color: white;
+  background: var(--color-primary-gold);
+  color: #000000;
+  font-weight: 600;
 }
 
 .save-tag-btn:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--color-primary-gold-light);
 }
 
 .save-tag-btn:disabled {

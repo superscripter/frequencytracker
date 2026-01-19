@@ -227,8 +227,9 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
   return (
     <div className="activity-types-manager">
       <div className="activity-types-header">
+        <h2 className="activity-types-title">Activity Types</h2>
         <button className="add-btn" onClick={() => setIsAdding(!isAdding)}>
-          {isAdding ? 'Cancel' : '+ Add Activity Type'}
+          {isAdding ? 'Cancel' : '+ Add'}
         </button>
       </div>
 
@@ -282,7 +283,6 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
       <table className="activity-types-table">
         <thead>
           <tr>
-            <th>Icon</th>
             <th onClick={() => handleSort('name')} className="sortable">
               Activity Type {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
             </th>
@@ -296,7 +296,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         <tbody>
           {sortedActivityTypes.length === 0 ? (
             <tr>
-              <td colSpan={5} className="empty-state">
+              <td colSpan={4} className="empty-state">
                 No activity types yet. Add one to get started!
               </td>
             </tr>
@@ -383,16 +383,7 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
 
   return (
     <tr>
-      <td>
-        <button
-          className="icon-cell-btn"
-          onClick={() => onOpenIconPicker(type.id)}
-          title="Change icon"
-        >
-          {renderIcon(type.icon)}
-        </button>
-      </td>
-      <td>
+      <td className="activity-type-with-icon">
         {isEditing ? (
           <input
             type="text"
@@ -402,7 +393,17 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
             autoFocus
           />
         ) : (
-          <span>{type.name}</span>
+          <div className="activity-name-icon-wrapper">
+            <span className="activity-name">{type.name}</span>
+            <button
+              className="icon-cell-btn"
+              onClick={() => onOpenIconPicker(type.id)}
+              title="Change icon"
+              style={{ color: type.tag?.color || '#ffffff' }}
+            >
+              {renderIcon(type.icon)}
+            </button>
+          </div>
         )}
       </td>
       <td>

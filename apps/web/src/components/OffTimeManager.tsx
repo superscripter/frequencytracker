@@ -9,10 +9,18 @@ interface Tag {
   color: string | null
 }
 
+interface ActivityType {
+  id: string
+  name: string
+  icon?: string
+}
+
 interface OffTime {
   id: string
-  tagId: string
-  tag: Tag
+  tagId: string | null
+  tag: Tag | null
+  activityTypeId: string | null
+  activityType: ActivityType | null
   startDate: string
   endDate: string
 }
@@ -20,11 +28,16 @@ interface OffTime {
 export function OffTimeManager() {
   const [offTimes, setOffTimes] = useState<OffTime[]>([])
   const [tags, setTags] = useState<Tag[]>([])
+  const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
+  const [newType, setNewType] = useState<'tag' | 'activityType'>('tag')
   const [newTagId, setNewTagId] = useState('')
+  const [newActivityTypeId, setNewActivityTypeId] = useState('')
   const [newStartDate, setNewStartDate] = useState('')
   const [newEndDate, setNewEndDate] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editType, setEditType] = useState<'tag' | 'activityType'>('tag')
   const [editTagId, setEditTagId] = useState('')
+  const [editActivityTypeId, setEditActivityTypeId] = useState('')
   const [editStartDate, setEditStartDate] = useState('')
   const [editEndDate, setEditEndDate] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -34,6 +47,7 @@ export function OffTimeManager() {
   useEffect(() => {
     fetchOffTimes()
     fetchTags()
+    fetchActivityTypes()
   }, [])
 
   const fetchOffTimes = async () => {
@@ -77,8 +91,29 @@ export function OffTimeManager() {
     }
   }
 
+  const fetchActivityTypes = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/activity-types`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch activity types')
+      }
+
+      const data = await response.json()
+      setActivityTypes(data)
+    } catch (err) {
+      console.error('Error fetching activity types:', err)
+    }
+  }
+
   const handleAddOffTime = async () => {
-    if (!newTagId || !newStartDate || !newEndDate) {
+    const hasSelection = newType === 'tag' ? newTagId : newActivityTypeId
+    if (!hasSelection || !newStartDate || !newEndDate) {
       setError('All fields are required')
       return
     }
@@ -88,17 +123,24 @@ export function OffTimeManager() {
 
     try {
       const token = localStorage.getItem('token')
+      const body: any = {
+        startDate: newStartDate,
+        endDate: newEndDate,
+      }
+
+      if (newType === 'tag') {
+        body.tagId = newTagId
+      } else {
+        body.activityTypeId = newActivityTypeId
+      }
+
       const response = await fetch(`${API_URL}/api/off-times`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          tagId: newTagId,
-          startDate: newStartDate,
-          endDate: newEndDate,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!response.ok) {
@@ -108,6 +150,7 @@ export function OffTimeManager() {
 
       await fetchOffTimes()
       setNewTagId('')
+      setNewActivityTypeId('')
       setNewStartDate('')
       setNewEndDate('')
       setShowAddForm(false)
@@ -120,7 +163,8 @@ export function OffTimeManager() {
   }
 
   const handleEditOffTime = async (id: string) => {
-    if (!editTagId || !editStartDate || !editEndDate) {
+    const hasSelection = editType === 'tag' ? editTagId : editActivityTypeId
+    if (!hasSelection || !editStartDate || !editEndDate) {
       setError('All fields are required')
       return
     }
@@ -129,17 +173,26 @@ export function OffTimeManager() {
 
     try {
       const token = localStorage.getItem('token')
+      const body: any = {
+        startDate: editStartDate,
+        endDate: editEndDate,
+      }
+
+      if (editType === 'tag') {
+        body.tagId = editTagId
+        body.activityTypeId = null
+      } else {
+        body.activityTypeId = editActivityTypeId
+        body.tagId = null
+      }
+
       const response = await fetch(`${API_URL}/api/off-times/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          tagId: editTagId,
-          startDate: editStartDate,
-          endDate: editEndDate,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!response.ok) {
@@ -150,6 +203,7 @@ export function OffTimeManager() {
       await fetchOffTimes()
       setEditingId(null)
       setEditTagId('')
+      setEditActivityTypeId('')
       setEditStartDate('')
       setEditEndDate('')
     } catch (err) {
@@ -188,7 +242,15 @@ export function OffTimeManager() {
 
   const startEdit = (offTime: OffTime) => {
     setEditingId(offTime.id)
-    setEditTagId(offTime.tagId)
+    if (offTime.tagId) {
+      setEditType('tag')
+      setEditTagId(offTime.tagId)
+      setEditActivityTypeId('')
+    } else if (offTime.activityTypeId) {
+      setEditType('activityType')
+      setEditActivityTypeId(offTime.activityTypeId)
+      setEditTagId('')
+    }
     setEditStartDate(offTime.startDate.split('T')[0])
     setEditEndDate(offTime.endDate.split('T')[0])
     setError('')
@@ -197,6 +259,7 @@ export function OffTimeManager() {
   const cancelEdit = () => {
     setEditingId(null)
     setEditTagId('')
+    setEditActivityTypeId('')
     setEditStartDate('')
     setEditEndDate('')
     setError('')
@@ -206,6 +269,7 @@ export function OffTimeManager() {
     setShowAddForm(!showAddForm)
     setError('')
     setNewTagId('')
+    setNewActivityTypeId('')
     setNewStartDate('')
     setNewEndDate('')
   }
@@ -238,26 +302,49 @@ export function OffTimeManager() {
 
       {error && <div className="error-message">{error}</div>}
 
-      {tags.length === 0 && (
-        <p className="no-tags-warning">
-          No tags available. Create tags first to set up off time periods.
-        </p>
-      )}
-
-      {showAddForm && tags.length > 0 && (
+      {showAddForm && (
         <div className="add-off-time-form">
           <select
-            value={newTagId}
-            onChange={(e) => setNewTagId(e.target.value)}
-            className="tag-select"
+            value={newType}
+            onChange={(e) => {
+              setNewType(e.target.value as 'tag' | 'activityType')
+              setNewTagId('')
+              setNewActivityTypeId('')
+            }}
+            className="type-select"
           >
-            <option value="">Select tag</option>
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
+            <option value="tag">By Tag</option>
+            <option value="activityType">By Activity Type</option>
           </select>
+
+          {newType === 'tag' ? (
+            <select
+              value={newTagId}
+              onChange={(e) => setNewTagId(e.target.value)}
+              className="tag-select"
+            >
+              <option value="">Select tag</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={newActivityTypeId}
+              onChange={(e) => setNewActivityTypeId(e.target.value)}
+              className="tag-select"
+            >
+              <option value="">Select activity type</option>
+              {activityTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          )}
+
           <input
             type="date"
             value={newStartDate}
@@ -273,7 +360,7 @@ export function OffTimeManager() {
           />
           <button
             onClick={handleAddOffTime}
-            disabled={isAdding || !newTagId || !newStartDate || !newEndDate}
+            disabled={isAdding || !(newType === 'tag' ? newTagId : newActivityTypeId) || !newStartDate || !newEndDate}
             className="save-off-time-btn"
           >
             {isAdding ? 'Adding...' : 'Add'}
@@ -292,17 +379,46 @@ export function OffTimeManager() {
               {editingId === offTime.id ? (
                 <div className="edit-off-time-form">
                   <select
-                    value={editTagId}
-                    onChange={(e) => setEditTagId(e.target.value)}
-                    className="tag-select"
+                    value={editType}
+                    onChange={(e) => {
+                      setEditType(e.target.value as 'tag' | 'activityType')
+                      setEditTagId('')
+                      setEditActivityTypeId('')
+                    }}
+                    className="type-select"
                   >
-                    <option value="">Select tag</option>
-                    {tags.map((tag) => (
-                      <option key={tag.id} value={tag.id}>
-                        {tag.name}
-                      </option>
-                    ))}
+                    <option value="tag">By Tag</option>
+                    <option value="activityType">By Activity Type</option>
                   </select>
+
+                  {editType === 'tag' ? (
+                    <select
+                      value={editTagId}
+                      onChange={(e) => setEditTagId(e.target.value)}
+                      className="tag-select"
+                    >
+                      <option value="">Select tag</option>
+                      {tags.map((tag) => (
+                        <option key={tag.id} value={tag.id}>
+                          {tag.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select
+                      value={editActivityTypeId}
+                      onChange={(e) => setEditActivityTypeId(e.target.value)}
+                      className="tag-select"
+                    >
+                      <option value="">Select activity type</option>
+                      {activityTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
                   <input
                     type="date"
                     value={editStartDate}
@@ -329,11 +445,18 @@ export function OffTimeManager() {
               ) : (
                 <div className="off-time-display">
                   <div className="off-time-info">
-                    <span
-                      className="tag-color-indicator"
-                      style={{ backgroundColor: offTime.tag.color || '#3b82f6' }}
-                    />
-                    <span className="tag-name">{offTime.tag.name}</span>
+                    {offTime.tag && (
+                      <>
+                        <span
+                          className="tag-color-indicator"
+                          style={{ backgroundColor: offTime.tag.color || '#3b82f6' }}
+                        />
+                        <span className="tag-name">{offTime.tag.name}</span>
+                      </>
+                    )}
+                    {offTime.activityType && (
+                      <span className="activity-type-name">{offTime.activityType.name}</span>
+                    )}
                     <span className="date-range">
                       {formatDate(offTime.startDate)} - {formatDate(offTime.endDate)}
                     </span>

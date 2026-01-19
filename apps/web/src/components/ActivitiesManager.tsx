@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { formatInTimeZone } from 'date-fns-tz'
+import * as TablerIcons from '@tabler/icons-react'
 import { useAuth } from '../context/AuthContext'
 import './ActivitiesManager.css'
 
@@ -10,12 +11,19 @@ interface Activity {
   type: {
     id: string
     name: string
+    icon?: string
   }
 }
 
 interface ActivityType {
   id: string
   name: string
+  icon?: string
+  tag?: {
+    id: string
+    name: string
+    color: string | null
+  } | null
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
@@ -122,6 +130,14 @@ export function ActivitiesManager({ selectedTypeId }: ActivitiesManagerProps) {
       userTimezone,
       'MMM d, yyyy h:mm a'
     )
+  }
+
+  const renderIcon = (iconName?: string, color?: string | null) => {
+    if (!iconName) iconName = 'Run'
+    const IconComponent = (TablerIcons as any)[`Icon${iconName}`]
+    // Fallback to Run icon if the icon doesn't exist
+    const FallbackIcon = IconComponent || (TablerIcons as any)['IconRun']
+    return FallbackIcon ? <FallbackIcon size={20} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null
   }
 
   const handleSubmitActivity = async (e: React.FormEvent) => {
@@ -285,11 +301,21 @@ export function ActivitiesManager({ selectedTypeId }: ActivitiesManagerProps) {
               </td>
             </tr>
           ) : (
-            activities.map((activity) => (
-              <tr key={activity.id}>
-                <td>{activity.type.name}</td>
-                <td>{formatDateTime(activity.date)}</td>
-                <td className="actions-cell">
+            activities.map((activity) => {
+              // Find the activity type to get the tag color
+              const activityType = activityTypes.find(t => t.id === activity.type.id)
+              const tagColor = activityType?.tag?.color
+
+              return (
+                <tr key={activity.id}>
+                  <td className="activity-type-cell">
+                    <span className="activity-icon-wrapper">
+                      {renderIcon(activity.type.icon, tagColor)}
+                    </span>
+                    <span>{activity.type.name}</span>
+                  </td>
+                  <td>{formatDateTime(activity.date)}</td>
+                  <td className="actions-cell">
                   <button
                     onClick={() => handleEditActivity(activity)}
                     className="edit-btn"
@@ -306,7 +332,8 @@ export function ActivitiesManager({ selectedTypeId }: ActivitiesManagerProps) {
                   </button>
                 </td>
               </tr>
-            ))
+              )
+            })
           )}
         </tbody>
       </table>

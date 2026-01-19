@@ -41,6 +41,8 @@ interface ActivityCardProps {
   showDetailedData?: boolean;
   showStreakFlame?: boolean;
   onCompletedToday?: (activityTypeId: string) => void;
+  onLongPressStart?: (activityTypeId: string) => void;
+  onLongPressEnd?: () => void;
 }
 
 export default function ActivityCard({
@@ -51,8 +53,11 @@ export default function ActivityCard({
   showDetailedData = false,
   showStreakFlame = true,
   onCompletedToday,
+  onLongPressStart,
+  onLongPressEnd,
 }: ActivityCardProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const renderIcon = (iconName: string, color?: string | null) => {
     const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
     return IconComponent ? <IconComponent size={32} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
@@ -108,6 +113,61 @@ export default function ActivityCard({
     }
   };
 
+  // Long press handlers for mouse
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only handle left click
+    if (e.button !== 0) return;
+
+    const timer = setTimeout(() => {
+      if (onLongPressStart) {
+        onLongPressStart(rec.activityType.id);
+      }
+    }, 500); // 500ms for long press
+
+    setLongPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    if (onLongPressEnd) {
+      onLongPressEnd();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    if (onLongPressEnd) {
+      onLongPressEnd();
+    }
+  };
+
+  // Long press handlers for touch
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const timer = setTimeout(() => {
+      if (onLongPressStart) {
+        onLongPressStart(rec.activityType.id);
+      }
+    }, 500); // 500ms for long press
+
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    if (onLongPressEnd) {
+      onLongPressEnd();
+    }
+  };
+
   // Determine if we should show the streak flame icon
   const shouldShowStreakFlame = (): { show: boolean; isGold: boolean } => {
     // Must have a current streak
@@ -144,6 +204,11 @@ export default function ActivityCard({
           '--text-color-light': sectionColors.light,
         } as React.CSSProperties}
         onContextMenu={handleContextMenu}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
       <div className="activity-card-header">
         <div className="activity-card-title-section">
@@ -216,7 +281,7 @@ export default function ActivityCard({
                   <div className="activity-card-stat">
                     <span className="stat-label">Streak:</span>
                     <span className="stat-value">
-                      {format(new Date(rec.currentStreakStart), 'MMM d, yyyy')}
+                      {format(new Date(rec.currentStreakStart), 'M/d/yyyy')}
                     </span>
                   </div>
                   <div className="activity-card-stat">

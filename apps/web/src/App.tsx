@@ -151,7 +151,6 @@ function App() {
             )}
             {currentView === 'Activities' && (
               <div className="activities-management-view">
-                <h2>Activity Types</h2>
                 <ActivityTypesManager tagsRefreshTrigger={tagsRefreshTrigger} />
                 <div className="divider"></div>
                 <TagsManager onTagsChange={() => setTagsRefreshTrigger(prev => prev + 1)} />
