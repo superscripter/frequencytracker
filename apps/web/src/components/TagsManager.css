@@ -61,6 +61,13 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.tag-name-input:focus {
+  outline: none;
+  border-color: var(--color-aurora-teal);
+  background: rgba(0, 191, 160, 0.05);
 }
 
 .tag-color-input {
@@ -69,6 +76,13 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-color-input:focus {
+  outline: none;
+  border-color: var(--color-aurora-teal);
+  box-shadow: 0 0 0 3px rgba(0, 191, 160, 0.1);
 }
 
 .save-tag-btn,

@@ -70,6 +70,15 @@
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.type-select:focus,
+.tag-select:focus,
+.date-input:focus {
+  outline: none;
+  border-color: var(--color-aurora-teal);
+  background: rgba(0, 191, 160, 0.05);
 }
 
 .type-select {
