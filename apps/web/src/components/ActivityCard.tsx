@@ -57,7 +57,7 @@ export default function ActivityCard({
   onLongPressEnd,
 }: ActivityCardProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const renderIcon = (iconName: string, color?: string | null) => {
     const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
     return IconComponent ? <IconComponent size={32} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
@@ -148,7 +148,7 @@ export default function ActivityCard({
   };
 
   // Long press handlers for touch
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = () => {
     const timer = setTimeout(() => {
       if (onLongPressStart) {
         onLongPressStart(rec.activityType.id);

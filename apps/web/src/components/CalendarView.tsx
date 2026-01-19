@@ -13,7 +13,7 @@ import {
   getYear,
 } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronRight } from '@tabler/icons-react';
 import * as TablerIcons from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
 import './CalendarView.css';
@@ -322,7 +322,7 @@ export function CalendarView({ selectedTypeId, selectedTagId }: CalendarViewProp
             className="year-select"
             value={getYear(currentDate)}
             onChange={handleYearChange}
-            size="1"
+            size={1}
           >
             {yearOptions.map(year => (
               <option key={year} value={year}>{year}</option>
