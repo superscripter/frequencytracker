@@ -426,7 +426,7 @@ export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
               {user.stravaId ? (
                 <>
                   <div className="strava-connected">
-                    <span className="strava-status">Connected (ID: {user.stravaId})</span>
+                    <span className="strava-status">Connected</span>
                     <button onClick={handleDisconnectStrava} className="disconnect-strava-btn">
                       Disconnect
                     </button>

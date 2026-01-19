@@ -119,12 +119,12 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
       : (bValue as number) - (aValue as number)
   })
 
-  const renderIcon = (iconName?: string) => {
+  const renderIcon = (iconName?: string, color?: string | null) => {
     if (!iconName) iconName = 'Run'
     const IconComponent = (TablerIcons as any)[`Icon${iconName}`]
     // Fallback to Run icon if the icon doesn't exist
     const FallbackIcon = IconComponent || (TablerIcons as any)['IconRun']
-    return FallbackIcon ? <FallbackIcon size={20} stroke={1.5} /> : null
+    return FallbackIcon ? <FallbackIcon size={20} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null
   }
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -247,7 +247,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
           <input
             type="number"
             min="0"
-            step="0.1"
+            step="any"
             placeholder="Frequency per week"
             value={formFrequency}
             onChange={(e) => setFormFrequency(Number(e.target.value))}
@@ -352,7 +352,7 @@ interface ActivityTypeRowProps {
   onDelete: (id: string) => void
   isEditing: boolean
   setIsEditing: (editing: boolean) => void
-  renderIcon: (iconName?: string) => ReactElement | null
+  renderIcon: (iconName?: string, color?: string | null) => ReactElement | null
   onOpenIconPicker: (id: string) => void
 }
 
@@ -393,16 +393,15 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
             autoFocus
           />
         ) : (
-          <div className="activity-name-icon-wrapper">
-            <span className="activity-name">{type.name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
               className="icon-cell-btn"
               onClick={() => onOpenIconPicker(type.id)}
               title="Change icon"
-              style={{ color: type.tag?.color || '#ffffff' }}
             >
-              {renderIcon(type.icon)}
+              {renderIcon(type.icon, type.tag?.color)}
             </button>
+            <span className="activity-name">{type.name}</span>
           </div>
         )}
       </td>
@@ -411,9 +410,12 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
           <input
             type="number"
             min="0"
-            step="0.1"
-            value={editFrequency}
-            onChange={(e) => setEditFrequency(Number(e.target.value))}
+            step="any"
+            value={editFrequency === 0 ? '' : editFrequency}
+            onChange={(e) => {
+              const value = e.target.value;
+              setEditFrequency(value === '' ? 0 : Number(value));
+            }}
             className="editable-cell"
           />
         ) : (

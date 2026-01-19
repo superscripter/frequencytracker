@@ -230,11 +230,18 @@
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #444;
+  border-right: 1px solid #333;
   vertical-align: middle;
+}
+
+.activities-table th:last-child,
+.activities-table td:last-child {
+  border-right: none;
 }
 
 .activities-table th {
   text-align: center;
+  border-right: 1px solid #444;
 }
 
 .activities-table th {
@@ -629,10 +636,12 @@
   .activities-table th {
     background-color: #f5f5f5;
     color: #213547;
+    border-right-color: #e0e0e0;
   }
 
   .activities-table td {
     color: #213547;
+    border-right-color: #f0f0f0;
   }
 
   .activities-table th,

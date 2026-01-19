@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
+import * as TablerIcons from '@tabler/icons-react';
 import { useAuth } from '../context/AuthContext';
 import { AnalyticsControls } from './AnalyticsControls';
 import './Analytics.css';
@@ -8,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface AnalyticsData {
   activityType: string;
+  icon: string | null;
   desiredFrequency: number;
   totalAvgFrequency: number;
   dateOfFirstActivity: string | null;
@@ -15,15 +17,50 @@ interface AnalyticsData {
   tag: {
     id: string;
     name: string;
+    color: string | null;
   } | null;
 }
 
 interface StreakData {
   activityType: string;
+  icon: string | null;
   longestStreak: number;
   averageFrequency: number;
   streakStart: string | null;
   streakEnd: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+}
+
+interface CurrentStreakData {
+  activityType: string;
+  icon: string | null;
+  currentStreak: number;
+  averageFrequency: number;
+  streakStart: string | null;
+  lastActivity: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+}
+
+interface PerfectStreakData {
+  activityType: string;
+  icon: string | null;
+  perfectStreak: number;
+  averageFrequency: number;
+  streakStart: string | null;
+  lastActivity: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
 }
 
 interface ActivityType {
@@ -81,6 +118,7 @@ export function Analytics() {
   const { user } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
   const [streaks, setStreaks] = useState<StreakData[]>([]);
+  const [currentStreaks, setCurrentStreaks] = useState<CurrentStreakData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
@@ -94,6 +132,15 @@ export function Analytics() {
   // Filter state
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>('all');
   const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
+
+  // Toggle state for Total Averages table
+  const [showTotalAverages, setShowTotalAverages] = useState(false);
+
+  // Toggle state for Longest Streaks table
+  const [showLongestStreaks, setShowLongestStreaks] = useState(false);
+
+  // Toggle state for Current Streaks table
+  const [showCurrentStreaks, setShowCurrentStreaks] = useState(false);
 
   // Get user timezone or default to Eastern Time
   const userTimezone = user?.timezone || 'America/New_York';
@@ -137,6 +184,7 @@ export function Analytics() {
       const data = await response.json();
       setAnalytics(data.analytics);
       setStreaks(data.streaks);
+      setCurrentStreaks(data.currentStreaks || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load analytics');
     } finally {
@@ -227,6 +275,12 @@ export function Analytics() {
     );
   };
 
+  const renderIcon = (iconName: string | null, color?: string | null) => {
+    if (!iconName) return null;
+    const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
+    return IconComponent ? <IconComponent size={20} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
+  };
+
   if (isLoading) {
     return <div className="analytics-loading">Loading analytics...</div>;
   }
@@ -247,26 +301,35 @@ export function Analytics() {
     }
   });
 
-  // Filter analytics based on selected tag and type
-  const filteredAnalytics = analytics.filter(item => {
-    // Filter by tag first
-    if (selectedTagFilter !== 'all') {
-      if (selectedTagFilter === 'untagged') {
-        if (item.tag !== null) return false;
-      } else {
-        if (item.tag?.id !== selectedTagFilter) return false;
+  // Helper function to filter items by tag and type
+  const filterByTagAndType = <T extends { activityType: string; tag: { id: string; name: string; color: string | null } | null }>(
+    items: T[]
+  ): T[] => {
+    return items.filter(item => {
+      // Filter by tag first
+      if (selectedTagFilter !== 'all') {
+        if (selectedTagFilter === 'untagged') {
+          if (item.tag !== null) return false;
+        } else {
+          if (item.tag?.id !== selectedTagFilter) return false;
+        }
       }
-    }
 
-    // Then filter by activity type
-    if (selectedTypeId !== 'all') {
-      // Find the activity type that matches this analytics item
-      const matchingType = activityTypes.find(type => type.name === item.activityType);
-      if (!matchingType || matchingType.id !== selectedTypeId) return false;
-    }
+      // Then filter by activity type
+      if (selectedTypeId !== 'all') {
+        // Find the activity type that matches this item
+        const matchingType = activityTypes.find(type => type.name === item.activityType);
+        if (!matchingType || matchingType.id !== selectedTypeId) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  };
+
+  // Filter all data using the helper function
+  const filteredAnalytics = filterByTagAndType(analytics);
+  const filteredStreaks = filterByTagAndType(streaks);
+  const filteredCurrentStreaks = filterByTagAndType(currentStreaks);
 
   return (
     <div className="analytics-container">
@@ -280,85 +343,186 @@ export function Analytics() {
         tags={tags}
       />
 
-      <h2>Activity Performance</h2>
+      <details className="analytics-details" open={showTotalAverages}>
+        <summary
+          className="analytics-summary"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowTotalAverages(!showTotalAverages);
+          }}
+        >
+          Total Averages
+        </summary>
 
-      {analytics.length === 0 ? (
-        <div className="analytics-empty">
-          <p>No activity types yet. Create some activity types in your Profile!</p>
-        </div>
-      ) : (
-        <div className="analytics-table-wrapper">
-          <table className="analytics-table">
-            <thead>
-              <tr>
-                <th>Activity Type</th>
-                <th>Desired</th>
-                <th>Total Avg</th>
-                <th>First Activity</th>
-                <th>Total Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAnalytics.map((item, index) => (
-                <tr key={index}>
-                  <td><strong>{item.activityType}</strong></td>
-                  <td>{item.desiredFrequency.toFixed(1)}</td>
-                  <td
-                    style={{
-                      color: item.totalAvgFrequency <= item.desiredFrequency
-                        ? 'var(--color-status-ahead)'
-                        : 'var(--color-status-overdue-light)'
-                    }}
-                  >
-                    <strong>{item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}</strong>
-                  </td>
-                  <td>{formatDate(item.dateOfFirstActivity)}</td>
-                  <td>{item.numberOfActivities}</td>
+        {analytics.length === 0 ? (
+          <div className="analytics-empty">
+            <p>No activity types yet. Create some activity types in your Profile!</p>
+          </div>
+        ) : (
+          <div className="analytics-table-wrapper">
+            <table className="analytics-table">
+              <thead>
+                <tr>
+                  <th>Activity Type</th>
+                  <th>Desired</th>
+                  <th>Total Avg</th>
+                  <th>First Activity</th>
+                  <th>Total Count</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {filteredAnalytics.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {renderIcon(item.icon, item.tag?.color)}
+                        <strong>{item.activityType}</strong>
+                      </div>
+                    </td>
+                    <td>{item.desiredFrequency.toFixed(1)}</td>
+                    <td
+                      style={{
+                        color: item.totalAvgFrequency <= item.desiredFrequency
+                          ? 'var(--color-status-ahead)'
+                          : 'var(--color-status-overdue-light)'
+                      }}
+                    >
+                      <strong>{item.totalAvgFrequency > 0 ? item.totalAvgFrequency.toFixed(1) : 'N/A'}</strong>
+                    </td>
+                    <td>{formatDate(item.dateOfFirstActivity)}</td>
+                    <td>{item.numberOfActivities}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </details>
 
-      <h2>Longest Streaks</h2>
+      <details className="analytics-details" open={showLongestStreaks}>
+        <summary
+          className="analytics-summary"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowLongestStreaks(!showLongestStreaks);
+          }}
+        >
+          Longest Streaks
+        </summary>
 
-      {streaks.length === 0 ? (
-        <div className="analytics-empty">
-          <p>No streaks yet. Add more activities to track streaks!</p>
-        </div>
-      ) : (
-        <div className="analytics-table-wrapper">
-          <table className="analytics-table">
-            <thead>
-              <tr>
-                <th>Activity Type</th>
-                <th>Longest Streak</th>
-                <th>Avg Frequency</th>
-                <th>Streak Period</th>
-              </tr>
-            </thead>
-            <tbody>
-              {streaks.map((item, index) => (
-                <tr key={index}>
-                  <td><strong>{item.activityType}</strong></td>
-                  <td>
-                    <span style={{ color: 'var(--color-aurora-green)', fontWeight: 600 }}>
-                      {item.longestStreak > 0 ? `${item.longestStreak} days` : 'N/A'}
-                    </span>
-                  </td>
-                  <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
-                  <td>
-                    {item.streakStart && item.streakEnd
-                      ? `${formatDate(item.streakStart)} - ${formatDate(item.streakEnd)}`
-                      : 'N/A'}
-                  </td>
+        {filteredStreaks.length === 0 ? (
+          <div className="analytics-empty">
+            <p>No streaks yet. Add more activities to track streaks!</p>
+          </div>
+        ) : (
+          <div className="analytics-table-wrapper">
+            <table className="analytics-table">
+              <thead>
+                <tr>
+                  <th>Activity Type</th>
+                  <th>Longest Streak</th>
+                  <th>Avg Frequency</th>
+                  <th>Streak Period</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {filteredStreaks.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {renderIcon(item.icon, item.tag?.color)}
+                        <strong>{item.activityType}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span style={{ color: 'var(--color-aurora-green)', fontWeight: 600 }}>
+                        {item.longestStreak > 0 ? `${item.longestStreak} days` : 'N/A'}
+                      </span>
+                    </td>
+                    <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
+                    <td>
+                      {item.streakStart && item.streakEnd
+                        ? `${formatDate(item.streakStart)} - ${formatDate(item.streakEnd)}`
+                        : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </details>
+
+      <details className="analytics-details" open={showCurrentStreaks}>
+        <summary
+          className="analytics-summary"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowCurrentStreaks(!showCurrentStreaks);
+          }}
+        >
+          Current Streaks
+        </summary>
+
+        {filteredCurrentStreaks.length === 0 ? (
+          <div className="analytics-empty">
+            <p>No current streaks. Start doing activities regularly to build a streak!</p>
+          </div>
+        ) : (
+          <div className="analytics-table-wrapper">
+            <table className="analytics-table">
+              <thead>
+                <tr>
+                  <th>Activity Type</th>
+                  <th>Streak</th>
+                  <th>Avg Frequency</th>
+                  <th>Streak Period</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCurrentStreaks.map((item, index) => {
+                  // Check if this is a perfect streak by comparing with analytics data
+                  const matchingAnalytic = analytics.find(a => a.activityType === item.activityType);
+                  const isPerfect = matchingAnalytic &&
+                    item.streakStart === matchingAnalytic.dateOfFirstActivity;
+
+                  return (
+                    <tr key={index}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{
+                            color: isPerfect ? 'var(--color-primary-gold)' : '#c0c0c0',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}>
+                            <TablerIcons.IconFlame size={20} stroke={1.5} />
+                          </div>
+                          {renderIcon(item.icon, item.tag?.color)}
+                          <strong>{item.activityType}</strong>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{
+                          color: isPerfect ? 'var(--color-primary-gold)' : 'var(--color-aurora-green)',
+                          fontWeight: 600
+                        }}>
+                          {item.currentStreak > 0 ? `${item.currentStreak} days` : 'N/A'}
+                        </span>
+                      </td>
+                      <td>{item.averageFrequency > 0 ? item.averageFrequency.toFixed(1) : 'N/A'}</td>
+                      <td>
+                        {item.streakStart && item.lastActivity
+                          ? `${formatDate(item.streakStart)} - ${formatDate(item.lastActivity)}`
+                          : 'N/A'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </details>
 
       <h2>Breakdown</h2>
 

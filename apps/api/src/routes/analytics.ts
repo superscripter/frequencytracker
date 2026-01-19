@@ -6,6 +6,7 @@ import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from
 
 interface AnalyticsData {
   activityType: string;
+  icon: string | null;
   desiredFrequency: number;
   totalAvgFrequency: number;
   dateOfFirstActivity: string | null;
@@ -13,15 +14,50 @@ interface AnalyticsData {
   tag: {
     id: string;
     name: string;
+    color: string | null;
   } | null;
 }
 
 interface StreakData {
   activityType: string;
+  icon: string | null;
   longestStreak: number;
   averageFrequency: number;
   streakStart: string | null;
   streakEnd: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+}
+
+interface CurrentStreakData {
+  activityType: string;
+  icon: string | null;
+  currentStreak: number;
+  averageFrequency: number;
+  streakStart: string | null;
+  lastActivity: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
+}
+
+interface PerfectStreakData {
+  activityType: string;
+  icon: string | null;
+  perfectStreak: number;
+  averageFrequency: number;
+  streakStart: string | null;
+  lastActivity: string | null;
+  tag: {
+    id: string;
+    name: string;
+    color: string | null;
+  } | null;
 }
 
 export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -113,11 +149,12 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return {
           activityType: type.name,
+          icon: type.icon,
           desiredFrequency: type.desiredFrequency,
           totalAvgFrequency,
           dateOfFirstActivity,
           numberOfActivities,
-          tag: type.tag ? { id: type.tag.id, name: type.tag.name } : null,
+          tag: type.tag ? { id: type.tag.id, name: type.tag.name, color: type.tag.color } : null,
         };
       });
 
@@ -200,14 +237,193 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return {
           activityType: type.name,
+          icon: type.icon,
           longestStreak,
           averageFrequency: longestStreakAvgFreq,
           streakStart: longestStreakStart ? longestStreakStart.toISOString() : null,
           streakEnd: longestStreakEnd ? longestStreakEnd.toISOString() : null,
+          tag: type.tag ? { id: type.tag.id, name: type.tag.name, color: type.tag.color } : null,
         };
       });
 
-      return reply.send({ analytics, streaks });
+      // Calculate current streaks for each activity type
+      // A current streak is an active streak (last activity was recent enough)
+      // that spans at least 3 intervals (3 * desired frequency)
+      const currentStreaks: CurrentStreakData[] = activityTypes
+        .map((type) => {
+          const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
+          const desiredFrequency = type.desiredFrequency;
+
+          if (activities.length < 2) {
+            return null;
+          }
+
+          // Get last activity
+          const lastActivity = activities[activities.length - 1];
+          const lastActivityInUserTz = toZonedTime(lastActivity.date, userTimezone);
+          const lastActivityMidnight = startOfDay(lastActivityInUserTz);
+          const daysSinceLastActivity = differenceInDays(midnightToday, lastActivityMidnight);
+
+          // Check if last activity was recent enough
+          if (daysSinceLastActivity > desiredFrequency) {
+            return null;
+          }
+
+          // Find the longest continuous streak ending at the last activity
+          const activityMidnights = activities.map((a) => {
+            const inUserTz = toZonedTime(a.date, userTimezone);
+            return startOfDay(inUserTz);
+          });
+
+          let currentStreakStart: Date | null = null;
+          let currentStreakDays = 0;
+          let currentStreakAvgFreq = 0;
+
+          // Try each possible starting activity and find the longest valid window ending at last activity
+          const endIdx = activities.length - 1;
+          for (let startIdx = 0; startIdx <= endIdx - 1; startIdx++) {
+            const windowStart = activityMidnights[startIdx];
+            const windowEnd = activityMidnights[endIdx];
+            const rawDaysInWindow = differenceInDays(windowEnd, windowStart);
+
+            const offTimeDaysInWindow = calculateOffTimeDays(
+              type.id,
+              windowStart,
+              windowEnd,
+              offTimes,
+              userTimezone
+            );
+
+            const daysInWindow = rawDaysInWindow - offTimeDaysInWindow;
+
+            // Calculate intervals between consecutive activities in this window
+            const intervals: number[] = [];
+            for (let i = startIdx; i < endIdx; i++) {
+              const rawInterval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+              const offTimeDaysInInterval = calculateOffTimeDays(
+                type.id,
+                activityMidnights[i],
+                activityMidnights[i + 1],
+                offTimes,
+                userTimezone
+              );
+              const interval = rawInterval - offTimeDaysInInterval;
+              intervals.push(interval);
+            }
+
+            if (intervals.length > 0) {
+              const sum = intervals.reduce((acc, val) => acc + val, 0);
+              const avgFreq = sum / intervals.length;
+
+              // Check if this window meets the desired frequency
+              if (avgFreq <= desiredFrequency && daysInWindow > currentStreakDays) {
+                currentStreakDays = daysInWindow;
+                currentStreakStart = activities[startIdx].date;
+                currentStreakAvgFreq = Math.round(avgFreq * 10) / 10;
+              }
+            }
+          }
+
+          // Only return if streak is at least 3 intervals
+          const minStreakDays = desiredFrequency * 3;
+          if (currentStreakDays >= minStreakDays) {
+            return {
+              activityType: type.name,
+              icon: type.icon,
+              currentStreak: currentStreakDays,
+              averageFrequency: currentStreakAvgFreq,
+              streakStart: currentStreakStart ? currentStreakStart.toISOString() : null,
+              lastActivity: lastActivity.date.toISOString(),
+              tag: type.tag ? { id: type.tag.id, name: type.tag.name, color: type.tag.color } : null,
+            };
+          }
+
+          return null;
+        })
+        .filter((item): item is CurrentStreakData => item !== null);
+
+      // Calculate perfect streaks (streaks that go back to first activity)
+      // These are current streaks where the streak start matches the first activity date
+      const perfectStreaks: PerfectStreakData[] = activityTypes
+        .map((type) => {
+          const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
+          const desiredFrequency = type.desiredFrequency;
+
+          if (activities.length < 2) {
+            return null;
+          }
+
+          // Get first and last activity
+          const firstActivity = activities[0];
+          const lastActivity = activities[activities.length - 1];
+          const lastActivityInUserTz = toZonedTime(lastActivity.date, userTimezone);
+          const lastActivityMidnight = startOfDay(lastActivityInUserTz);
+          const daysSinceLastActivity = differenceInDays(midnightToday, lastActivityMidnight);
+
+          // Check if last activity was recent enough
+          if (daysSinceLastActivity > desiredFrequency) {
+            return null;
+          }
+
+          // Calculate streak from first to last activity
+          const activityMidnights = activities.map((a) => {
+            const inUserTz = toZonedTime(a.date, userTimezone);
+            return startOfDay(inUserTz);
+          });
+
+          const windowStart = activityMidnights[0];
+          const windowEnd = activityMidnights[activities.length - 1];
+          const rawDaysInWindow = differenceInDays(windowEnd, windowStart);
+
+          const offTimeDaysInWindow = calculateOffTimeDays(
+            type.id,
+            windowStart,
+            windowEnd,
+            offTimes,
+            userTimezone
+          );
+
+          const daysInWindow = rawDaysInWindow - offTimeDaysInWindow;
+
+          // Calculate intervals between consecutive activities
+          const intervals: number[] = [];
+          for (let i = 0; i < activities.length - 1; i++) {
+            const rawInterval = differenceInDays(activityMidnights[i + 1], activityMidnights[i]);
+            const offTimeDaysInInterval = calculateOffTimeDays(
+              type.id,
+              activityMidnights[i],
+              activityMidnights[i + 1],
+              offTimes,
+              userTimezone
+            );
+            const interval = rawInterval - offTimeDaysInInterval;
+            intervals.push(interval);
+          }
+
+          if (intervals.length > 0) {
+            const sum = intervals.reduce((acc, val) => acc + val, 0);
+            const avgFreq = sum / intervals.length;
+
+            // Check if this is a perfect streak (meets desired frequency for entire history)
+            const minStreakDays = desiredFrequency * 3;
+            if (avgFreq <= desiredFrequency && daysInWindow >= minStreakDays) {
+              return {
+                activityType: type.name,
+                icon: type.icon,
+                perfectStreak: daysInWindow,
+                averageFrequency: Math.round(avgFreq * 10) / 10,
+                streakStart: firstActivity.date.toISOString(),
+                lastActivity: lastActivity.date.toISOString(),
+                tag: type.tag ? { id: type.tag.id, name: type.tag.name, color: type.tag.color } : null,
+              };
+            }
+          }
+
+          return null;
+        })
+        .filter((item): item is PerfectStreakData => item !== null);
+
+      return reply.send({ analytics, streaks, currentStreaks, perfectStreaks });
     } catch (error) {
       fastify.log.error(error);
       return reply.status(500).send({ error: 'Internal server error' });

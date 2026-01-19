@@ -43,13 +43,23 @@
   font-weight: 600;
   color: #ffffff;
   border-bottom: 2px solid #555;
+  border-right: 1px solid #444;
+}
+
+.analytics-table th:last-child {
+  border-right: none;
 }
 
 .analytics-table td {
   padding: 0.75rem;
   text-align: center;
   border-bottom: 1px solid #444;
+  border-right: 1px solid #333;
   color: #e8e8e8;
+}
+
+.analytics-table td:last-child {
+  border-right: none;
 }
 
 .analytics-table td:first-child {
@@ -411,11 +421,13 @@ h2 {
   .analytics-table th {
     color: #213547;
     border-bottom-color: #ddd;
+    border-right-color: #e0e0e0;
   }
 
   .analytics-table td {
     color: #213547;
     border-bottom-color: #eee;
+    border-right-color: #f0f0f0;
   }
 
   .analytics-table td:first-child {

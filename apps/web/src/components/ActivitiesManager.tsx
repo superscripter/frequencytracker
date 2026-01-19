@@ -309,10 +309,10 @@ export function ActivitiesManager({ selectedTypeId }: ActivitiesManagerProps) {
               return (
                 <tr key={activity.id}>
                   <td className="activity-type-cell">
-                    <span className="activity-icon-wrapper">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {renderIcon(activity.type.icon, tagColor)}
-                    </span>
-                    <span>{activity.type.name}</span>
+                      <span>{activity.type.name}</span>
+                    </div>
                   </td>
                   <td>{formatDateTime(activity.date)}</td>
                   <td className="actions-cell">
