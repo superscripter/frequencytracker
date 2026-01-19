@@ -444,9 +444,22 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .activity-cards-grid {
+  /* Mobile card size: large (1 per row) */
+  .activity-cards-grid-mobile-large {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  /* Mobile card size: medium (2 per row) */
+  .activity-cards-grid-mobile-medium {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* Mobile card size: small (3 per row) */
+  .activity-cards-grid-mobile-small {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
   }
 
   .section-header {

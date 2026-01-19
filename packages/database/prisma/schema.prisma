@@ -27,6 +27,7 @@ model User {
   showDetailedCardData       Boolean @default(false) // Show detailed stats on activity cards
   showStreakFlame            Boolean @default(true)  // Show flame icon for activity streaks
   cardSize                   String  @default("medium") // Card size: "small", "medium", "large"
+  mobileCardSize             String  @default("medium") // Mobile card size: "small" (3/row), "medium" (2/row), "large" (1/row)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

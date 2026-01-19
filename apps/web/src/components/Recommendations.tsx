@@ -43,6 +43,7 @@ interface UserPreferences {
   showDetailedCardData: boolean;
   showStreakFlame: boolean;
   cardSize: 'small' | 'medium' | 'large';
+  mobileCardSize: 'small' | 'medium' | 'large';
 }
 
 export function Recommendations() {
@@ -54,6 +55,7 @@ export function Recommendations() {
     showDetailedCardData: false,
     showStreakFlame: true,
     cardSize: 'medium',
+    mobileCardSize: 'medium',
   });
   const [selectedTagId, setSelectedTagId] = useState<string>('all');
   const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
@@ -259,7 +261,7 @@ export function Recommendations() {
     }
 
     return (
-      <div className={`activity-cards-grid activity-cards-grid-${preferences.cardSize}`}>
+      <div className={`activity-cards-grid activity-cards-grid-${preferences.cardSize} activity-cards-grid-mobile-${preferences.mobileCardSize}`}>
         {items.map((rec) => (
           <ActivityCard
             key={rec.activityType.id}

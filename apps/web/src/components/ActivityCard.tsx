@@ -58,6 +58,7 @@ export default function ActivityCard({
 }: ActivityCardProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [lastTap, setLastTap] = useState<number>(0);
   const renderIcon = (iconName: string, color?: string | null) => {
     const IconComponent = (TablerIcons as any)[`Icon${iconName}`];
     return IconComponent ? <IconComponent size={32} stroke={1.5} style={{ color: color || 'currentColor' }} /> : null;
@@ -99,6 +100,12 @@ export default function ActivityCard({
   const shouldHighlight = highlightOverdue && isOverdue;
 
   const handleContextMenu = (e: React.MouseEvent) => {
+    // Only allow context menu on desktop (not touch devices)
+    // On mobile, use double-tap instead
+    if ('ontouchstart' in window) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY });
   };
@@ -148,7 +155,7 @@ export default function ActivityCard({
   };
 
   // Long press handlers for touch
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     const timer = setTimeout(() => {
       if (onLongPressStart) {
         onLongPressStart(rec.activityType.id);
@@ -158,7 +165,8 @@ export default function ActivityCard({
     setLongPressTimer(timer);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    // Clear long press timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
@@ -166,6 +174,20 @@ export default function ActivityCard({
     if (onLongPressEnd) {
       onLongPressEnd();
     }
+
+    // Double tap detection (only on mobile)
+    const currentTime = new Date().getTime();
+    const tapGap = currentTime - lastTap;
+
+    if (tapGap < 300 && tapGap > 0) {
+      // Double tap detected - show context menu
+      e.preventDefault();
+      e.stopPropagation();
+      const touch = e.changedTouches[0];
+      setContextMenu({ x: touch.clientX, y: touch.clientY });
+    }
+
+    setLastTap(currentTime);
   };
 
   // Determine if we should show the streak flame icon

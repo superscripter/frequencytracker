@@ -7,6 +7,7 @@ const updatePreferencesSchema = z.object({
   showDetailedCardData: z.boolean().optional(),
   showStreakFlame: z.boolean().optional(),
   cardSize: z.enum(['small', 'medium', 'large']).optional(),
+  mobileCardSize: z.enum(['small', 'medium', 'large']).optional(),
 });
 
 export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
@@ -32,6 +33,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
           showDetailedCardData: true,
           showStreakFlame: true,
           cardSize: true,
+          mobileCardSize: true,
         },
       });
 
@@ -45,6 +47,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
           showDetailedCardData: user.showDetailedCardData,
           showStreakFlame: user.showStreakFlame,
           cardSize: user.cardSize,
+          mobileCardSize: user.mobileCardSize,
         },
       });
     } catch (error) {
@@ -74,7 +77,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request body', details: result.error });
       }
 
-      const { highlightOverdueActivities, showDetailedCardData, showStreakFlame, cardSize } = result.data;
+      const { highlightOverdueActivities, showDetailedCardData, showStreakFlame, cardSize, mobileCardSize } = result.data;
 
       // Build update object with only provided fields
       const updateData: any = {};
@@ -90,6 +93,9 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
       if (cardSize !== undefined) {
         updateData.cardSize = cardSize;
       }
+      if (mobileCardSize !== undefined) {
+        updateData.mobileCardSize = mobileCardSize;
+      }
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -99,6 +105,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
           showDetailedCardData: true,
           showStreakFlame: true,
           cardSize: true,
+          mobileCardSize: true,
         },
       });
 
@@ -108,6 +115,7 @@ export const preferencesRoutes: FastifyPluginAsync = async (fastify) => {
           showDetailedCardData: updatedUser.showDetailedCardData,
           showStreakFlame: updatedUser.showStreakFlame,
           cardSize: updatedUser.cardSize,
+          mobileCardSize: updatedUser.mobileCardSize,
         },
       });
     } catch (error) {

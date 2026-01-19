@@ -179,35 +179,89 @@
 }
 
 @media (max-width: 768px) {
+  .calendar-view {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   .calendar-grid {
     gap: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .calendar-day {
-    min-height: 80px;
-    padding: 0.25rem;
+    min-height: 55px;
+    padding: 0.15rem;
+    overflow: hidden;
   }
 
   .day-number {
-    font-size: 0.85rem;
+    font-size: 0.65rem;
+    margin-bottom: 0.15rem;
+    line-height: 1;
+  }
+
+  .day-activities {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.15rem;
+    align-items: center;
+    justify-items: center;
   }
 
   .activity-icon {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .activity-icon svg {
+    width: 100%;
+    height: 100%;
+    max-width: 14px;
+    max-height: 14px;
+  }
+
+  .activity-overflow {
+    font-size: 0.55rem;
+    padding: 0.1rem;
+    line-height: 1;
   }
 
   .calendar-day-header {
-    padding: 0.5rem;
-    font-size: 0.85rem;
+    padding: 0.3rem 0.1rem;
+    font-size: 0.6rem;
   }
 
   .calendar-title h2 {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 
   .calendar-header {
-    padding: 0.75rem;
+    padding: 0.35rem 0.25rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .calendar-selectors {
+    gap: 0.3rem;
+  }
+
+  .month-select,
+  .year-select {
+    padding: 0.35rem 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .month-select {
+    min-width: 90px;
+  }
+
+  .year-select {
+    min-width: 60px;
   }
 }
 

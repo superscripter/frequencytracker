@@ -20,6 +20,7 @@ interface UserPreferences {
   showDetailedCardData: boolean
   showStreakFlame: boolean
   cardSize: 'small' | 'medium' | 'large'
+  mobileCardSize: 'small' | 'medium' | 'large'
 }
 
 interface RecommendationsControlsProps {
@@ -307,6 +308,22 @@ export function RecommendationsControls({
                   id="card-size-select"
                   value={preferences.cardSize}
                   onChange={(e) => onPreferenceChange('cardSize', e.target.value)}
+                  className="filter-select"
+                  style={{ width: '100%' }}
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
+              <div className="preference-group">
+                <label htmlFor="mobile-card-size-select" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  Card Size on Mobile:
+                </label>
+                <select
+                  id="mobile-card-size-select"
+                  value={preferences.mobileCardSize}
+                  onChange={(e) => onPreferenceChange('mobileCardSize', e.target.value)}
                   className="filter-select"
                   style={{ width: '100%' }}
                 >

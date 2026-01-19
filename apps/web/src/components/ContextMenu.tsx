@@ -12,7 +12,7 @@ export default function ContextMenu({ x, y, onClose, onCompletedToday }: Context
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -24,11 +24,18 @@ export default function ContextMenu({ x, y, onClose, onCompletedToday }: Context
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
+    // Use capture phase to ensure we get the event before it bubbles
+    // Add a small delay to prevent immediate closure from the double-tap
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside as EventListener, true);
+      document.addEventListener('touchstart', handleClickOutside as EventListener, true);
+      document.addEventListener('keydown', handleEscape);
+    }, 100);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside as EventListener, true);
+      document.removeEventListener('touchstart', handleClickOutside as EventListener, true);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose]);
