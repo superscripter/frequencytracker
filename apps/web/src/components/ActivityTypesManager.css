@@ -120,10 +120,25 @@
   padding: 0.5rem;
   border: 1px solid #666;
   border-radius: 4px;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+.add-form .tag-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.add-form .tag-select:hover {
+  background-color: #242424;
+  border-color: var(--color-aurora-teal);
+}
+
+.add-form .tag-select:focus {
+  background-color: #242424;
+  border-color: var(--color-aurora-teal);
 }
 
 .error-message {

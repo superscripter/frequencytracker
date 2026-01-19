@@ -15,7 +15,7 @@
 
 .off-time-header h3 {
   margin: 0;
-  color: #1f2937;
+  color: var(--color-primary-gold);
   font-size: 1.25rem;
 }
 
@@ -71,22 +71,37 @@
   border-radius: 4px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
+  background-color: white;
+}
+
+.type-select:hover,
+.tag-select:hover,
+.date-input:hover {
+  border-color: var(--color-aurora-teal);
+  background-color: rgba(0, 191, 160, 0.03);
 }
 
 .type-select:focus,
 .tag-select:focus,
 .date-input:focus {
   outline: none;
-  border-color: var(--color-aurora-teal);
-  background: rgba(0, 191, 160, 0.05);
+  border-color: var(--color-aurora-teal) !important;
+  background-color: rgba(0, 191, 160, 0.05) !important;
 }
 
 .type-select {
   flex: 1;
   min-width: 120px;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   color: #e8e8e8;
   cursor: pointer;
+}
+
+.type-select option,
+.tag-select option,
+.date-input option {
+  background: #1a1a1a;
+  color: #e8e8e8;
 }
 
 .tag-select {
@@ -153,9 +168,10 @@
 }
 
 .off-time-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .off-time-display {
@@ -164,10 +180,11 @@
   align-items: center;
   padding: 0.75rem;
   transition: background 0.2s;
+  background: transparent;
 }
 
 .off-time-display:hover {
-  background: #f9fafb;
+  background: rgba(242, 201, 76, 0.1);
 }
 
 .off-time-info {

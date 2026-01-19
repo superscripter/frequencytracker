@@ -90,7 +90,7 @@
   padding: 0.45rem 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.85rem;
   cursor: pointer;
@@ -99,11 +99,23 @@
   transition: all 0.2s ease;
 }
 
+.preference-select option,
+.filter-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.preference-select:hover,
+.filter-select:hover {
+  background: #242424;
+  border-color: var(--color-aurora-teal);
+}
+
 .preference-select:focus,
 .filter-select:focus {
   outline: none;
   border-color: var(--color-aurora-teal);
-  background: rgba(0, 0, 0, 0.4);
+  background: #242424;
 }
 
 .activity-type-select,
@@ -112,11 +124,23 @@
   padding: 0.45rem 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.activity-type-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.activity-type-select:hover,
+.activity-date-input:hover,
+.activity-time-input:hover {
+  background: #242424;
+  border-color: var(--color-aurora-teal);
 }
 
 .activity-type-select {
@@ -136,7 +160,7 @@
 .activity-time-input:focus {
   outline: none;
   border-color: var(--color-aurora-teal);
-  background: rgba(0, 0, 0, 0.4);
+  background: #242424;
 }
 
 .add-activity-btn {

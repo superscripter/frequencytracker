@@ -102,7 +102,7 @@
   padding: 0.5rem;
   border: 1px solid #666;
   border-radius: 4px;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.9rem;
   cursor: pointer;
@@ -110,10 +110,23 @@
   max-width: 300px;
 }
 
+.preference-select option,
+.filter-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.preference-select:hover,
+.filter-select:hover {
+  background-color: #242424;
+  border-color: var(--color-aurora-teal);
+}
+
 .preference-select:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: var(--color-aurora-teal);
+  background-color: #242424;
 }
 
 .activity-type-select,
@@ -122,10 +135,22 @@
   padding: 0.5rem;
   border: 1px solid #666;
   border-radius: 4px;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+.activity-type-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.activity-type-select:hover,
+.activity-date-input:hover,
+.activity-time-input:hover {
+  background-color: #242424;
+  border-color: var(--color-aurora-teal);
 }
 
 .activity-type-select {
@@ -483,16 +508,27 @@
   padding: 0.5rem;
   border: 1px solid #666;
   border-radius: 4px;
-  background-color: #0a0a0a;
+  background-color: #1a1a1a;
   color: #e8e8e8;
   font-size: 0.9rem;
   cursor: pointer;
   min-width: 200px;
 }
 
+.breakdown-type-select option {
+  background: #1a1a1a;
+  color: #e8e8e8;
+}
+
+.breakdown-type-select:hover {
+  background-color: #242424;
+  border-color: var(--color-aurora-teal);
+}
+
 .breakdown-type-select:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: var(--color-aurora-teal);
+  background-color: #242424;
 }
 
 .breakdown-loading {
