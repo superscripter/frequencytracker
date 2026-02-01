@@ -52,8 +52,9 @@ export const subscriptionRoutes: FastifyPluginAsync = async (fastify) => {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: error.errors });
       }
-      fastify.log.error(error);
-      return reply.status(500).send({ error: 'Failed to create checkout session' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      fastify.log.error({ error, errorMessage }, 'Failed to create checkout session');
+      return reply.status(500).send({ error: 'Failed to create checkout session', details: errorMessage });
     }
   });
 
