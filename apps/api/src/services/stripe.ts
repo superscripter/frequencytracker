@@ -46,8 +46,8 @@ export async function createCheckoutSession(
         quantity: 1,
       },
     ],
-    success_url: `${process.env.FRONTEND_URL}/profile?subscription_success=true`,
-    cancel_url: `${process.env.FRONTEND_URL}/profile?subscription_canceled=true`,
+    success_url: `${process.env.FRONTEND_URL}?subscription_success=true`,
+    cancel_url: `${process.env.FRONTEND_URL}?subscription_canceled=true`,
     metadata: { userId },
     subscription_data: {
       metadata: { userId }, // This ensures the subscription itself has the userId
@@ -63,7 +63,7 @@ export async function createCustomerPortalSession(customerId: string): Promise<s
   const stripe = getStripe();
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${process.env.FRONTEND_URL}/profile`,
+    return_url: `${process.env.FRONTEND_URL}`,
   });
   return session.url;
 }

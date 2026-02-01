@@ -37,6 +37,16 @@ function App() {
     }
   }, [user, isLoading])
 
+  // Handle subscription redirect from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('subscription_success') === 'true' || params.get('subscription_canceled') === 'true') {
+      setCurrentView('Profile')
+      // Clean up the URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   // Save preference to localStorage when it changes (but don't update current view)
   useEffect(() => {
     localStorage.setItem('activitiesDefaultView', defaultView)
