@@ -13,6 +13,8 @@ import notificationRoutes from './routes/notifications.js';
 import { preferencesRoutes } from './routes/preferences.js';
 import { tagRoutes } from './routes/tags.js';
 import { offTimeRoutes } from './routes/offTimes.js';
+import { subscriptionRoutes } from './routes/subscriptions.js';
+import { supportRoutes } from './routes/support.js';
 import { initializeNotificationScheduler } from './services/notification-scheduler.js';
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
@@ -50,6 +52,21 @@ const schema = {
     FRONTEND_URL: {
       type: 'string',
       default: 'http://localhost:5173',
+    },
+    STRIPE_SECRET_KEY: {
+      type: 'string',
+    },
+    STRIPE_PUBLISHABLE_KEY: {
+      type: 'string',
+    },
+    STRIPE_WEBHOOK_SECRET: {
+      type: 'string',
+    },
+    STRIPE_PRICE_ID_MONTHLY: {
+      type: 'string',
+    },
+    STRIPE_PRICE_ID_ANNUAL: {
+      type: 'string',
     },
   },
 };
@@ -89,6 +106,16 @@ export async function buildServer() {
   // Register Prisma
   await fastify.register(prismaPlugin);
 
+  // Add raw body parsing for Stripe webhook signature verification
+  fastify.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    async (req, body: string) => {
+      (req as any).rawBody = body;
+      return JSON.parse(body);
+    }
+  );
+
   // Health check
   fastify.get('/health', async () => {
     return { status: 'ok', timestamp: new Date().toISOString() };
@@ -105,6 +132,8 @@ export async function buildServer() {
   await fastify.register(preferencesRoutes, { prefix: '/api/preferences' });
   await fastify.register(tagRoutes, { prefix: '/api/tags' });
   await fastify.register(offTimeRoutes, { prefix: '/api/off-times' });
+  await fastify.register(subscriptionRoutes, { prefix: '/api/subscriptions' });
+  await fastify.register(supportRoutes, { prefix: '/api/support' });
 
   return fastify;
 }

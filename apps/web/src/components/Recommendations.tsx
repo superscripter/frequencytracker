@@ -308,7 +308,7 @@ export function Recommendations() {
 
       {recommendations.length === 0 ? (
         <div className="recommendations-empty">
-          <p>No activity types found. Create some activity types to see recommendations.</p>
+          <p>No activity types found. Create some activity types in the Activties tab!</p>
         </div>
       ) : (
         <>

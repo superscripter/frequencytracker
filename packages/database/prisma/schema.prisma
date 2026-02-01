@@ -18,6 +18,15 @@ model User {
   timezone  String?  @default("America/New_York") // User's timezone
   autoSync  Boolean  @default(false) // Auto-sync from Strava on page load
 
+  // Subscription fields
+  subscriptionTier      String    @default("free") // "free" or "premium"
+  subscriptionStatus    String?   // "active", "canceled", "past_due", "unpaid"
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?   @unique
+  stripePriceId         String?   // Track which plan (monthly/annual)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime? // For canceled subscriptions with grace period
+
   // Notification preferences
   enableDailyNotifications Boolean @default(false) // Enable daily push notifications
   notificationTime         String? @default("06:00") // Time to send notifications (HH:MM format in user's timezone)
@@ -45,6 +54,7 @@ model User {
   stravaSyncRules   StravaSyncRule[]
   tags              Tag[]
   offTimes          OffTime[]
+  promoRedemptions  PromoRedemption[]
 
   @@map("users")
 }
@@ -168,4 +178,36 @@ model OffTime {
   @@index([activityTypeId])
   @@index([startDate, endDate]) // For efficient date range queries
   @@map("off_times")
+}
+
+model PromoCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  durationDays Int       @default(365) // Duration of premium access in days
+  maxUses      Int?                    // null = unlimited uses
+  currentUses  Int       @default(0)
+  expiresAt    DateTime?               // When the code itself expires (null = never)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Track redemptions
+  redemptions PromoRedemption[]
+
+  @@map("promo_codes")
+}
+
+model PromoRedemption {
+  id          String   @id @default(cuid())
+  userId      String
+  promoCodeId String
+  redeemedAt  DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promoCodeId]) // Prevent same user using same code twice
+  @@index([userId])
+  @@index([promoCodeId])
+  @@map("promo_redemptions")
 }

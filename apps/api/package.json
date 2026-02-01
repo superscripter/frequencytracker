@@ -13,27 +13,29 @@
     "db:generate": "cd ../../packages/database && npx prisma generate"
   },
   "dependencies": {
-    "@frequency-tracker/database": "*",
-    "fastify": "^4.26.0",
     "@fastify/cors": "^9.0.1",
-    "@fastify/jwt": "^8.0.0",
     "@fastify/env": "^4.3.0",
-    "fastify-plugin": "^5.0.1",
+    "@fastify/jwt": "^8.0.0",
+    "@frequency-tracker/database": "*",
     "bcrypt": "^5.1.1",
-    "zod": "^3.22.4",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.5",
+    "fastify": "^4.26.0",
+    "fastify-plugin": "^5.0.1",
+    "node-cron": "^3.0.3",
+    "resend": "^6.9.1",
+    "stripe": "^20.2.0",
     "web-push": "^3.6.7",
-    "node-cron": "^3.0.3"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
     "@types/bcrypt": "^5.0.2",
-    "@types/web-push": "^3.6.3",
+    "@types/node": "^20.11.0",
     "@types/node-cron": "^3.0.11",
-    "tsx": "^4.7.0",
+    "@types/web-push": "^3.6.3",
     "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   }

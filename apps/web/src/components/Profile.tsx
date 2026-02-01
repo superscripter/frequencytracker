@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { formatInTimeZone } from 'date-fns-tz'
 import { useAuth } from '../context/AuthContext'
+import { SubscriptionManager } from './SubscriptionManager'
 import './Profile.css'
 
 const US_TIMEZONES = [
@@ -69,10 +70,12 @@ export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
   }, [user])
 
   useEffect(() => {
-    // Check for Strava OAuth redirect messages
+    // Check for Strava OAuth redirect messages and subscription redirects
     const params = new URLSearchParams(window.location.search)
     const stravaConnected = params.get('strava_connected')
     const stravaError = params.get('strava_error')
+    const subscriptionSuccess = params.get('subscription_success')
+    const subscriptionCanceled = params.get('subscription_canceled')
 
     if (stravaConnected === 'true') {
       setStravaMessage('Successfully connected to Strava!')
@@ -85,7 +88,18 @@ export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
       window.history.replaceState({}, '', '/profile')
       setTimeout(() => setStravaMessage(''), 5000)
     }
-  }, [])
+
+    if (subscriptionSuccess === 'true') {
+      setSaveMessage('Successfully subscribed to Premium!')
+      refreshUser()
+      window.history.replaceState({}, '', '/profile')
+      setTimeout(() => setSaveMessage(''), 5000)
+    } else if (subscriptionCanceled === 'true') {
+      setSaveMessage('Subscription canceled')
+      window.history.replaceState({}, '', '/profile')
+      setTimeout(() => setSaveMessage(''), 3000)
+    }
+  }, [refreshUser])
 
   // Fetch sync rules when user has Strava connected
   useEffect(() => {
@@ -372,6 +386,8 @@ export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
 
   return (
     <div className="profile-container">
+      <SubscriptionManager />
+
       <div className="profile-header">
         <div className="profile-info">
           <div className="info-row">
@@ -543,6 +559,17 @@ export function Profile({ onTagsChange: _onTagsChange }: ProfileProps) {
           {syncMessage}
         </div>
       )}
+      <div className="support-section">
+        <p>
+          Need help with your account?{' '}
+          <a
+            href="mailto:frequencytrackerhelp@gmail.com"
+            className="support-link"
+          >
+            frequencytrackerhelp@gmail.com
+          </a>
+        </p>
+      </div>
     </div>
   )
 }

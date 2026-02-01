@@ -9,6 +9,9 @@ interface User {
   stravaId?: string | null
   enableDailyNotifications?: boolean
   notificationTime?: string
+  subscriptionTier?: 'free' | 'premium'
+  subscriptionStatus?: string | null
+  subscriptionEndDate?: string | null
 }
 
 interface AuthContextType {

@@ -276,6 +276,7 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         // It's possible there won't be a valid streak to show
         let currentStreak = 0;
         let currentStreakStart: Date | null = null;
+
         if (typeActivities.length >= 2) {
           // Activities are already in descending order (most recent first)
           // We need them in ascending order for calculations, so reverse
@@ -328,9 +329,11 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
             if (intervals.length > 0) {
               const sum = intervals.reduce((acc, val) => acc + val, 0);
               const avgFreq = sum / intervals.length;
+              // Round to 1 decimal place for comparison (consistent with analytics display)
+              const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
-              // Check if this window meets the desired frequency
-              if (avgFreq <= type.desiredFrequency && daysInWindow > currentStreak) {
+              // Check if this window meets the desired frequency (using rounded value)
+              if (roundedAvgFreq <= type.desiredFrequency && daysInWindow > currentStreak) {
                 currentStreak = daysInWindow;
                 currentStreakStart = activitiesAsc[startIdx].date;
               }

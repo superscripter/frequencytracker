@@ -242,15 +242,8 @@ export function Analytics() {
     const datePart = dateString.split('T')[0];
     const [year, month, day] = datePart.split('-');
 
-    // Create a date object using UTC to avoid timezone shifts
-    const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
-
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC'
-    });
+    // Return in MM/DD/YYYY format
+    return `${month}/${day}/${year}`;
   };
 
   const formatDateTime = (dateString: string) => {
@@ -342,7 +335,7 @@ export function Analytics() {
 
         {analytics.length === 0 ? (
           <div className="analytics-empty">
-            <p>No activity types yet. Create some activity types in your Profile!</p>
+            <p>No activity types yet. Create some activity types in the Activities tab!</p>
           </div>
         ) : (
           <div className="analytics-table-wrapper">

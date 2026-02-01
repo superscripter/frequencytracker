@@ -4,6 +4,7 @@ import { prisma } from '@frequency-tracker/database';
 import { toZonedTime } from 'date-fns-tz';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
+import { canCreateActivityType } from '../utils/subscriptionHelpers.js';
 
 const createActivityTypeSchema = z.object({
   name: z.string().min(1),
@@ -83,6 +84,15 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const body = createActivityTypeSchema.parse(request.body);
+
+      // Check subscription limits
+      const canCreate = await canCreateActivityType(request.user.userId);
+      if (!canCreate.allowed) {
+        return reply.status(403).send({
+          error: canCreate.reason,
+          code: 'SUBSCRIPTION_LIMIT_REACHED',
+        });
+      }
 
       // Check if activity type with this name already exists for this user
       const existing = await prisma.activityType.findFirst({
@@ -488,8 +498,10 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           if (intervals.length > 0) {
             const sum = intervals.reduce((acc, val) => acc + val, 0);
             const avgFreq = sum / intervals.length;
+            // Round to 1 decimal place for comparison (consistent with analytics display)
+            const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
-            if (avgFreq <= activityType.desiredFrequency && daysInWindow > currentStreak) {
+            if (roundedAvgFreq <= activityType.desiredFrequency && daysInWindow > currentStreak) {
               currentStreak = daysInWindow;
             }
           }

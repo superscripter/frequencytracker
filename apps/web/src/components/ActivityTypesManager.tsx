@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { ReactElement } from 'react'
 import * as TablerIcons from '@tabler/icons-react'
 import { IconPicker } from './IconPicker'
+import { useAuth } from '../context/AuthContext'
 import './ActivityTypesManager.css'
 
 interface Tag {
@@ -30,6 +31,7 @@ interface ActivityTypesManagerProps {
 }
 
 export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManagerProps) {
+  const { user } = useAuth()
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -149,6 +151,13 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
 
       if (!response.ok) {
         const data = await response.json()
+
+        // Check for subscription limit error
+        if (data.code === 'SUBSCRIPTION_LIMIT_REACHED') {
+          setError(`${data.error} Go to the Profile tab to upgrade to Premium.`)
+          return
+        }
+
         throw new Error(data.error || 'Failed to create activity type')
       }
 
@@ -224,6 +233,11 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
     return <div className="activity-types-loading">Loading activity types...</div>
   }
 
+  // Check if user is approaching free tier limit
+  const isFree = user?.subscriptionTier !== 'premium'
+  const activityTypeCount = activityTypes.length
+  const nearLimit = isFree && activityTypeCount >= 4
+
   return (
     <div className="activity-types-manager">
       <div className="activity-types-header">
@@ -232,6 +246,13 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
           {isAdding ? 'Cancel' : '+ Add'}
         </button>
       </div>
+
+      {nearLimit && (
+        <div className="limit-warning">
+          You're using {activityTypeCount}/5 activity types.
+          Upgrade to Premium for unlimited activity types!
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 

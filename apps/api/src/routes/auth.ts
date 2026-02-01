@@ -26,7 +26,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       if (existingUser) {
-        return reply.status(400).send({ error: 'User already exists' });
+        return reply.status(400).send({ message: 'An account with this email already exists' });
       }
 
       // Hash password
@@ -48,6 +48,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           enableDailyNotifications: true,
           notificationTime: true,
           stravaId: true,
+          subscriptionTier: true,
+          subscriptionStatus: true,
+          subscriptionEndDate: true,
           createdAt: true,
         },
       });
@@ -58,10 +61,23 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ user, token });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return reply.status(400).send({ error: error.errors });
+        // Format Zod errors into user-friendly messages
+        const messages = error.errors.map((err) => {
+          if (err.path[0] === 'email') {
+            return 'Please enter a valid email address';
+          }
+          if (err.path[0] === 'password') {
+            if (err.code === 'too_small') {
+              return 'Password must be at least 8 characters';
+            }
+            return 'Please enter a valid password';
+          }
+          return err.message;
+        });
+        return reply.status(400).send({ message: messages[0], errors: error.errors });
       }
       fastify.log.error(error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ message: 'An unexpected error occurred. Please try again.' });
     }
   });
 
@@ -83,19 +99,22 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           enableDailyNotifications: true,
           notificationTime: true,
           stravaId: true,
+          subscriptionTier: true,
+          subscriptionStatus: true,
+          subscriptionEndDate: true,
           createdAt: true,
         },
       });
 
       if (!user) {
-        return reply.status(401).send({ error: 'Invalid credentials' });
+        return reply.status(401).send({ message: 'Invalid email or password' });
       }
 
       // Verify password
       const validPassword = await bcrypt.compare(body.password, user.password);
 
       if (!validPassword) {
-        return reply.status(401).send({ error: 'Invalid credentials' });
+        return reply.status(401).send({ message: 'Invalid email or password' });
       }
 
       // Generate JWT
@@ -111,16 +130,28 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           enableDailyNotifications: user.enableDailyNotifications,
           notificationTime: user.notificationTime,
           stravaId: user.stravaId,
+          subscriptionTier: user.subscriptionTier,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionEndDate: user.subscriptionEndDate,
           createdAt: user.createdAt,
         },
         token,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return reply.status(400).send({ error: error.errors });
+        const messages = error.errors.map((err) => {
+          if (err.path[0] === 'email') {
+            return 'Please enter a valid email address';
+          }
+          if (err.path[0] === 'password') {
+            return 'Please enter your password';
+          }
+          return err.message;
+        });
+        return reply.status(400).send({ message: messages[0], errors: error.errors });
       }
       fastify.log.error(error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ message: 'An unexpected error occurred. Please try again.' });
     }
   });
 
@@ -140,6 +171,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           autoSync: true,
           enableDailyNotifications: true,
           notificationTime: true,
+          subscriptionTier: true,
+          subscriptionStatus: true,
+          subscriptionEndDate: true,
           createdAt: true,
           stravaId: true,
         },
@@ -186,6 +220,9 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           autoSync: true,
           enableDailyNotifications: true,
           notificationTime: true,
+          subscriptionTier: true,
+          subscriptionStatus: true,
+          subscriptionEndDate: true,
           createdAt: true,
           stravaId: true,
         },

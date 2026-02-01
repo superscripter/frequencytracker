@@ -653,3 +653,28 @@
     color: #999999;
   }
 }
+
+.support-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.support-section p {
+  margin: 0;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.support-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.support-link:hover {
+  text-decoration: underline;
+}

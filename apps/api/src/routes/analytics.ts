@@ -222,13 +222,15 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
               if (intervals.length > 0) {
                 const sum = intervals.reduce((acc, val) => acc + val, 0);
                 const avgFreq = sum / intervals.length;
+                // Round to 1 decimal place for comparison (consistent with analytics display)
+                const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
-                // Check if this window meets the desired frequency
-                if (avgFreq <= desiredFrequency && daysInWindow > longestStreak) {
+                // Check if this window meets the desired frequency (using rounded value)
+                if (roundedAvgFreq <= desiredFrequency && daysInWindow > longestStreak) {
                   longestStreak = daysInWindow;
                   longestStreakStart = activities[startIdx].date;
                   longestStreakEnd = activities[endIdx].date;
-                  longestStreakAvgFreq = Math.round(avgFreq * 10) / 10;
+                  longestStreakAvgFreq = roundedAvgFreq;
                 }
               }
             }
@@ -314,12 +316,14 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
             if (intervals.length > 0) {
               const sum = intervals.reduce((acc, val) => acc + val, 0);
               const avgFreq = sum / intervals.length;
+              // Round to 1 decimal place for comparison (consistent with analytics display)
+              const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
-              // Check if this window meets the desired frequency
-              if (avgFreq <= desiredFrequency && daysInWindow > currentStreakDays) {
+              // Check if this window meets the desired frequency (using rounded value)
+              if (roundedAvgFreq <= desiredFrequency && daysInWindow > currentStreakDays) {
                 currentStreakDays = daysInWindow;
                 currentStreakStart = activities[startIdx].date;
-                currentStreakAvgFreq = Math.round(avgFreq * 10) / 10;
+                currentStreakAvgFreq = roundedAvgFreq;
               }
             }
           }
@@ -403,15 +407,17 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
           if (intervals.length > 0) {
             const sum = intervals.reduce((acc, val) => acc + val, 0);
             const avgFreq = sum / intervals.length;
+            // Round to 1 decimal place for comparison (consistent with analytics display)
+            const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
             // Check if this is a perfect streak (meets desired frequency for entire history)
             const minStreakDays = desiredFrequency * 3;
-            if (avgFreq <= desiredFrequency && daysInWindow >= minStreakDays) {
+            if (roundedAvgFreq <= desiredFrequency && daysInWindow >= minStreakDays) {
               return {
                 activityType: type.name,
                 icon: type.icon,
                 perfectStreak: daysInWindow,
-                averageFrequency: Math.round(avgFreq * 10) / 10,
+                averageFrequency: roundedAvgFreq,
                 streakStart: firstActivity.date.toISOString(),
                 lastActivity: lastActivity.date.toISOString(),
                 tag: type.tag ? { id: type.tag.id, name: type.tag.name, color: type.tag.color } : null,

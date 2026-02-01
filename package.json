@@ -12,7 +12,8 @@
     "api": "npm run dev --workspace=@frequency-tracker/api",
     "db:push": "npm run db:push --workspace=@frequency-tracker/database",
     "db:studio": "npm run db:studio --workspace=@frequency-tracker/database",
-    "db:generate": "npm run db:generate --workspace=@frequency-tracker/database"
+    "db:generate": "npm run db:generate --workspace=@frequency-tracker/database",
+    "send-email": "npx tsx apps/api/src/scripts/sendEmail.ts"
   },
   "devDependencies": {
     "dotenv-cli": "^7.3.0",
