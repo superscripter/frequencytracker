@@ -29,6 +29,11 @@ export const subscriptionRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'User not found' });
       }
 
+      // Check if user already has an active subscription
+      if (user.subscriptionTier === 'premium' && user.subscriptionStatus === 'active') {
+        return reply.status(400).send({ error: 'You already have an active subscription' });
+      }
+
       // Create or retrieve Stripe customer
       let customerId = user.stripeCustomerId;
       if (!customerId) {
