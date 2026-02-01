@@ -44,8 +44,24 @@ export const subscriptionRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      // Create checkout session
-      const checkoutUrl = await createCheckoutSession(customerId, body.priceId, userId);
+      // Create checkout session, handling case where customer was deleted from Stripe
+      let checkoutUrl: string;
+      try {
+        checkoutUrl = await createCheckoutSession(customerId, body.priceId, userId);
+      } catch (stripeError: any) {
+        // If customer doesn't exist in Stripe, create a new one and retry
+        if (stripeError.code === 'resource_missing' || stripeError.message?.includes('No such customer')) {
+          fastify.log.info({ userId, oldCustomerId: customerId }, 'Stripe customer not found, creating new one');
+          customerId = await createStripeCustomer(user.email, userId);
+          await prisma.user.update({
+            where: { id: userId },
+            data: { stripeCustomerId: customerId },
+          });
+          checkoutUrl = await createCheckoutSession(customerId, body.priceId, userId);
+        } else {
+          throw stripeError;
+        }
+      }
 
       return reply.send({ url: checkoutUrl });
     } catch (error) {
