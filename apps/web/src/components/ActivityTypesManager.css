@@ -151,6 +151,49 @@
   border-color: var(--color-aurora-teal);
 }
 
+.season-freq-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.season-freq-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.season-freq-label span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #b8b8b8;
+}
+
+.season-freq-label input {
+  width: 3.5rem;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  font-size: 0.9rem;
+}
+
+.season-col {
+  text-align: center;
+}
+
+.season-input {
+  width: 3rem;
+  text-align: center;
+  padding: 0.3rem 0.2rem !important;
+  font-size: 0.85rem;
+}
+
 .error-message {
   padding: 0.75rem;
   background-color: rgba(255, 80, 80, 0.2);
@@ -173,24 +216,34 @@
   table-layout: fixed;
 }
 
+/* Column 1: Activity name */
 .activity-types-table th:nth-child(1),
 .activity-types-table td:nth-child(1) {
-  width: 35%;
-}
-
-.activity-types-table th:nth-child(2),
-.activity-types-table td:nth-child(2) {
-  width: 20%;
-}
-
-.activity-types-table th:nth-child(3),
-.activity-types-table td:nth-child(3) {
   width: 25%;
 }
 
+/* Columns 2-5: Season frequencies */
+.activity-types-table th:nth-child(2),
+.activity-types-table td:nth-child(2),
+.activity-types-table th:nth-child(3),
+.activity-types-table td:nth-child(3),
 .activity-types-table th:nth-child(4),
-.activity-types-table td:nth-child(4) {
+.activity-types-table td:nth-child(4),
+.activity-types-table th:nth-child(5),
+.activity-types-table td:nth-child(5) {
+  width: 9%;
+}
+
+/* Column 6: Tag */
+.activity-types-table th:nth-child(6),
+.activity-types-table td:nth-child(6) {
   width: 20%;
+}
+
+/* Column 7: Actions */
+.activity-types-table th:nth-child(7),
+.activity-types-table td:nth-child(7) {
+  width: 11%;
 }
 
 .activity-types-table th,
@@ -240,17 +293,20 @@
   text-align: left;
 }
 
-/* Column 2: Desired Frequency (centered) */
-.activity-types-table tbody td:nth-child(2) {
+/* Columns 2-5: Season frequencies (centered) */
+.activity-types-table tbody td:nth-child(2),
+.activity-types-table tbody td:nth-child(3),
+.activity-types-table tbody td:nth-child(4),
+.activity-types-table tbody td:nth-child(5) {
   text-align: center;
 }
 
-/* Column 3: Tag (centered) */
-.activity-types-table tbody td:nth-child(3) {
+/* Column 6: Tag (centered) */
+.activity-types-table tbody td:nth-child(6) {
   text-align: center;
 }
 
-/* Column 4: Actions (right-aligned, handled by .actions-cell) */
+/* Column 7: Actions (right-aligned, handled by .actions-cell) */
 
 .tag-select-inline {
   width: 100%;
@@ -387,19 +443,35 @@
     flex-direction: column;
   }
 
-  .add-form input[type="text"],
-  .add-form input[type="number"] {
+  .add-form input[type="text"] {
     flex: none;
     width: 100%;
   }
 
+  .season-freq-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .season-freq-label input {
+    width: 3rem;
+  }
+
   .activity-types-table {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
   }
 
   .activity-types-table th,
   .activity-types-table td {
-    padding: 0.5rem 0.3rem;
+    padding: 0.4rem 0.2rem;
+  }
+
+  .season-col {
+    padding: 0.4rem 0.1rem !important;
+  }
+
+  .season-input {
+    width: 2.5rem;
   }
 
   .edit-btn,
@@ -414,10 +486,15 @@
 @media (prefers-color-scheme: light) {
   /* Form inputs */
   .add-form input,
-  .add-form .tag-select {
+  .add-form .tag-select,
+  .season-freq-label input {
     border: 1px solid #ccc;
     background-color: white;
     color: #213547;
+  }
+
+  .season-freq-label span {
+    color: #555;
   }
 
   /* Table */

@@ -15,13 +15,17 @@ interface ActivityType {
   id: string
   name: string
   description?: string
-  desiredFrequency: number
+  freqWinter: number
+  freqSpring: number
+  freqSummer: number
+  freqFall: number
+  desiredFrequency?: number // computed by API for current season, kept for backward compat
   tagId?: string | null
   tag?: Tag | null
   icon?: string
 }
 
-type SortField = 'name' | 'desiredFrequency'
+type SortField = 'name' | 'freqWinter' | 'freqSpring' | 'freqSummer' | 'freqFall'
 type SortOrder = 'asc' | 'desc'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
@@ -47,7 +51,10 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
 
   // Form state
   const [formName, setFormName] = useState('')
-  const [formFrequency, setFormFrequency] = useState(1)
+  const [formFreqWinter, setFormFreqWinter] = useState(1)
+  const [formFreqSpring, setFormFreqSpring] = useState(1)
+  const [formFreqSummer, setFormFreqSummer] = useState(1)
+  const [formFreqFall, setFormFreqFall] = useState(1)
   const [formTagId, setFormTagId] = useState<string>('')
   const [formIcon, setFormIcon] = useState('Run')
 
@@ -143,7 +150,10 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         },
         body: JSON.stringify({
           name: formName,
-          desiredFrequency: formFrequency,
+          freqWinter: formFreqWinter,
+          freqSpring: formFreqSpring,
+          freqSummer: formFreqSummer,
+          freqFall: formFreqFall,
           tagId: formTagId || null,
           icon: formIcon,
         }),
@@ -163,7 +173,10 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
 
       await fetchActivityTypes()
       setFormName('')
-      setFormFrequency(1)
+      setFormFreqWinter(1)
+      setFormFreqSpring(1)
+      setFormFreqSummer(1)
+      setFormFreqFall(1)
       setFormTagId('')
       setFormIcon('Run')
       setIsAdding(false)
@@ -172,7 +185,16 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
     }
   }
 
-  const handleUpdate = async (id: string, name: string, frequency: number, tagId: string | null, icon?: string) => {
+  const handleUpdate = async (
+    id: string,
+    name: string,
+    freqWinter: number,
+    freqSpring: number,
+    freqSummer: number,
+    freqFall: number,
+    tagId: string | null,
+    icon?: string
+  ) => {
     setError('')
 
     try {
@@ -185,7 +207,10 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         },
         body: JSON.stringify({
           name,
-          desiredFrequency: frequency,
+          freqWinter,
+          freqSpring,
+          freqSummer,
+          freqFall,
           tagId: tagId || null,
           icon,
         }),
@@ -238,6 +263,9 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
   const activityTypeCount = activityTypes.length
   const nearLimit = isFree && activityTypeCount >= 4
 
+  const sortIndicator = (field: SortField) =>
+    sortField === field ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ''
+
   return (
     <div className="activity-types-manager">
       <div className="activity-types-header">
@@ -265,15 +293,48 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
             onChange={(e) => setFormName(e.target.value)}
             required
           />
-          <input
-            type="number"
-            min="0"
-            step="any"
-            placeholder="Frequency per week"
-            value={formFrequency}
-            onChange={(e) => setFormFrequency(Number(e.target.value))}
-            required
-          />
+          <div className="season-freq-group">
+            <label className="season-freq-label">
+              <span>W</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={formFreqWinter}
+                onChange={(e) => setFormFreqWinter(Number(e.target.value))}
+              />
+            </label>
+            <label className="season-freq-label">
+              <span>Sp</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={formFreqSpring}
+                onChange={(e) => setFormFreqSpring(Number(e.target.value))}
+              />
+            </label>
+            <label className="season-freq-label">
+              <span>Su</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={formFreqSummer}
+                onChange={(e) => setFormFreqSummer(Number(e.target.value))}
+              />
+            </label>
+            <label className="season-freq-label">
+              <span>F</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={formFreqFall}
+                onChange={(e) => setFormFreqFall(Number(e.target.value))}
+              />
+            </label>
+          </div>
           <select
             value={formTagId}
             onChange={(e) => setFormTagId(e.target.value)}
@@ -305,10 +366,19 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         <thead>
           <tr>
             <th onClick={() => handleSort('name')} className="sortable">
-              Activity Type {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+              Activity Type{sortIndicator('name')}
             </th>
-            <th onClick={() => handleSort('desiredFrequency')} className="sortable">
-              Desired Frequency {sortField === 'desiredFrequency' && (sortOrder === 'asc' ? '↑' : '↓')}
+            <th onClick={() => handleSort('freqWinter')} className="sortable season-col" title="Winter (Dec–Feb)">
+              W{sortIndicator('freqWinter')}
+            </th>
+            <th onClick={() => handleSort('freqSpring')} className="sortable season-col" title="Spring (Mar–May)">
+              Sp{sortIndicator('freqSpring')}
+            </th>
+            <th onClick={() => handleSort('freqSummer')} className="sortable season-col" title="Summer (Jun–Aug)">
+              Su{sortIndicator('freqSummer')}
+            </th>
+            <th onClick={() => handleSort('freqFall')} className="sortable season-col" title="Fall (Sep–Nov)">
+              F{sortIndicator('freqFall')}
             </th>
             <th>Tag</th>
             <th></th>
@@ -317,7 +387,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
         <tbody>
           {sortedActivityTypes.length === 0 ? (
             <tr>
-              <td colSpan={4} className="empty-state">
+              <td colSpan={7} className="empty-state">
                 No activity types yet. Add one to get started!
               </td>
             </tr>
@@ -352,7 +422,16 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
               // Find the type being edited and update it
               const typeToUpdate = activityTypes.find(t => t.id === iconPickerTargetId)
               if (typeToUpdate) {
-                handleUpdate(typeToUpdate.id, typeToUpdate.name, typeToUpdate.desiredFrequency, typeToUpdate.tagId || null, icon)
+                handleUpdate(
+                  typeToUpdate.id,
+                  typeToUpdate.name,
+                  typeToUpdate.freqWinter,
+                  typeToUpdate.freqSpring,
+                  typeToUpdate.freqSummer,
+                  typeToUpdate.freqFall,
+                  typeToUpdate.tagId || null,
+                  icon
+                )
               }
             }
           }}
@@ -369,7 +448,7 @@ export function ActivityTypesManager({ tagsRefreshTrigger }: ActivityTypesManage
 interface ActivityTypeRowProps {
   type: ActivityType
   tags: Tag[]
-  onUpdate: (id: string, name: string, frequency: number, tagId: string | null, icon?: string) => void
+  onUpdate: (id: string, name: string, freqWinter: number, freqSpring: number, freqSummer: number, freqFall: number, tagId: string | null, icon?: string) => void
   onDelete: (id: string) => void
   isEditing: boolean
   setIsEditing: (editing: boolean) => void
@@ -379,7 +458,10 @@ interface ActivityTypeRowProps {
 
 function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditing, renderIcon, onOpenIconPicker }: ActivityTypeRowProps) {
   const [editName, setEditName] = useState(type.name)
-  const [editFrequency, setEditFrequency] = useState(type.desiredFrequency)
+  const [editFreqWinter, setEditFreqWinter] = useState(type.freqWinter)
+  const [editFreqSpring, setEditFreqSpring] = useState(type.freqSpring)
+  const [editFreqSummer, setEditFreqSummer] = useState(type.freqSummer)
+  const [editFreqFall, setEditFreqFall] = useState(type.freqFall)
   const [editTagId, setEditTagId] = useState<string>(type.tagId || '')
   const [editIcon, setEditIcon] = useState<string>(type.icon || 'Run')
 
@@ -388,19 +470,44 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
   }
 
   const handleSave = () => {
-    if (editName.trim() !== '' && (editName !== type.name || editFrequency !== type.desiredFrequency || editTagId !== (type.tagId || '') || editIcon !== (type.icon || 'Run'))) {
-      onUpdate(type.id, editName, editFrequency, editTagId || null, editIcon)
+    const hasChanges =
+      editName !== type.name ||
+      editFreqWinter !== type.freqWinter ||
+      editFreqSpring !== type.freqSpring ||
+      editFreqSummer !== type.freqSummer ||
+      editFreqFall !== type.freqFall ||
+      editTagId !== (type.tagId || '') ||
+      editIcon !== (type.icon || 'Run')
+
+    if (editName.trim() !== '' && hasChanges) {
+      onUpdate(type.id, editName, editFreqWinter, editFreqSpring, editFreqSummer, editFreqFall, editTagId || null, editIcon)
     }
     setIsEditing(false)
   }
 
   const handleCancel = () => {
     setEditName(type.name)
-    setEditFrequency(type.desiredFrequency)
+    setEditFreqWinter(type.freqWinter)
+    setEditFreqSpring(type.freqSpring)
+    setEditFreqSummer(type.freqSummer)
+    setEditFreqFall(type.freqFall)
     setEditTagId(type.tagId || '')
     setEditIcon(type.icon || 'Run')
     setIsEditing(false)
   }
+
+  const freqDisplay = (val: number) => val === 0 ? '—' : val
+
+  const freqInput = (val: number, setter: (n: number) => void) => (
+    <input
+      type="number"
+      min="0"
+      step="any"
+      value={val === 0 ? '' : val}
+      onChange={(e) => setter(e.target.value === '' ? 0 : Number(e.target.value))}
+      className="editable-cell season-input"
+    />
+  )
 
   return (
     <tr>
@@ -426,22 +533,17 @@ function ActivityTypeRow({ type, tags, onUpdate, onDelete, isEditing, setIsEditi
           </div>
         )}
       </td>
-      <td>
-        {isEditing ? (
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={editFrequency === 0 ? '' : editFrequency}
-            onChange={(e) => {
-              const value = e.target.value;
-              setEditFrequency(value === '' ? 0 : Number(value));
-            }}
-            className="editable-cell"
-          />
-        ) : (
-          <span>{type.desiredFrequency}</span>
-        )}
+      <td className="season-col">
+        {isEditing ? freqInput(editFreqWinter, setEditFreqWinter) : <span>{freqDisplay(type.freqWinter)}</span>}
+      </td>
+      <td className="season-col">
+        {isEditing ? freqInput(editFreqSpring, setEditFreqSpring) : <span>{freqDisplay(type.freqSpring)}</span>}
+      </td>
+      <td className="season-col">
+        {isEditing ? freqInput(editFreqSummer, setEditFreqSummer) : <span>{freqDisplay(type.freqSummer)}</span>}
+      </td>
+      <td className="season-col">
+        {isEditing ? freqInput(editFreqFall, setEditFreqFall) : <span>{freqDisplay(type.freqFall)}</span>}
       </td>
       <td>
         {isEditing ? (

@@ -64,7 +64,10 @@ model ActivityType {
   userId           String
   name             String   // e.g., "Run", "Bike", "Swim", "Strength Training"
   description      String?
-  desiredFrequency Float    @default(1) // Desired frequency per week
+  freqWinter       Float    @default(1) // Desired frequency (days between) for Winter (Dec-Feb)
+  freqSpring       Float    @default(1) // Desired frequency (days between) for Spring (Mar-May)
+  freqSummer       Float    @default(1) // Desired frequency (days between) for Summer (Jun-Aug)
+  freqFall         Float    @default(1) // Desired frequency (days between) for Fall (Sep-Nov)
   tagId            String?
   icon             String?  @default("Run") // Tabler icon name for visual representation
   createdAt        DateTime @default(now())

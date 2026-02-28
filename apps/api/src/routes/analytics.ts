@@ -3,11 +3,16 @@ import { prisma } from '@frequency-tracker/database';
 import { toZonedTime } from 'date-fns-tz';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
+import { getCurrentSeason, getSeasonalFrequency } from '../utils/seasonHelpers.js';
 
 interface AnalyticsData {
   activityType: string;
   icon: string | null;
   desiredFrequency: number;
+  freqWinter: number;
+  freqSpring: number;
+  freqSummer: number;
+  freqFall: number;
   totalAvgFrequency: number;
   dateOfFirstActivity: string | null;
   numberOfActivities: number;
@@ -84,6 +89,9 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       const nowInUserTz = toZonedTime(nowUtc, userTimezone);
       const midnightToday = startOfDay(nowInUserTz);
 
+      // Determine current season for desired frequency calculations
+      const currentSeason = getCurrentSeason(nowInUserTz);
+
       // Get off-times for this user to exclude from calculations
       const offTimes = await getUserOffTimes(userId);
 
@@ -150,7 +158,11 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         return {
           activityType: type.name,
           icon: type.icon,
-          desiredFrequency: type.desiredFrequency,
+          desiredFrequency: getSeasonalFrequency(type, currentSeason),
+          freqWinter: type.freqWinter,
+          freqSpring: type.freqSpring,
+          freqSummer: type.freqSummer,
+          freqFall: type.freqFall,
           totalAvgFrequency,
           dateOfFirstActivity,
           numberOfActivities,
@@ -165,7 +177,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       const streaks: StreakData[] = activityTypes.map((type) => {
         // Filter out activities that occurred during off-time periods
         const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
-        const desiredFrequency = type.desiredFrequency;
+        const desiredFrequency = getSeasonalFrequency(type, currentSeason);
 
         let longestStreak = 0;
         let longestStreakAvgFreq = 0;
@@ -254,7 +266,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       const currentStreaks: CurrentStreakData[] = activityTypes
         .map((type) => {
           const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
-          const desiredFrequency = type.desiredFrequency;
+          const desiredFrequency = getSeasonalFrequency(type, currentSeason);
 
           if (activities.length < 2) {
             return null;
@@ -351,7 +363,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       const perfectStreaks: PerfectStreakData[] = activityTypes
         .map((type) => {
           const activities = filterActivitiesByOffTime(type.activities, offTimes, userTimezone);
-          const desiredFrequency = type.desiredFrequency;
+          const desiredFrequency = getSeasonalFrequency(type, currentSeason);
 
           if (activities.length < 2) {
             return null;

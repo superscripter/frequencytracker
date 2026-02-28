@@ -5,11 +5,15 @@ import { toZonedTime } from 'date-fns-tz';
 import { differenceInDays, startOfDay } from 'date-fns';
 import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
 import { canCreateActivityType } from '../utils/subscriptionHelpers.js';
+import { getCurrentSeason, getSeasonalFrequency } from '../utils/seasonHelpers.js';
 
 const createActivityTypeSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  desiredFrequency: z.number().min(0),
+  freqWinter: z.number().min(0).default(1),
+  freqSpring: z.number().min(0).default(1),
+  freqSummer: z.number().min(0).default(1),
+  freqFall: z.number().min(0).default(1),
   tagId: z.string().optional().nullable(),
   icon: z.string().optional().default('Run').refine(
     (icon) => icon !== 'Flame',
@@ -20,7 +24,10 @@ const createActivityTypeSchema = z.object({
 const updateActivityTypeSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
-  desiredFrequency: z.number().min(0).optional(),
+  freqWinter: z.number().min(0).optional(),
+  freqSpring: z.number().min(0).optional(),
+  freqSummer: z.number().min(0).optional(),
+  freqFall: z.number().min(0).optional(),
   tagId: z.string().optional().nullable(),
   icon: z.string().optional().refine(
     (icon) => !icon || icon !== 'Flame',
@@ -41,7 +48,14 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           tag: true,
         },
       });
-      return reply.send(activityTypes);
+
+      const currentSeason = getCurrentSeason(new Date());
+      const response = activityTypes.map((t) => ({
+        ...t,
+        desiredFrequency: getSeasonalFrequency(t, currentSeason),
+      }));
+
+      return reply.send(response);
     } catch (error) {
       fastify.log.error(error);
       return reply.status(500).send({ error: 'Internal server error' });
@@ -111,7 +125,10 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
           userId: request.user.userId,
           name: body.name,
           description: body.description,
-          desiredFrequency: body.desiredFrequency,
+          freqWinter: body.freqWinter,
+          freqSpring: body.freqSpring,
+          freqSummer: body.freqSummer,
+          freqFall: body.freqFall,
           tagId: body.tagId,
           icon: body.icon || 'Run',
         },
@@ -120,7 +137,11 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      return reply.status(201).send(activityType);
+      const currentSeason = getCurrentSeason(new Date());
+      return reply.status(201).send({
+        ...activityType,
+        desiredFrequency: getSeasonalFrequency(activityType, currentSeason),
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: error.errors });
@@ -169,7 +190,10 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         data: {
           name: body.name,
           description: body.description,
-          desiredFrequency: body.desiredFrequency,
+          freqWinter: body.freqWinter,
+          freqSpring: body.freqSpring,
+          freqSummer: body.freqSummer,
+          freqFall: body.freqFall,
           tagId: body.tagId,
           icon: body.icon,
         },
@@ -178,7 +202,11 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         },
       });
 
-      return reply.send(activityType);
+      const currentSeason = getCurrentSeason(new Date());
+      return reply.send({
+        ...activityType,
+        desiredFrequency: getSeasonalFrequency(activityType, currentSeason),
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: error.errors });
@@ -261,6 +289,10 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
       const nowUtc = new Date();
       const nowInUserTz = toZonedTime(nowUtc, userTimezone);
       const midnightToday = startOfDay(nowInUserTz);
+
+      // Determine current season's desired frequency
+      const currentSeason = getCurrentSeason(nowInUserTz);
+      const currentFreq = getSeasonalFrequency(activityType, currentSeason);
 
       // Get off-times for this user
       const offTimes = await getUserOffTimes(userId);
@@ -347,7 +379,7 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         daysSinceLastActivity = rawDaysSince - offTimeDays;
 
         // Calculate days until next (can be negative if overdue)
-        daysUntilNext = activityType.desiredFrequency - daysSinceLastActivity;
+        daysUntilNext = currentFreq - daysSinceLastActivity;
       }
 
       // Calculate averages with detailed breakdown
@@ -501,7 +533,7 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
             // Round to 1 decimal place for comparison (consistent with analytics display)
             const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
-            if (roundedAvgFreq <= activityType.desiredFrequency && daysInWindow > currentStreak) {
+            if (roundedAvgFreq <= currentFreq && daysInWindow > currentStreak) {
               currentStreak = daysInWindow;
             }
           }
@@ -512,11 +544,15 @@ export const activityTypeRoutes: FastifyPluginAsync = async (fastify) => {
         activityType: {
           id: activityType.id,
           name: activityType.name,
-          desiredFrequency: activityType.desiredFrequency,
+          desiredFrequency: currentFreq,
+          freqWinter: activityType.freqWinter,
+          freqSpring: activityType.freqSpring,
+          freqSummer: activityType.freqSummer,
+          freqFall: activityType.freqFall,
         },
         lastPerformedDate,
         daysSinceLastActivity,
-        desiredFrequency: activityType.desiredFrequency,
+        desiredFrequency: currentFreq,
         offTimePeriods: relevantOffTimes,
         daysUntilNext,
         averageFrequencyLast3: last3Details.average,

@@ -4,6 +4,7 @@ import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { differenceInDays, subDays, startOfDay } from 'date-fns';
 import { prisma } from '@frequency-tracker/database';
 import { getUserOffTimes, filterActivitiesByOffTime, calculateOffTimeDays } from '../utils/offTimeCalculations.js';
+import { getCurrentSeason, getSeasonalFrequency } from '../utils/seasonHelpers.js';
 
 interface RecommendationItem {
   activityType: {
@@ -11,6 +12,10 @@ interface RecommendationItem {
     name: string;
     description: string | null;
     desiredFrequency: number;
+    freqWinter: number;
+    freqSpring: number;
+    freqSummer: number;
+    freqFall: number;
     icon: string | null;
     tag?: {
       id: string;
@@ -74,7 +79,10 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         userId: string;
         name: string;
         description: string | null;
-        desiredFrequency: number;
+        freqWinter: number;
+        freqSpring: number;
+        freqSummer: number;
+        freqFall: number;
         tagId: string | null;
         icon: string | null;
         createdAt: Date;
@@ -114,9 +122,13 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
         activitiesByType.get(activity.typeId)!.push(activity);
       }
 
+      // Determine current season once for all types
+      const currentSeason = getCurrentSeason(nowInUserTz);
+
       // Calculate recommendations for each activity type
       const recommendations: RecommendationItem[] = activityTypes.map((type) => {
         const typeActivities = activitiesByType.get(type.id) || [];
+        const desiredFrequency = getSeasonalFrequency(type, currentSeason);
 
         // Get the first activity date (oldest activity)
         const firstActivityDate = typeActivities.length > 0
@@ -164,7 +176,7 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
           daysSinceLastActivity = rawDaysSince - offTimeDays;
 
           // Calculate difference (positive means overdue, negative means ahead)
-          difference = daysSinceLastActivity - type.desiredFrequency;
+          difference = daysSinceLastActivity - desiredFrequency;
 
           // Determine status based on difference
           // Positive difference = overdue, negative = ahead of schedule
@@ -333,7 +345,7 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
               const roundedAvgFreq = Math.round(avgFreq * 10) / 10;
 
               // Check if this window meets the desired frequency (using rounded value)
-              if (roundedAvgFreq <= type.desiredFrequency && daysInWindow > currentStreak) {
+              if (roundedAvgFreq <= desiredFrequency && daysInWindow > currentStreak) {
                 currentStreak = daysInWindow;
                 currentStreakStart = activitiesAsc[startIdx].date;
               }
@@ -346,7 +358,11 @@ export const recommendationsRoutes: FastifyPluginAsync = async (fastify) => {
             id: type.id,
             name: type.name,
             description: type.description,
-            desiredFrequency: type.desiredFrequency,
+            desiredFrequency,
+            freqWinter: type.freqWinter,
+            freqSpring: type.freqSpring,
+            freqSummer: type.freqSummer,
+            freqFall: type.freqFall,
             icon: type.icon,
             tag: type.tagId ? tagMap.get(type.tagId) || null : null,
           },

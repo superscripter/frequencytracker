@@ -4,6 +4,7 @@ import webpush from 'web-push';
 import { startOfDay, subDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { syncStravaActivities } from './strava.js';
+import { getCurrentSeason, getSeasonalFrequency } from '../utils/seasonHelpers.js';
 
 // Initialize VAPID configuration
 function initVapid() {
@@ -55,8 +56,9 @@ async function getUserRecommendations(userId: string, userTimezone: string): Pro
       daysSinceLastActivity = daysDiff;
     }
 
-    // desiredFrequency is already in days between activities
-    const expectedFrequencyDays = activityType.desiredFrequency;
+    // Get the current season's desired frequency (days between activities)
+    const currentSeason = getCurrentSeason(now);
+    const expectedFrequencyDays = getSeasonalFrequency(activityType, currentSeason);
 
     // Calculate how overdue the activity is (difference from desired frequency)
     const difference = daysSinceLastActivity !== null
