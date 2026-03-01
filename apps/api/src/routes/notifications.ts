@@ -177,6 +177,27 @@ export default async function notificationRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Cron endpoint for season review emails
+  // Called by Vercel on the 1st of March, June, September, December at 6:30 AM MT
+  fastify.get('/season-review-cron', async (request, reply) => {
+    try {
+      const authHeader = request.headers.authorization;
+      const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'development'}`;
+
+      if (authHeader !== expectedAuth) {
+        return reply.code(401).send({ error: 'Unauthorized' });
+      }
+
+      const { sendSeasonReviewToAllUsers } = await import('../scripts/sendSeasonReview.js');
+      await sendSeasonReviewToAllUsers();
+
+      return { success: true, message: 'Season review emails sent' };
+    } catch (error) {
+      console.error('Error in season-review-cron endpoint:', error);
+      reply.code(500).send({ error: 'Failed to send season review emails' });
+    }
+  });
+
   // Diagnostic endpoint for troubleshooting notifications
   fastify.get('/diagnostic', async (request, reply) => {
     try {

@@ -208,6 +208,10 @@ export function SubscriptionManager() {
       {isPremium && (
         <div className="manage-section">
           <p>Thank you for being a Premium member!</p>
+          <p>With your premium membership you get:</p>
+          <ul>
+            <li>Access to more than 5 activity types</li>
+          </ul>
           <button
             onClick={handleManageSubscription}
             disabled={isLoading}

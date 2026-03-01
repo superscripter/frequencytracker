@@ -302,7 +302,7 @@ export function RecommendationsControls({
               </div>
               <div className="preference-group">
                 <label htmlFor="card-size-select" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                  Card Size:
+                  Card Size on Desktop:
                 </label>
                 <select
                   id="card-size-select"

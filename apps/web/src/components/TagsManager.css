@@ -38,9 +38,10 @@
 .error-message {
   padding: 0.75rem;
   margin-bottom: 1rem;
-  background: #fee2e2;
-  color: #dc2626;
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff5555;
   border-radius: 4px;
+  border: 1px solid rgba(255, 80, 80, 0.4);
   font-size: 0.875rem;
 }
 
@@ -50,7 +51,7 @@
   gap: 0.5rem;
   align-items: center;
   padding: 1rem;
-  background: #f9fafb;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
   margin-bottom: 1rem;
 }
@@ -58,28 +59,29 @@
 .tag-name-input {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #666;
   border-radius: 4px;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  background-color: white;
+  background-color: #1a1a1a;
+  color: #e8e8e8;
 }
 
 .tag-name-input:hover {
   border-color: var(--color-aurora-teal);
-  background-color: rgba(0, 191, 160, 0.03);
+  background-color: #242424;
 }
 
 .tag-name-input:focus {
   outline: none;
-  border-color: var(--color-aurora-teal) !important;
-  background-color: rgba(0, 191, 160, 0.05) !important;
+  border-color: var(--color-aurora-teal);
+  background-color: #242424;
 }
 
 .tag-color-input {
   width: 40px;
   height: 38px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #666;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -91,8 +93,8 @@
 
 .tag-color-input:focus {
   outline: none;
-  border-color: var(--color-aurora-teal) !important;
-  box-shadow: 0 0 0 3px rgba(0, 191, 160, 0.1) !important;
+  border-color: var(--color-aurora-teal);
+  box-shadow: 0 0 0 3px rgba(0, 191, 160, 0.1);
 }
 
 .save-tag-btn,
@@ -121,12 +123,12 @@
 }
 
 .cancel-tag-btn {
-  background: #e5e7eb;
-  color: #1f2937;
+  background: #333;
+  color: #e8e8e8;
 }
 
 .cancel-tag-btn:hover {
-  background: #d1d5db;
+  background: #444;
 }
 
 .no-tags-message {
@@ -172,12 +174,12 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #666;
 }
 
 .tag-name {
   font-weight: 500;
-  color: #1f2937;
+  color: #e8e8e8;
 }
 
 .tag-count {

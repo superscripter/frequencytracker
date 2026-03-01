@@ -246,6 +246,14 @@ export function initializeNotificationScheduler() {
       timezone: 'America/Denver',
     });
 
+    // Season review: 6:30 AM on the 1st of March, June, September, December
+    cron.schedule('30 6 1 3,6,9,12 *', async () => {
+      const { sendSeasonReviewToAllUsers } = await import('../scripts/sendSeasonReview.js');
+      await sendSeasonReviewToAllUsers();
+    }, {
+      timezone: 'America/Denver',
+    });
+
     console.log('[Notification Scheduler] Local scheduler initialized');
   } else {
     console.log('[Notification Scheduler] Running in production - Vercel cron handles scheduling');
